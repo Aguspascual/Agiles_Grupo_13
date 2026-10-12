@@ -1,0 +1,17 @@
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+
+:root {
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  color: #131b2e;
+  background: #faf8ff;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+a { color: #006c49; text-decoration: none; }
+a:hover, .text-button:hover { text-decoration: underline; }
+:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
+

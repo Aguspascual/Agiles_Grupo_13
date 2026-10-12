@@ -44,5 +44,5 @@ Probar registro/login/perfil con API y formularios Angular.
 
 ## Estado
 
-PENDING
+PARCIAL — HU-01 frontend implementado y verificado. HU-02, autenticación real, API, perfil persistido y migraciones quedan pendientes fuera del alcance de esta entrega frontend.
 

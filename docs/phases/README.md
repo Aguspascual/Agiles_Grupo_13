@@ -7,7 +7,7 @@ Fuente funcional: [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/me
 | 01 | Project Setup | - | PENDING |
 | 02 | Infraestructura | - | PENDING |
 | 03 | Base de datos | - | PENDING |
-| 04 | Auth y perfil | HU-01 / HU-02 | PENDING |
+| 04 | Auth y perfil | HU-01 / HU-02 | PARCIAL — HU-01 frontend |
 | 05 | Clubes | HU-03 | PENDING |
 | 06 | Publicar partido | HU-04 | PENDING |
 | 07 | Buscar partidos | HU-05 | PENDING |
@@ -17,5 +17,5 @@ Fuente funcional: [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/me
 | 11 | Compartir WhatsApp | HU-12 | PENDING |
 | 12 | Caché y testing | - | PENDING |
 
-Los estados se actualizan al verificar compilación, pruebas, API, migraciones y Docker. Se implementa en orden, una fase a la vez.
+Los estados se actualizan al verificar los entregables que correspondan a cada fase. La fase 04 está parcial: HU-01 tiene frontend validado; HU-02 y cualquier integración de API/migraciones no se realizaron. Esta entrega se limita al frontend y no completa las fases anteriores del MVP.
 
