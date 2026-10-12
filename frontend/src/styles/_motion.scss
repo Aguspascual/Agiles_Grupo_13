@@ -19,8 +19,8 @@
 .login-aside > :nth-child(2), .login-aside > :nth-child(3), .register-aside > :nth-child(n + 2) { animation: enter-softly .55s .18s ease both; }
 .primary-button span { display: inline-block; transition: transform .2s ease; }
 .primary-button:hover span { transform: translateX(4px); }
-.choice-chip span, .level-body, .benefits li > span { transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease; }
-.choice-chip:hover span, .level-card:hover .level-body { transform: translateY(-2px); }
+.choice-chip span, .benefits li > span { transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.choice-chip:hover span { transform: translateY(-2px); }
 .benefits li > span { transition: transform .25s ease; }
 .benefits li:hover > span { transform: rotate(-7deg) scale(1.06); }
 .hero-photo { transition: background-position .5s ease; }
@@ -63,13 +63,12 @@ app-preview-notice { display: block; animation: enter-softly .3s ease both; }
   .register-brand small { font-size: .52rem; }
   .header-login { font-size: 0; }
   .header-login a { margin: 0; font-size: .75rem; padding: 9px; }
-  .register-card h1 { font-size: 2rem; }
-  .field-grid { grid-template-columns: 1fr; gap: 0; }
+  .register-card { padding: 14px 14px; }
+  .register-card h1 { font-size: 1.65rem; }
+  .register-card .field input:not([type='radio']):not([type='checkbox']) { min-height: 44px; font-size: 16px; }
+  .register-card .primary-button { min-height: 46px; }
+  .field-grid, .personal-grid { grid-template-columns: 1fr; gap: 10px; }
   .preferences-section .field-grid > div + div { margin-top: 16px; }
-  .level-grid { grid-template-columns: 1fr 1fr; }
-  .level-body { min-height: 111px; padding: 12px; }
-  .section-heading { display: block; }
-  .section-heading > span { display: block; margin: -11px 0 18px 38px; }
   .register-aside { display: none; }
   .register-footer { display: block; margin-top: 30px; }
   .register-footer span { display: block; margin-top: 6px; }

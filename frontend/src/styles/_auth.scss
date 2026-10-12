@@ -1,4 +1,4 @@
-.auth-page { min-height: 100vh; padding: 54px clamp(20px, 4vw, 64px); background: #faf8ff; }
+.auth-page { min-height: 100vh; padding: 54px clamp(20px, 4vw, 64px); background: var(--pm-auth-canvas, #e8eeeb); }
 .auth-layout { max-width: 1440px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(350px, .95fr); gap: clamp(36px, 4.5vw, 78px); align-items: start; }
 .brand-row { display: flex; align-items: center; gap: 17px; margin-bottom: 54px; }
 .brand-mark { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; box-shadow: 0 3px 12px #151c2720; }
@@ -14,7 +14,15 @@ h1, h2, p { margin-top: 0; }
 .page-intro { color: #48584f; line-height: 1.65; font-size: clamp(1rem, 1.4vw, 1.26rem); }
 .login-main > .page-intro { max-width: 710px; margin-bottom: 40px; }
 .auth-card, .side-panel, .side-card { background: #fff; border: 1px solid #edf0f6; border-radius: 20px; box-shadow: 0 3px 8px #141c2a08; }
-.login-card { padding: clamp(28px, 3.3vw, 56px); }
+.login-card { max-width: 640px; padding: clamp(20px, 1.8vw, 26px); }
+.login-page .field { margin-bottom: 12px; }
+.login-page .field label { margin-bottom: 6px; }
+.login-page .field input:not([type='radio']):not([type='checkbox']) { min-height: 48px; padding-top: 11px; padding-bottom: 11px; }
+.login-page .check-row { margin: 2px 0 14px; }
+.login-page .primary-button { min-height: 44px; }
+.login-page .divider { margin: 16px 0 12px; }
+.login-page .social-row button { min-height: 40px; }
+.login-page .switch-page { margin-top: 16px; }
 .field { margin-bottom: 22px; }
 .field label, .choice-label { display: block; margin: 0 0 9px; font-weight: 700; font-size: .94rem; }
 .label-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -40,7 +48,6 @@ input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
 .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .social-row button { min-height: 48px; border: 0; border-radius: 9px; background: #eef0ff; color: #131b2e; font-weight: 700; }
 .social-row button:disabled { opacity: .65; cursor: not-allowed; }
-.upcoming { margin: 9px 0 0; text-align: center; font-size: .74rem; color: #6f8075; }
 .switch-page { margin: 38px 0 0; text-align: center; color: #48584f; }
 .switch-page a { margin-left: 4px; font-weight: 800; }
 .login-aside { padding-top: 2px; display: grid; gap: 22px; }

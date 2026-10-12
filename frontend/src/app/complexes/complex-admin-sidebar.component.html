@@ -1,6 +1,49 @@
 <aside class="sidebar">
-  <a class="brand" routerLink="/ingresar" aria-label="PádelMatch, volver al ingreso"><img src="/images/padelmatch-logo.jpg" alt="" width="44" height="44" /><span><strong>PádelMatch</strong><small>Administración</small></span></a>
-  <span class="nav-label">GESTIÓN</span><a class="nav-item active" routerLink="/admin/complejos"><span>⌂</span> Complejos</a>
-  <div class="sidebar-note"><span class="status-dot"></span><span>Panel de demo<br /><small>Datos locales de HU-02</small></span></div>
-  <a class="logout-link" routerLink="/ingresar">← Volver al ingreso</a>
+  <a class="brand" routerLink="/ingresar" aria-label="PádelMatch, volver al ingreso"
+    ><img src="/images/padelmatch-logo.jpg" alt="" width="44" height="44" /><span
+      ><strong>PádelMatch</strong><small>Administración</small></span
+    ></a
+  >
+  <span class="nav-label">GESTIÓN</span>
+  <a
+    class="nav-item"
+    routerLink="/admin/complejos"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+    ><span aria-hidden="true">⌂</span> Complejos</a
+  >
+  <a
+    class="nav-item courts-nav"
+    [routerLink]="['/admin/complejos', complexId, 'canchas']"
+    routerLinkActive="active"
+    ><span aria-hidden="true">▦</span> Canchas</a
+  >
+  <div class="sidebar-footer">
+    @if (showRoleSimulation) {
+      <section class="role-switcher" aria-label="Simular permisos de usuario">
+        <label for="demo-role">Simular vista de</label>
+        <select id="demo-role" [value]="role" (change)="roleChange.emit($any($event.target).value)">
+          <option value="admin">Administración</option>
+          <option value="manager">Encargado</option>
+        </select>
+        @if (role === 'manager') {
+          <label for="demo-manager">Usuario de prueba</label>
+          <select
+            id="demo-manager"
+            [value]="managerId"
+            (change)="managerChange.emit($any($event.target).value)"
+          >
+            @for (manager of managers; track manager.id) {
+              <option [value]="manager.id">{{ manager.name }}</option>
+            }
+          </select>
+        }
+      </section>
+    }
+    <div class="sidebar-note">
+      <span class="status-dot"></span
+      ><span>Panel de demo<br /><small>Datos locales de prueba</small></span>
+    </div>
+    <a class="logout-link" routerLink="/ingresar"><span aria-hidden="true">↪</span> Cerrar sesión</a>
+  </div>
 </aside>

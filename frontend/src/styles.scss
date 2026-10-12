@@ -2,3 +2,10 @@
 @use './styles/auth';
 @use './styles/register';
 @use './styles/motion';
+
+:root {
+  --pm-admin-canvas: #e8eeeb;
+  --pm-admin-surface-strong: #fff;
+  --pm-admin-border: #d8e1db;
+  --pm-auth-canvas: var(--pm-admin-canvas);
+}

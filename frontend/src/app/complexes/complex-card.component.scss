@@ -2,16 +2,18 @@
 .complex-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px #141c2a12; }
 .card-topline { display: flex; justify-content: space-between; align-items: center; }
 .court-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: #adedd3; color: #006c49; font-size: 1.35rem; }
-.zone-tag { padding: 6px 10px; border-radius: 999px; background: #eef0ff; color: #39445a; font-size: .72rem; font-weight: 800; }
+.zone-tag { padding: 6px 10px; border-radius: 999px; background: #f1f5f2; color: #39445a; font-size: .72rem; font-weight: 800; }
 h3 { margin: 2px 0 0; color: #131b2e; font-size: 1.1rem; }
 .detail { display: flex; gap: 9px; margin: 0; color: #566357; font-size: .86rem; }
 .detail span { color: #006c49; }
 .manager-list { display: grid; gap: 9px; margin-top: 7px; padding-top: 15px; border-top: 1px solid #edf0f6; }
 .caption { color: #758177; font-size: .65rem; font-weight: 800; letter-spacing: .1em; }
 .manager-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.manager-chip { padding: 6px 9px; border-radius: 999px; background: #f0f2ff; color: #29364a; font-size: .73rem; font-weight: 700; }
+.manager-chip { padding: 6px 9px; border-radius: 999px; background: #f1f5f2; color: #29364a; font-size: .73rem; font-weight: 700; }
 .card-actions { display: flex; justify-content: end; gap: 8px; margin-top: 4px; }
-.card-actions button { padding: 8px 11px; border: 1px solid #dce2ed; border-radius: 8px; background: white; color: #006c49; font: inherit; font-size: .78rem; font-weight: 800; }
+.card-actions button, .court-action { padding: 8px 11px; border: 1px solid #dce2ed; border-radius: 8px; background: white; color: #006c49; font: inherit; font-size: .78rem; font-weight: 800; text-decoration: none; cursor: pointer; }
+.card-actions .court-action { margin-right: auto; border-color: #ccebdc; background: #f0faf5; }
 .card-actions .danger-action { border-color: #f1cccc; color: #a12828; }
 @keyframes card-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .complex-card { animation: none; transition: none; } }
+@media (max-width: 480px) { .card-actions { flex-wrap: wrap; } .card-actions .court-action { flex-basis: 100%; margin-right: 0; text-align: center; } }

@@ -34,7 +34,7 @@ export class RegisterPage {
       email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
       password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
       confirmPassword: new FormControl('', { nonNullable: true, validators: Validators.required }),
-      zone: new FormControl('', { nonNullable: true, validators: Validators.required }),
+      zones: new FormControl<string[]>([], { nonNullable: true, validators: Validators.required }),
       level: new FormControl('', { nonNullable: true, validators: Validators.required }),
       position: new FormControl('', { nonNullable: true }),
       hand: new FormControl('', { nonNullable: true }),
@@ -54,5 +54,14 @@ export class RegisterPage {
     this.submitted = true;
     this.form.markAllAsTouched();
     this.ready = this.form.valid;
+  }
+
+  toggleZone(zone: string, selected: boolean): void {
+    const currentZones = this.form.controls.zones.value;
+    const nextZones = selected
+      ? [...new Set([...currentZones, zone])]
+      : currentZones.filter((currentZone) => currentZone !== zone);
+    this.form.controls.zones.setValue(nextZones);
+    this.form.controls.zones.markAsTouched();
   }
 }

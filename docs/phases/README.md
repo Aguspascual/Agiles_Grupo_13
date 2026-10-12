@@ -8,7 +8,7 @@ Fuente funcional: [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/me
 | 02 | Infraestructura | - | PENDING |
 | 03 | Base de datos | - | PENDING |
 | 04 | Registro e inicio de sesión | HU-01 | PARCIAL — HU-01 frontend |
-| 05 | Complejos y canchas | HU-02 / HU-03 | PARCIAL — HU-02 frontend |
+| 05 | Complejos y canchas | HU-02 / HU-03 | PARCIAL — HU-02 / HU-03 frontend |
 | 06 | Publicar partido | HU-04 | PENDING |
 | 07 | Buscar partidos | HU-05 | PENDING |
 | 08 | Detalle y participación | HU-06 / HU-07 / HU-08 / HU-09 | PENDING |
@@ -17,5 +17,5 @@ Fuente funcional: [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/me
 | 11 | Compartir WhatsApp | HU-12 | PENDING |
 | 12 | Caché y testing | - | PENDING |
 
-Los estados se actualizan al verificar los entregables que correspondan a cada fase. HU-01 tiene el frontend validado; HU-02 tiene el frontend probado con una demo Angular local. Las APIs, datos persistentes, autorizaciones y HU-03 siguen pendientes y fuera del alcance frontend de esta entrega. El tablero de Trello conserva las historias y sus checklists separan responsabilidades frontend/backend.
+Los estados se actualizan al verificar los entregables que correspondan a cada fase. HU-01, HU-02 y HU-03 tienen su interfaz frontend en modo de demostración local. Las APIs, los datos persistentes, las autorizaciones efectivas y las reglas de reservas siguen pendientes de backend. El tablero de Trello conserva las historias y sus checklists separan responsabilidades frontend/backend.
 

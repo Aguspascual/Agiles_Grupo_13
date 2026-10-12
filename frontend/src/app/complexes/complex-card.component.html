@@ -5,6 +5,6 @@
   <p class="detail"><span aria-hidden="true">☎</span>{{ complex.phone }}</p>
   <div class="manager-list"><span class="caption">ENCARGADOS</span><div class="manager-chips">@for (id of complex.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> }</div></div>
   @if (canManage) {
-    <footer class="card-actions"><button type="button" (click)="edit.emit(complex)">Editar</button><button class="danger-action" type="button" (click)="remove.emit(complex)">Dar de baja</button></footer>
+    <footer class="card-actions"><a class="court-action" [routerLink]="['/admin/complejos', complex.id, 'canchas']">Administrar canchas</a><button type="button" (click)="edit.emit(complex)">Editar</button><button class="danger-action" type="button" (click)="remove.emit(complex)">Dar de baja</button></footer>
   }
 </article>

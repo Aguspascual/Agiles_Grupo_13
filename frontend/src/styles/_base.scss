@@ -3,7 +3,7 @@
 :root {
   font-family: 'Plus Jakarta Sans', Arial, sans-serif;
   color: #131b2e;
-  background: #faf8ff;
+  background: var(--pm-auth-canvas, #e8eeeb);
   font-synthesis: none;
 }
 

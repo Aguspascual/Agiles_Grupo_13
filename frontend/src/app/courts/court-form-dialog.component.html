@@ -1,0 +1,23 @@
+<div class="dialog-backdrop" [class.closing]="closing" (click)="close.emit()">
+  <section
+    #panel
+    class="dialog-panel"
+    role="dialog"
+    tabindex="-1"
+    aria-modal="true"
+    aria-labelledby="court-dialog-title"
+    [class.closing]="closing"
+    (click)="$event.stopPropagation()"
+    (animationend)="finishClose($event)"
+  >
+    <h2 id="court-dialog-title" class="visually-hidden">
+      {{ court ? 'Editar cancha' : 'Agregar cancha' }}
+    </h2>
+    <app-court-form
+      [court]="court"
+      [disabled]="closing"
+      (save)="save.emit($event)"
+      (cancel)="close.emit()"
+    />
+  </section>
+</div>

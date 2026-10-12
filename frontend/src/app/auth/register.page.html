@@ -10,13 +10,12 @@
 
     <div class="register-layout">
       <section class="auth-card register-card" aria-labelledby="register-title">
-        <span class="eyebrow">Registro de jugador</span>
-        <h1 id="register-title">Creá tu perfil de jugador en La Plata</h1>
-        <p class="page-intro">Sumate a la comunidad de pádel de la ciudad. Encontrá partidos a tu medida y jugá en los mejores clubes.</p>
+        <h1 id="register-title">Creá tu perfil de jugador</h1>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
           <section class="form-section" aria-labelledby="personal-title">
             <h2 id="personal-title" class="section-title"><span>1</span> Datos personales básicos</h2>
+            <div class="personal-grid">
             <div class="field">
               <label for="register-name">Nombre y apellido</label>
               <input id="register-name" name="name" type="text" formControlName="name" autocomplete="name" placeholder="ej. Lucas Marchetti" />
@@ -33,7 +32,6 @@
                 <p class="field-error">Ingresá un correo electrónico válido.</p>
               }
             </div>
-            <div class="field-grid">
               <div class="field">
                 <label for="register-password">Contraseña</label>
                 <input id="register-password" name="password" type="password" formControlName="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
@@ -57,29 +55,30 @@
           </section>
 
           <section class="form-section" aria-labelledby="zone-title">
-            <h2 id="zone-title" class="section-title"><span>2</span> Zona habitual en La Plata</h2>
-            <p>Priorizaremos partidos y clubes cercanos a tus lugares de juego frecuentes.</p>
-            <div class="choice-list" role="group" aria-label="Zona habitual">
+            <h2 id="zone-title" class="section-title"><span>2</span> Zonas habituales</h2>
+            <div class="choice-list" role="group" aria-label="Zonas habituales">
               @for (zone of zones; track zone) {
-                <label class="choice-chip"><input type="radio" formControlName="zone" [value]="zone" /><span>{{ zone }}</span></label>
+                <label class="choice-chip zone-choice"><input type="checkbox" name="zones" [checked]="form.controls.zones.value.includes(zone)" (change)="toggleZone(zone, $any($event.target).checked)" /><span>{{ zone }}</span></label>
               }
             </div>
-            @if (submitted && form.controls.zone.invalid) { <p class="field-error">Elegí una zona habitual.</p> }
+            @if (submitted && form.controls.zones.invalid) { <p class="field-error">Elegí una o más zonas habituales.</p> }
           </section>
 
-          <section class="form-section" aria-labelledby="level-title">
-            <div class="section-heading"><h2 id="level-title" class="section-title"><span>3</span> Nivel de pádel inicial</h2><span>De Principiante a 1ra división</span></div>
-            <div class="level-grid" role="group" aria-label="Nivel de pádel inicial">
-              @for (level of levels; track level.value) {
-                <label class="level-card"><input type="radio" formControlName="level" [value]="level.value" /><span class="level-body"><strong>{{ level.value }}</strong><span>{{ level.detail }}</span></span></label>
-              }
-            </div>
-            @if (submitted && form.controls.level.invalid) { <p class="field-error">Elegí tu nivel inicial.</p> }
-            <div class="info-note"><strong>¿No sabés cuál es tu categoría?</strong><br />Elegí la que mejor describa tu juego actual. Podrás actualizar este dato en tu perfil.</div>
+          <section class="form-section level-picker" aria-label="Nivel inicial">
+              <label for="register-level">Nivel inicial</label>
+              <div class="level-select-control">
+              <select id="register-level" formControlName="level">
+                <option value="">Elegí tu nivel de pádel</option>
+                @for (level of levels; track level.value) {
+                  <option [value]="level.value">{{ level.value }} · {{ level.detail }}</option>
+                }
+              </select>
+              </div>
+              @if (submitted && form.controls.level.invalid) { <p class="field-error">Elegí tu nivel inicial.</p> }
           </section>
 
           <section class="form-section preferences-section" aria-labelledby="preferences-title">
-            <h2 id="preferences-title" class="section-title"><span>4</span> Preferencias de juego <small>(opcional)</small></h2>
+            <h2 id="preferences-title" class="section-title"><span>3</span> Preferencias de juego <small>(opcional)</small></h2>
             <div class="field-grid">
               <div><p class="choice-label">Posición en la cancha</p><div class="choice-list compact" role="group" aria-label="Posición en la cancha">
                 @for (position of ['Drive', 'Revés', 'Indistinto']; track position) { <label class="choice-chip"><input type="radio" formControlName="position" [value]="position" /><span>{{ position }}</span></label> }
@@ -99,16 +98,12 @@
           @if (ready) {
             <app-preview-notice message="Todavía no se creó una cuenta: falta integrar el servicio de autenticación." />
           }
-          <p class="support-line">Esta es una vista previa del frontend de HU-01.</p>
         </form>
       </section>
 
       <aside class="register-aside" aria-label="La comunidad de PádelMatch">
         <div class="side-panel">
-          <span class="eyebrow">En La Plata</span>
           <h2>Una comunidad para encontrarse en la cancha</h2>
-          <p>Buscá partidos abiertos cerca de tu zona y conectate con jugadores de tu categoría.</p>
-          <div class="zone-map"><span>Casco Urbano</span><span>Gonnet</span><span>City Bell</span><span>Tolosa</span></div>
           <ul class="benefits">
             <li><span>↗</span><div><strong>Partidos a tu medida</strong><p>Elegí una zona y tu nivel para encontrar mejores opciones.</p></div></li>
             <li><span>⌂</span><div><strong>Clubes de La Plata</strong><p>Conocé dónde se juega en distintos barrios de la ciudad.</p></div></li>

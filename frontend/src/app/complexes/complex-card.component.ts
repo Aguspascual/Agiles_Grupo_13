@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ComplexRecord, ManagerOption } from './complex.model';
 
 @Component({
   selector: 'app-complex-card',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './complex-card.component.html',
   styleUrl: './complex-card.component.scss',
 })

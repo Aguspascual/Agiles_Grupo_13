@@ -30,7 +30,10 @@ export class LoginPage {
     this.submitted = true;
     this.form.markAllAsTouched();
     if (this.form.valid) {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const reducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducedMotion) {
         void this.router.navigateByUrl('/admin/complejos');
         return;
       }
