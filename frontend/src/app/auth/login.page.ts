@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PreviewNoticeComponent } from './preview-notice.component';
 
 @Component({
@@ -17,16 +17,30 @@ export class LoginPage {
 
   submitted = false;
   ready = false;
+  transitioning = false;
   passwordVisible = false;
   recoveryVisible = false;
 
-  constructor() {
+  constructor(private readonly router: Router) {
     this.form.valueChanges.subscribe(() => (this.ready = false));
   }
 
   onSubmit(): void {
+    if (this.transitioning) return;
     this.submitted = true;
     this.form.markAllAsTouched();
-    this.ready = this.form.valid;
+    if (this.form.valid) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        void this.router.navigateByUrl('/admin/complejos');
+        return;
+      }
+      this.transitioning = true;
+    }
+  }
+
+  finishTransition(event: AnimationEvent): void {
+    if (this.transitioning && event.animationName === 'login-exit') {
+      void this.router.navigateByUrl('/admin/complejos');
+    }
   }
 }

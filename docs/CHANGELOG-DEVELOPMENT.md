@@ -54,3 +54,57 @@ La verificación local de esta entrega cubrió `npm test -- --watch=false` y `np
 ## Commit sugerido
 
 `HU-01: dockerizar y modularizar el frontend de registro e inicio de sesión`
+
+## HU-02 — Alta de complejos y encargados
+
+### Frontend completado y probado
+
+- Se agregó `/admin/complejos`, con alta, edición, baja confirmable, datos de contacto y asignación de múltiples encargados.
+- La sesión del formulario de login navega a esa ruta cuando las validaciones locales pasan. Esta navegación es solo una entrada de demo: no verifica credenciales ni crea una sesión.
+- `ComplexPreviewStore` administra los datos de ejemplo en memoria; al recargar se restablecen. El selector de rol simula la vista de administración/encargado y filtra los complejos asignados. No aplica seguridad real.
+- Los componentes de navegación, tarjeta, formulario y diálogos son independientes para reutilización y mantenimiento.
+- Stitch tiene una pantalla pública de “Clubes”, no un panel administrativo de complejos; el frontend reutiliza el sistema visual existente.
+- Verificación anterior: `npm test -- --watch=false` pasó 6 pruebas; la imagen `padelmatch-frontend:latest` se reconstruyó y el contenedor quedó saludable. Las rutas `/ingresar` y `/admin/complejos` respondieron HTTP 200.
+- Revisión final: `npm run build` pasó. Al repetir `npm test -- --watch=false`, Vitest falló antes de ejecutar tests al no resolver `@angular/core` desde el `init-testbed.js` generado. La llamada actual a localhost y Docker también quedó bloqueada por permisos del entorno.
+- Prueba manual en navegador: login de demo → panel, alta local de un complejo y simulación del alcance de un encargado; sin errores de consola.
+
+### Archivos principales
+
+- `frontend/src/app/complexes/complex-admin.page.*`: coordinación del panel.
+- `complex-preview.store.ts` y `complex.model.ts`: modelos y datos de demostración locales.
+- `complex-form.component.*`, `complex-card.component.*`, `confirm-dialog.component.*` y `complex-admin-sidebar.component.*`: piezas reutilizables.
+- `app.routes.ts` y `auth/login.page.ts`: ruta de HU-02 y continuación de demo desde el login.
+
+### Pendiente de backend
+
+Persistencia, endpoints, autenticación, sesión, asignación segura de encargados y autorización efectiva por complejo. El selector de rol solo sirve para probar la presentación frontend.
+
+La HU-02 permanece en **En proceso** en Trello hasta completar backend e integración; su checklist de Frontend queda completo y el de Backend sigue pendiente.
+
+### Commit sugerido
+
+`HU-02: implementar administración visual de complejos y encargados`
+
+### Ajustes visuales de login y administración
+
+- Se quitó el texto de comunidad del login, se colocó el título junto al logo y se duplicó el tamaño del logo en escritorio; en móvil conserva una escala compacta.
+- El panel ahora presenta únicamente “Complejos” en el encabezado, sin banner informativo, contador ni leyenda de alcance del encargado. El botón “Nuevo complejo” tiene menor tamaño.
+- Se eliminó el rótulo “Nuevo complejo” del modal, se amplió su ancho y se compactó el formulario para que no use scroll interno. El selector de zona es personalizado, con opciones visuales propias.
+- La confirmación de baja ya no muestra la explicación sobre el almacenamiento local/backend.
+- Verificación: `npm run build` y la reconstrucción Docker pasaron; el contenedor `padelmatch-frontend:latest` quedó saludable. En `http://localhost:8080` se comprobó login → panel, modal y selección personalizada de zona.
+
+### Transiciones y confirmación de guardado
+
+- Se quitó del login el texto introductorio solicitado. Al enviar credenciales de prueba válidas, la pantalla sale con una transición lateral con perspectiva y el panel entra desde el lado opuesto; con `prefers-reduced-motion` la navegación continúa sin esperar animación.
+- La apertura del formulario de complejo es más pausada. Cancelar, guardar o hacer clic fuera activa una animación de salida y mantiene el diálogo en pantalla hasta que termina.
+- Se agregó `app-toast`, componente reutilizable de confirmación accesible con autocierre y botón para descartarlo. Se muestra al crear, editar o quitar un complejo en el estado local de prueba.
+- La navegación de login sigue siendo exclusivamente frontend y no valida credenciales contra un servicio.
+- Verificación: `npm run build` y `docker compose up --build -d frontend` completaron; el contenedor se inició con la imagen actualizada. En navegador se verificó que el login transiciona al panel, se creó un complejo temporal, el modal terminó su salida y se mostró el toast. Se recargó la página al final para descartar el dato local usado durante la prueba.
+- `npm test -- --watch=false` no llegó a ejecutar casos: Vitest reportó `Timeout waiting for worker to respond` al iniciar el worker de Windows. El bundle de pruebas sí compiló. La limitación queda pendiente de resolver en el entorno de pruebas.
+
+### Ajustes responsive y feedback de complejos
+
+- Se redujo el tamaño del título y el logo de acceso con medidas fluidas para móvil, junto con espacios y controles más compactos; se agregó un ajuste extra para pantallas de hasta 360 px.
+- El panel reduce su espacio superior, adapta la grilla de complejos al ancho disponible y ajusta barra, controles y tarjetas en móvil. El modal limita su altura al viewport, permite desplazamiento interno cuando el teléfono lo requiere y reorganiza los campos en una columna.
+- La apertura del modal ahora dura 620 ms y el cierre 660 ms. El toast se monta fuera de la capa del modal y aparece después de la animación de cierre para que quede visible. El contenedor del toast respeta el ancho de pantalla y las áreas seguras del dispositivo.
+- Verificación: build de Angular y rebuild de Docker correctos. En el navegador Docker a 558 × 510 px, login y panel no tuvieron desbordamiento horizontal; se verificaron el modal, la creación y actualización, y los dos mensajes de confirmación. El modal cerró tras la duración configurada y el toast se vio sobre el panel.

@@ -8,6 +8,13 @@
   to { opacity: 1; transform: scale(1); }
 }
 .entrance { animation: enter-softly .55s cubic-bezier(.2,.7,.2,1) both; }
+.login-page.is-exiting { pointer-events: none; transform-origin: left center; animation: login-exit .58s cubic-bezier(.76,0,.24,1) both; }
+@keyframes login-exit {
+  45% { opacity: .72; transform: perspective(1100px) translateX(-32%) rotateY(8deg) scale(.97); }
+  100% { opacity: 0; transform: perspective(1100px) translateX(-110%) rotateY(14deg) scale(.92); }
+}
+.admin-shell { animation: admin-enter .62s cubic-bezier(.16,1,.3,1); }
+@keyframes admin-enter { from { opacity: 0; transform: translateX(7vw) scale(.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
 .auth-card, .side-panel, .side-card { animation: settle-in .5s .08s ease both; }
 .login-aside > :nth-child(2), .login-aside > :nth-child(3), .register-aside > :nth-child(n + 2) { animation: enter-softly .55s .18s ease both; }
 .primary-button span { display: inline-block; transition: transform .2s ease; }
@@ -29,13 +36,25 @@ app-preview-notice { display: block; animation: enter-softly .3s ease both; }
 }
 
 @media (max-width: 680px) {
-  .auth-page { padding: 22px 16px 40px; }
-  .brand-row { margin-bottom: 36px; }
+  .auth-page { padding: 20px 16px 32px; }
+  .brand-row { margin-bottom: 24px; }
   .brand-mark { width: 46px; height: 46px; }
+  .login-page .brand-row { gap: clamp(10px, 3vw, 18px); margin-bottom: 22px; }
+  .login-page .brand-mark { flex: 0 0 auto; width: clamp(52px, 16vw, 72px); height: clamp(52px, 16vw, 72px); }
+  .login-main .login-brand-title { min-width: 0; font-size: clamp(1.5rem, 6vw, 2.15rem); line-height: 1.05; }
   .eyebrow { font-size: .62rem; padding: 7px 10px; }
-  .login-main h1 { font-size: 2.55rem; }
+  .login-main h1 { font-size: 2.1rem; }
   .login-main > .page-intro { margin-bottom: 28px; }
-  .login-card, .register-card { padding: 24px 19px; border-radius: 16px; }
+  .login-card, .register-card { padding: clamp(18px, 5vw, 26px) clamp(15px, 4.5vw, 22px); border-radius: 16px; }
+  .login-page .field { margin-bottom: 16px; }
+  .login-page .field input:not([type='radio']):not([type='checkbox']) { min-height: 48px; padding-top: 11px; padding-bottom: 11px; font-size: 16px; }
+  .login-page .input-wrap input:not([type='radio']):not([type='checkbox']) { padding-left: 46px; }
+  .login-page .text-button { font-size: .74rem; }
+  .login-page .check-row { margin-bottom: 20px; font-size: .84rem; }
+  .login-page .primary-button { min-height: 50px; }
+  .login-page .divider { margin: 20px 0 14px; }
+  .login-page .social-row button { min-height: 44px; }
+  .login-page .switch-page { margin-top: 24px; font-size: .84rem; }
   .login-aside { display: none; }
   .label-row { align-items: flex-start; }
   .text-button { font-size: .76rem; }
@@ -54,6 +73,15 @@ app-preview-notice { display: block; animation: enter-softly .3s ease both; }
   .register-aside { display: none; }
   .register-footer { display: block; margin-top: 30px; }
   .register-footer span { display: block; margin-top: 6px; }
+}
+
+@media (max-width: 360px) {
+  .auth-page { padding-inline: 12px; }
+  .login-page .brand-row { gap: 9px; }
+  .login-page .brand-mark { width: 50px; height: 50px; }
+  .login-main .login-brand-title { font-size: 1.45rem; }
+  .login-card { padding-inline: 13px; }
+  .login-page .label-row { flex-wrap: wrap; row-gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

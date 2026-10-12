@@ -31,6 +31,7 @@ describe('HU-01: registro e inicio de sesión', () => {
   it('muestra el acceso a la cuenta desde la ruta de ingreso', async () => {
     const { root } = await open('/ingresar');
     expect(root.textContent).toContain('Volvé a la cancha');
+    expect(root.textContent).not.toContain('Ingresá a tu cuenta para sumarte a partidos abiertos');
     expect(root.querySelector('input[name="email"]')).not.toBeNull();
     expect(root.querySelector('input[name="password"]')).not.toBeNull();
     expect(root.querySelector('a[href="/registro"]')).not.toBeNull();
@@ -49,15 +50,22 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.textContent).not.toContain('Formulario listo para conectar');
   });
 
-  it('avisa que el ingreso válido está listo para conectar al backend', async () => {
+  it('permite continuar a HU-02 con un formulario válido, sin solicitar backend', async () => {
     const { root, fixture } = await open('/ingresar');
     fill(root, 'email', 'jugadora@example.com');
     fill(root, 'password', 'claveSegura123');
     root.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     fixture.detectChanges();
+    expect(root.querySelector('.login-page')?.classList.contains('is-exiting')).toBe(true);
 
-    expect(root.textContent).toContain('Formulario listo para conectar');
-    expect(TestBed.inject(Router).url).toBe('/ingresar');
+    const finishAnimation = new Event('animationend', { bubbles: true });
+    Object.defineProperty(finishAnimation, 'animationName', { value: 'login-exit' });
+    root.querySelector('.login-page')?.dispatchEvent(finishAnimation);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Router).url).toBe('/admin/complejos');
+    expect(root.textContent).toContain('Complejos');
   });
 
   it('rechaza contraseñas distintas en el registro', async () => {

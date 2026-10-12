@@ -1,5 +1,7 @@
 # Plan de implementación — MVP de partidos abiertos de pádel
 
+> **Actualización:** Trello es la fuente de verdad para la secuencia y alcance actual de HU-01 a HU-22. Este plan conserva decisiones generales del MVP y se ajusta gradualmente por historia; no usar la antigua numeración de HU como criterio de aceptación vigente.
+
 ## Base del plan
 
 Este plan toma como fuente el [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/metodologias-agiles), en especial la [idea del proyecto](https://trello.com/c/NLIIQKSX/27-idea-del-proyecto-partidos-abiertos-de-p%C3%A1del) y las historias HU-01 a HU-12, junto con el alcance detallado adjunto por el usuario. El repositorio se encontraba vacío al comenzar. Este documento y [el índice de fases](phases/README.md) describen trabajo futuro: **no se implementó código**.

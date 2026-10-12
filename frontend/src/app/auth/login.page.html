@@ -1,13 +1,10 @@
-<main class="auth-page login-page entrance">
+<main class="auth-page login-page entrance" [class.is-exiting]="transitioning" (animationend)="finishTransition($event)">
   <div class="auth-layout">
     <section class="login-main" aria-labelledby="login-title">
       <div class="brand-row">
-        <img class="brand-mark" src="/images/padelmatch-logo.jpg" alt="PádelMatch La Plata" width="56" height="56" />
-        <span class="eyebrow"><span class="status-dot"></span> Comunidad de pádel de La Plata</span>
+        <img class="brand-mark" src="/images/padelmatch-logo.jpg" alt="PádelMatch La Plata" width="112" height="112" />
+        <h1 id="login-title" class="login-brand-title">Volvé a la <span>cancha</span></h1>
       </div>
-
-      <h1 id="login-title">Volvé a la <span>cancha</span></h1>
-      <p class="page-intro">Ingresá a tu cuenta para sumarte a partidos abiertos y encontrar jugadores cerca tuyo.</p>
 
       <div class="auth-card login-card">
         <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>

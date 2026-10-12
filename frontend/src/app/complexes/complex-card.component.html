@@ -1,0 +1,10 @@
+<article class="complex-card">
+  <div class="card-topline"><span class="court-mark" aria-hidden="true">⌂</span><span class="zone-tag">{{ complex.zone }}</span></div>
+  <h3>{{ complex.name }}</h3>
+  <p class="detail"><span aria-hidden="true">⌖</span>{{ complex.address }}</p>
+  <p class="detail"><span aria-hidden="true">☎</span>{{ complex.phone }}</p>
+  <div class="manager-list"><span class="caption">ENCARGADOS</span><div class="manager-chips">@for (id of complex.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> }</div></div>
+  @if (canManage) {
+    <footer class="card-actions"><button type="button" (click)="edit.emit(complex)">Editar</button><button class="danger-action" type="button" (click)="remove.emit(complex)">Dar de baja</button></footer>
+  }
+</article>

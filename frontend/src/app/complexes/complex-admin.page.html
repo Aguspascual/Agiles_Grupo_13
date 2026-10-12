@@ -1,0 +1,30 @@
+<main class="admin-shell">
+  <app-complex-admin-sidebar />
+
+  <section class="workspace">
+    <header class="topbar"><h1>Complejos</h1><div class="avatar" aria-label="Usuario administrador">AP</div></header>
+
+    <section class="toolbar"><button class="primary-button new-complex-button" type="button" [disabled]="role() !== 'admin'" (click)="openCreate()"><span aria-hidden="true">＋</span> Nuevo complejo</button></section>
+
+    <section class="role-demo" aria-label="Simular permisos de usuario"><label for="demo-role">Simular vista de</label><select id="demo-role" [value]="role()" (change)="role.set($any($event.target).value)"><option value="admin">Administración</option><option value="manager">Encargado</option></select>
+      @if (role() === 'manager') { <label for="demo-manager">Usuario de prueba</label><select id="demo-manager" [value]="managerId()" (change)="managerId.set($any($event.target).value)">@for (manager of managers; track manager.id) { <option [value]="manager.id">{{ manager.name }}</option> }</select> }
+    </section>
+
+    @if (complexes().length) {
+      <section class="complex-grid" aria-label="Complejos"><h2 class="visually-hidden">Complejos disponibles</h2>
+        @for (complex of complexes(); track complex.id) {
+          <app-complex-card [complex]="complex" [managers]="managers" [canManage]="true" (edit)="openEdit($event)" (remove)="deleteTarget.set($event)" />
+        }
+      </section>
+    } @else { <section class="empty-state"><span aria-hidden="true">⌂</span><h2>No hay complejos asignados</h2><p>Esta persona no tiene complejos asignados en la vista de prueba.</p></section> }
+
+    <footer class="page-footer">HU-02 · Administración visual de complejos y encargados</footer>
+  </section>
+
+  @if (formOpen()) { <app-complex-form-dialog [complex]="editing()" [managers]="managers" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" /> }
+
+  @if (deleteTarget(); as target) {
+    <app-confirm-dialog [title]="'¿Dar de baja ' + target.name + '?'" confirmLabel="Confirmar baja" (cancel)="deleteTarget.set(null)" (confirm)="confirmDelete()" />
+  }
+</main>
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />
