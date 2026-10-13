@@ -37,7 +37,7 @@ Desde la raíz del repositorio, con Docker Engine iniciado:
 docker compose up --build
 ```
 
-Abrir `http://localhost:8080`. Compose levanta únicamente el frontend Angular compilado y servido por Nginx; la imagen local queda disponible como `padelmatch-frontend:latest`.
+Abrir `http://localhost:8081`. Compose levanta únicamente el frontend Angular compilado y servido por Nginx; la imagen local queda disponible como `padelmatch-frontend:latest`.
 
 ## Verificar
 
