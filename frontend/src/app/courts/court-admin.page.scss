@@ -3,7 +3,7 @@
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
   background: var(--pm-admin-canvas);
-  color: #131b2e;
+  color: #17251d;
 }
 .court-workspace {
   width: min(100%, 1440px);
@@ -18,6 +18,9 @@
   border-radius: 16px;
   background: var(--pm-admin-surface-strong);
   box-shadow: 0 8px 25px #14362408;
+}
+.page-header h1 {
+  color: #131b2e;
 }
 .heading-row {
   display: flex;
@@ -82,9 +85,12 @@ h1 {
   font-size: 1.15rem;
   letter-spacing: -0.02em;
 }
+.section-heading h2 {
+  color: #17251d;
+}
 .section-heading p {
   margin: 4px 0 0;
-  color: #69766c;
+  color: #68776e;
   font-size: 0.79rem;
 }
 .court-grid {

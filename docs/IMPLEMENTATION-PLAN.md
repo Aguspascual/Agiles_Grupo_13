@@ -84,18 +84,17 @@ Cada fase tendrá una explicación de qué se implementó, archivos creados o mo
 
 **Verificación:** consulta pública y rechazo de mutaciones sin ADMIN. [Detalle de fase](phases/phase-05-clubs.md).
 
-### 06 — Publicar partido (HU-04)
+### 06 — Configurar horarios disponibles (HU-04)
 
-**Objetivo:** crear partidos futuros en clubes existentes.
+**Objetivo:** permitir que un encargado configure horarios recurrentes por cancha, consulte una fecha por vez y bloquee/libere turnos puntuales.
 
-- Implementar formulario de club, fecha, horario, rango de nivel y observaciones.
-- Validar fecha y hora futuras, club existente y rango de nivel correcto.
-- Crear el partido y agregar al organizador como primer jugador en una sola transacción.
-- Fijar cuatro lugares: al publicar habrá un jugador y tres lugares libres.
+- Editar varios intervalos no superpuestos por día y duración de turnos de 60 o 90 minutos.
+- Autoguardar cambios válidos y migrar la demo local de `localStorage` v1 a v2.
+- Calcular únicamente los turnos de la fecha seleccionada; avanzar sin límite de semanas.
+- Guardar los bloqueos puntuales como excepciones locales, sin generar anticipadamente todos los turnos futuros.
+- Mantener el flujo responsive y accesible, sin solicitudes al backend ni cambios de infraestructura.
 
-**Endpoint:** `POST /api/matches`.
-
-**Verificación:** creación válida visible en búsqueda y rechazo de datos inválidos. [Detalle de fase](phases/phase-06-create-match.md).
+**Verificación:** pruebas del generador, formularios, agenda, persistencia local y navegación; build Angular y build del contenedor frontend. La disponibilidad compartida, reservas reales y persistencia remota quedan pendientes de integración backend. [Detalle de fase](phases/phase-06-available-hours.md).
 
 ### 07 — Buscar partidos (HU-05)
 

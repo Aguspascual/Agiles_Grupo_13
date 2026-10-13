@@ -138,14 +138,18 @@
   font-weight: 700;
 }
 .card-actions {
+  position: relative;
   display: flex;
   justify-content: end;
-  gap: 8px;
   padding-top: 9px;
   border-top: 1px solid #edf0f6;
 }
-.card-actions button {
+.actions-menu button,
+.actions-menu a {
+  display: inline-flex;
   min-height: 34px;
+  align-items: center;
+  justify-content: center;
   padding: 0 10px;
   border: 1px solid #dce2ed;
   border-radius: 8px;
@@ -155,18 +159,58 @@
   font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
+  text-decoration: none;
 }
-.card-actions button:hover {
+.actions-trigger {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #dce2ed;
+  border-radius: 12px;
+  background: #f7f9f8;
+  color: #365546;
+  cursor: pointer;
+}
+.actions-trigger svg { width: 19px; height: 19px; }
+.actions-trigger:hover,
+.actions-menu button:hover,
+.actions-menu a:hover {
   border-color: #10b981;
   background: #f5fcf8;
 }
-.card-actions .danger-action {
+.actions-trigger:focus-visible,
+.actions-menu a:focus-visible,
+.actions-menu button:focus-visible {
+  outline: 3px solid #76d8ad;
+  outline-offset: 2px;
+}
+.actions-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  width: min(190px, calc(100vw - 48px));
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #dce2ed;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 12px 28px #10182826;
+  animation: menu-in 0.14s ease-out;
+}
+.actions-menu button,
+.actions-menu a { justify-content: start; width: 100%; background: #fff; }
+.actions-menu button:disabled { opacity: 0.5; cursor: not-allowed; }
+.actions-menu .danger-action {
   border-color: #f1cccc;
   color: #a12828;
 }
-.card-actions .danger-action:hover {
+.actions-menu .danger-action:hover:not(:disabled) {
   background: #fff7f6;
 }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes court-card-in {
   from {
     opacity: 0;
@@ -182,4 +226,5 @@
     animation: none;
     transition: none;
   }
+  .actions-menu { animation: none; }
 }

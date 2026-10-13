@@ -1,0 +1,22 @@
+<details class="court-picker">
+  <summary aria-label="Seleccionar cancha">
+    <span class="court-picker-label">Cancha</span>
+    <span class="court-picker-current">{{ currentCourt.name }}</span>
+    <svg class="court-picker-chevron" aria-hidden="true" viewBox="0 0 20 20" fill="none">
+      <path d="m5 7.5 5 5 5-5" />
+    </svg>
+  </summary>
+  <nav class="court-picker-menu" aria-label="Cambiar cancha">
+    @for (item of courts; track item.id) {
+      <a
+        [attr.aria-current]="item.id === currentCourt.id ? 'page' : null"
+        [routerLink]="['/admin/complejos', complexId, 'canchas', item.id, 'horarios']"
+      >
+        <span>{{ item.name }}</span>
+        @if (item.id === currentCourt.id) {
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="m4 10 4 4 8-8" /></svg>
+        }
+      </a>
+    }
+  </nav>
+</details>

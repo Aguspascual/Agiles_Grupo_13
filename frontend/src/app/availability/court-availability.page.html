@@ -1,0 +1,74 @@
+<main class="availability-shell">
+  <app-complex-admin-sidebar
+    [complexId]="currentComplexId()"
+    [showRoleSimulation]="true"
+    [role]="role()"
+    [managers]="managers"
+    [managerId]="managerId()"
+    (roleChange)="role.set($event)"
+    (managerChange)="managerId.set($event)"
+  />
+
+  <section class="availability-workspace">
+    @if (complex(); as currentComplex) {
+      @if (court(); as currentCourt) {
+        <header class="page-header">
+          <div class="heading-copy">
+            <div class="heading-row">
+              <div>
+                <h1>Disponibilidad</h1>
+                <p>{{ currentCourt.name }}</p>
+              </div>
+            </div>
+          </div>
+          @if (courts().length > 1) {
+            <app-court-picker
+              [complexId]="currentComplex.id"
+              [courts]="courts()"
+              [currentCourt]="currentCourt"
+            />
+          }
+        </header>
+
+        <section class="schedule-panel" aria-label="Configuración semanal">
+          <app-weekly-schedule-form
+            [rules]="rules()"
+            (rulesChange)="saveRules($event)"
+          />
+          @if (!persistenceAvailable()) {
+            <p class="storage-notice" role="status">Los cambios se mantienen en esta sesión, pero el navegador no permitió guardarlos.</p>
+          }
+        </section>
+
+        <section class="turns-panel" aria-labelledby="turns-title">
+          <header class="section-heading turns-heading">
+            <div>
+              <h2 id="turns-title">{{ selectedDateLabel() }}</h2>
+            </div>
+            <nav class="date-navigation" aria-label="Navegación por fecha">
+              <button type="button" aria-label="Día anterior" [disabled]="previousDayDisabled()" (click)="previousDay()">‹</button>
+              <button type="button" aria-label="Día siguiente" (click)="nextDay()">›</button>
+            </nav>
+          </header>
+          <app-availability-calendar [slots]="slots()" (toggleBlocked)="toggleSlot($event)" />
+        </section>
+      } @else {
+        <section class="missing-state">
+          <span aria-hidden="true">◷</span>
+          <h1>No encontramos esta cancha</h1>
+          <p>Elegí una cancha existente para configurar sus horarios.</p>
+          <a [routerLink]="['/admin/complejos', currentComplex.id, 'canchas']">Volver a canchas</a>
+        </section>
+      }
+    } @else {
+      <section class="missing-state">
+        <span aria-hidden="true">⌂</span>
+        <h1>No encontramos este complejo</h1>
+        <p>Volvé al listado para elegir un complejo disponible.</p>
+        <a routerLink="/admin/complejos">Ir a complejos</a>
+      </section>
+    }
+  </section>
+</main>
+
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />
