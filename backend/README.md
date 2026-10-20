@@ -1,4 +1,4 @@
-# Backend HU-01
+# Backend HU-01 y HU-02
 
 API Go para registro e inicio de sesión, con PostgreSQL como almacenamiento.
 
@@ -19,3 +19,19 @@ go run ./cmd/api
 - `GET /health`: responde `204` cuando el proceso está activo.
 
 `zone` acepta únicamente Casco Urbano, Gonnet, City Bell, San Carlos, Tolosa, Villa Elisa o Berisso / Ensenada. Se recortan espacios al inicio y final. El registro crea `users` y `player_profiles` en una misma transacción. La migración no crea tablas `zones` ni `user_zones`.
+
+## HU-02 — Complejos
+
+- `GET /api/v1/complexes`: requiere JWT; ADMIN ve todos los activos y los encargados solo los asignados.
+- `POST /api/v1/complexes`: requiere ADMIN; recibe `name`, `address`, `zone`, `phone` y `managerIds`.
+- `PUT /api/v1/complexes/{id}`: ADMIN puede cambiar datos y encargados; un encargado asignado puede cambiar datos conservando la misma lista de encargados.
+- `DELETE /api/v1/complexes/{id}`: requiere ADMIN y realiza una baja lógica.
+- `GET /api/v1/complexes/available-managers`: requiere ADMIN; devuelve usuarios registrados con perfil (`id`, `name`, `email`).
+
+La migración `002_complexes.sql` agrega `users.role`, con valores `USER` o `ADMIN` y valor predeterminado `USER`. El registro público no recibe ni asigna roles: toda alta comienza como `USER`. Para promover manualmente una cuenta de desarrollo, ejecutar SQL con acceso administrativo a PostgreSQL, identificando la cuenta por email:
+
+```sql
+UPDATE users SET role = 'ADMIN', updated_at = now() WHERE email = 'admin@example.com';
+```
+
+Los complejos se eliminan de forma lógica (`deleted_at`), se excluyen de listados y conservan sus asignaciones. No se crean todavía canchas, horarios ni reservas.
