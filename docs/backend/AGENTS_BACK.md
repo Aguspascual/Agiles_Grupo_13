@@ -77,7 +77,7 @@ docs: actualizar acuerdos de desarrollo backend
 - Abrir como borrador si falta trabajo. Solicitar al menos una aprobación de otro integrante backend; el autor no se aprueba su PR.
 - El reviewer prueba los pasos indicados y contrasta criterios, TDD y reglas. Los cambios pedidos se realizan en la misma rama.
 - Antes de integrar: resolver conflictos, pasar los checks pertinentes y dejar claros los pendientes. No declarar una HU completa si falta un comportamiento requerido.
-- Con aprobación, el autor integra mediante **Create a merge commit**, borra la rama cuando no queden dependientes y vincula la PR con la tarjeta de Trello.
+- Con aprobación y validaciones correctas, el reviewer asignado integra mediante **Create a merge commit**. El autor no integra su propia PR. Después, eliminar la rama cuando no queden dependientes y vincular la PR con la tarjeta de Trello.
 - No hacer commit, push, comentarios/reviews en GitHub, merge ni cambios en Trello automáticamente: requieren autorización explícita.
 - Los hallazgos de revisión quedan en el chat; se publican en una PR solo con autorización. No acumular informes de revisión en el repositorio.
 
