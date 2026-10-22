@@ -1,0 +1,64 @@
+.auth-page { min-height: 100vh; padding: 54px clamp(20px, 4vw, 64px); background: var(--pm-auth-canvas, #e8eeeb); }
+.auth-layout { max-width: 1440px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(350px, .95fr); gap: clamp(36px, 4.5vw, 78px); align-items: start; }
+.brand-row { display: flex; align-items: center; gap: 17px; margin-bottom: 54px; }
+.brand-mark { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; box-shadow: 0 3px 12px #151c2720; }
+.login-page .brand-row { gap: 24px; margin-bottom: 38px; }
+.login-page .brand-mark { width: 112px; height: 112px; }
+.login-brand-title { margin: 0; font-size: clamp(2.25rem, 3.5vw, 3.8rem); line-height: 1.08; letter-spacing: -.055em; font-weight: 800; }
+.login-brand-title span { color: #006c49; border-bottom: 5px solid #66efb0; }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 7px 14px; background: #adedd3; color: #235f4b; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.status-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #10b981; display: inline-block; }
+h1, h2, p { margin-top: 0; }
+.login-main h1 { margin-bottom: 14px; font-size: clamp(2.65rem, 4.1vw, 4.45rem); line-height: 1.12; letter-spacing: -.055em; font-weight: 800; }
+.login-main h1 span { color: #006c49; border-bottom: 5px solid #66efb0; }
+.page-intro { color: #48584f; line-height: 1.65; font-size: clamp(1rem, 1.4vw, 1.26rem); }
+.login-main > .page-intro { max-width: 710px; margin-bottom: 40px; }
+.auth-card, .side-panel, .side-card { background: #fff; border: 1px solid #edf0f6; border-radius: 20px; box-shadow: 0 3px 8px #141c2a08; }
+.login-card { max-width: 640px; padding: clamp(20px, 1.8vw, 26px); }
+.login-page .field { margin-bottom: 12px; }
+.login-page .field label { margin-bottom: 6px; }
+.login-page .field input:not([type='radio']):not([type='checkbox']) { min-height: 48px; padding-top: 11px; padding-bottom: 11px; }
+.login-page .check-row { margin: 2px 0 14px; }
+.login-page .primary-button { min-height: 44px; }
+.login-page .divider { margin: 16px 0 12px; }
+.login-page .social-row button { min-height: 40px; }
+.login-page .switch-page { margin-top: 16px; }
+.field { margin-bottom: 22px; }
+.field label, .choice-label { display: block; margin: 0 0 9px; font-weight: 700; font-size: .94rem; }
+.label-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.text-button { padding: 0; border: 0; background: none; color: #006c49; font-size: .88rem; font-weight: 700; }
+.input-wrap { position: relative; }
+.input-wrap > svg { position: absolute; top: 50%; left: 19px; width: 21px; height: 21px; transform: translateY(-50%); fill: none; stroke: #73867a; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.field input:not([type='radio']):not([type='checkbox']) { width: 100%; min-height: 54px; padding: 14px 18px; border: 1px solid #e5e8f0; border-radius: 10px; color: #131b2e; background: #f0f2ff; outline: none; transition: border-color .2s, box-shadow .2s; }
+.input-wrap input:not([type='radio']):not([type='checkbox']) { padding-left: 52px; }
+.field input::placeholder { color: #839088; }
+.field input:not([type='radio']):not([type='checkbox']):focus { border-color: #10b981; box-shadow: 0 0 0 3px #10b98126; }
+.show-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #73867a; padding: 10px; display: grid; place-items: center; }
+.show-password svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.has-trailing-action input:not([type='radio']):not([type='checkbox']) { padding-right: 54px; }
+.field-error { margin: 7px 0 0; color: #b52929; font-size: .84rem; font-weight: 600; }
+.info-note { background: #e9edff; color: #263c42; border-radius: 11px; padding: 15px 18px; line-height: 1.55; font-size: .91rem; }
+.check-row { display: flex; align-items: center; gap: 9px; margin: 6px 0 27px; color: #3c4a42; font-size: .92rem; }
+input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
+.primary-button { display: flex; justify-content: center; align-items: center; gap: 11px; width: 100%; min-height: 56px; border: 0; border-radius: 10px; background: #10b981; color: white; font-weight: 800; box-shadow: 0 6px 13px #006c491a; transition: background .2s, transform .2s; }
+.primary-button:hover { background: #059668; transform: translateY(-1px); }
+.form-notice { margin: 18px 0 0; padding: 15px 18px; border: 1px solid #95d3ba; border-radius: 11px; background: #ecfdf5; color: #005236; line-height: 1.5; }
+.divider { display: flex; align-items: center; gap: 15px; margin: 26px 0 18px; color: #78887d; font-weight: 800; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e0e5f3; }
+.social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.social-row button { min-height: 48px; border: 0; border-radius: 9px; background: #eef0ff; color: #131b2e; font-weight: 700; }
+.social-row button:disabled { opacity: .65; cursor: not-allowed; }
+.switch-page { margin: 38px 0 0; text-align: center; color: #48584f; }
+.switch-page a { margin-left: 4px; font-weight: 800; }
+.login-aside { padding-top: 2px; display: grid; gap: 22px; }
+.hero-photo { position: relative; min-height: 380px; overflow: hidden; border-radius: 19px; background: linear-gradient(180deg, #07131900 35%, #111b30d9), url('/images/cancha-interior.jpg') center / cover; }
+.hero-photo-copy { position: absolute; inset: 20px 24px 23px; display: flex; flex-direction: column; justify-content: space-between; align-items: start; color: #fff; }
+.photo-badge { display: inline-block; border-radius: 999px; padding: 8px 14px; background: #112235bd; font-size: .8rem; font-weight: 700; }
+.hero-photo-copy p { max-width: 390px; margin: 0; font-size: clamp(1.35rem, 2vw, 1.8rem); line-height: 1.2; font-weight: 800; }
+.side-card { display: flex; align-items: start; gap: 17px; padding: 24px; }
+.side-card.soft-card { background: #eef0ff; }
+.side-card h2 { margin-bottom: 5px; font-size: 1.14rem; }
+.side-card p { margin: 0; color: #48584f; line-height: 1.5; font-size: .93rem; }
+.side-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; background: #adedd3; border-radius: 12px; color: #006c49; font-size: 1.45rem; }
+.side-card > .status-dot { margin-top: 8px; }
+

@@ -1,0 +1,78 @@
+:host { display: block; min-width: 0; }
+
+.editor-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 12px;
+  border: 1px solid var(--pm-admin-border);
+  border-radius: 12px;
+  background: var(--pm-admin-surface-strong);
+  color: #172238;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-toggle span:first-child { display: grid; gap: 2px; }
+.editor-toggle strong { font-size: 0.86rem; }
+.editor-toggle small { color: #657084; font-size: 0.72rem; }
+.editor-toggle:focus-visible, .add-interval:focus-visible, .remove-interval:focus-visible,
+.day-content input:focus-visible, .day-content select:focus-visible {
+  outline: 3px solid #07835a66;
+  outline-offset: 2px;
+}
+.editor-panel { padding-top: 10px; animation: panel-in 0.22s ease-out; }
+.day-list { display: grid; gap: 8px; }
+.day-row {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--pm-admin-border);
+  border-radius: 12px;
+  background: var(--pm-admin-surface-strong);
+}
+.day-heading { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.day-toggle { display: flex; align-items: center; gap: 8px; min-height: 34px; color: #172238; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
+.day-toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.switch { position: relative; flex: 0 0 auto; width: 34px; height: 19px; border-radius: 999px; background: #b8c1be; transition: background-color 0.16s ease; }
+.switch::after { position: absolute; top: 3px; left: 3px; width: 13px; height: 13px; border-radius: 50%; background: white; content: ''; transition: transform 0.16s ease; }
+.day-toggle input:checked + .switch { background: #07835a; }
+.day-toggle input:checked + .switch::after { transform: translateX(15px); }
+.day-toggle input:focus-visible + .switch { outline: 3px solid #76d8ad; outline-offset: 3px; }
+.day-summary { margin-left: auto; color: #657084; font-size: 0.69rem; font-weight: 700; }
+.day-disclosure { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #dce2ed; border-radius: 9px; background: #fff; color: #445064; cursor: pointer; transition: background-color 0.16s ease, border-color 0.16s ease; }
+.day-disclosure:hover { border-color: #a6c5b1; background: #f3f8f4; }
+.day-disclosure:focus-visible { outline: 3px solid #76d8ad; outline-offset: 2px; }
+.day-content { display: grid; gap: 7px; min-width: 0; }
+.day-content.is-disabled { opacity: 0.5; }
+.interval-list { display: grid; gap: 6px; }
+.interval-row { display: grid; grid-template-columns: auto minmax(86px, 1fr) auto minmax(86px, 1fr) 30px; align-items: center; gap: 7px; min-width: 0; }
+.interval-row label, .day-options label { color: #566174; font-size: 0.7rem; font-weight: 700; }
+.interval-row input, .day-options select { width: 100%; min-width: 0; min-height: 34px; padding: 0 7px; border: 1px solid #d7e0da; border-radius: 8px; background: white; color: #172238; font: inherit; font-size: 0.75rem; }
+.remove-interval { width: 30px; height: 30px; border: 0; border-radius: 8px; background: #f3f5f4; color: #596477; font-size: 1rem; cursor: pointer; }
+.remove-interval:disabled, .add-interval:disabled { cursor: not-allowed; opacity: 0.45; }
+.day-options { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+.add-interval { min-height: 29px; margin-right: auto; padding: 0 8px; border: 1px solid #cbd8d1; border-radius: 7px; background: white; color: #08724f; font: inherit; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+.day-options select { width: auto; min-height: 30px; }
+.field-error { grid-column: 1; margin-top: -4px; color: #a12828; font-size: 0.7rem; font-weight: 700; }
+.save-error { margin: 8px 0 0; color: #a12828; font-size: 0.76rem; font-weight: 700; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+
+@keyframes panel-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 760px) {
+  .day-row { gap: 7px; }
+  .day-toggle { min-height: 28px; }
+}
+@media (max-width: 480px) {
+  .interval-row { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) 28px; gap: 4px; }
+  .interval-row label { font-size: 0.65rem; }
+  .day-options { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch::after { transition: none; }
+  .editor-panel { animation: none; }
+}

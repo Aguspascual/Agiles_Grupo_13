@@ -1,0 +1,40 @@
+<section class="availability-calendar" aria-label="Turnos de la fecha seleccionada">
+  @if (days().length) {
+    <div class="day-list">
+      @for (day of days(); track day.date) {
+        <section class="day-group" [attr.aria-label]="day.label">
+          <div class="slot-grid">
+            @for (slot of day.slots; track slot.id) {
+              <article class="slot-card" [class.is-blocked]="slot.status === 'blocked'">
+                <div class="slot-time">
+                  <time [attr.datetime]="slot.startsAt">{{ slot.startsAt }}</time>
+                  <span aria-hidden="true">—</span>
+                  <time [attr.datetime]="slot.endsAt">{{ slot.endsAt }}</time>
+                </div>
+                <span class="slot-status" role="status">
+                  <span class="status-dot" aria-hidden="true"></span>
+                  {{ slot.status === 'blocked' ? 'Bloqueado' : 'Disponible' }}
+                </span>
+                <button
+                  type="button"
+                  [attr.aria-label]="
+                    (slot.status === 'blocked' ? 'Liberar' : 'Bloquear') +
+                    ' turno de ' + slot.startsAt + ', ' + day.label
+                  "
+                  (click)="toggle(slot)"
+                >
+                  {{ slot.status === 'blocked' ? 'Liberar' : 'Bloquear' }}
+                </button>
+              </article>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  } @else {
+    <div class="empty-state" role="status">
+      <span class="empty-icon" aria-hidden="true">◷</span>
+          <h3>Sin turnos para esta fecha</h3>
+    </div>
+  }
+</section>
