@@ -1,6 +1,5 @@
 services:
   frontend:
-    image: padelmatch-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
