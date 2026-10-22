@@ -29,6 +29,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | TDD | HU | Estado |
 | --- | --- | --- |
 | [0001: alta de un día](TDD-0001-hu-04-alta-horario-diario.md) | HU-04 | Borrador |
+| [0002: baja de un día](TDD-0002-hu-04-baja-horario-diario.md) | HU-04 | Borrador |
 
 ### HU-04: acuerdos y contrato común propuesto
 
