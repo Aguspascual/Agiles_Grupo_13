@@ -1,10 +1,10 @@
 ---
 autor: [Nombre]
 fecha: [AAAA-MM-DD]
-titulo: [Nombre de la Funcionalidad]
+titulo: [Operación y funcionalidad]
 ---
 
-# TDD-[XXXX]: [Nombre de la Funcionalidad]
+# TDD-[XXXX]: [Operación y funcionalidad]
 
 ## Contexto de Negocio (PRD)
 
@@ -27,7 +27,7 @@ titulo: [Nombre de la Funcionalidad]
 *   `campo`: Tipo (Restricciones).
 
 ### Contrato de API
-[Definición de endpoints y DTO JSON acordados con frontend.]
+[Contrato de una sola operación: alta, baja, modificación, búsqueda o funcionalidad puntual. DTO JSON acordados con frontend.]
 *   **Endpoint**: `METHOD /api/v1/[recurso]`
 *   **Request Body**:
 ```json
@@ -35,7 +35,7 @@ titulo: [Nombre de la Funcionalidad]
     "campo": "valor"
 }
 ```
-*   **Response**: [Código HTTP y cuerpo de respuesta.]
+*   **Response**: [Código HTTP y cuerpo JSON completo, o sin cuerpo si corresponde.]
 
 ### Componentes del Monolito Modular
 [Distribución de responsabilidades dentro del módulo.]

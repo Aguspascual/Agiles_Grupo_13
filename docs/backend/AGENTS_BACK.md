@@ -11,13 +11,15 @@
 ## Flujo de trabajo y TDD
 
 1. Elegir una tarjeta de Sprint 2 o En proceso y coordinar su responsabilidad backend para evitar duplicados.
-2. Crear un documento desde [TEMPLATE.md](TDDs/TEMPLATE.md): un TDD por CRUD cohesivo y documentos separados para comportamientos con reglas propias.
+2. Crear un documento desde [TEMPLATE.md](TDDs/TEMPLATE.md) por operación: alta, baja, modificación y búsqueda van en TDD separados. Las funcionalidades puntuales también tienen su propio TDD.
 3. Acordar criterios de aceptación, modelo, API, permisos, errores, transacciones y pruebas antes de programar. El TDD comienza como borrador.
 4. Obtener aprobación humana del documento y registrar la versión aceptada en la PR o conversación vinculada. Un agente no se autoaprueba.
 5. Trabajar con **Red → Green → Refactor**: prueba que falla por el comportamiento faltante, implementación mínima y mejora con pruebas verdes.
 6. Entregar unidades pequeñas con código, pruebas y documentación coherentes; pedir revisión a otro integrante del equipo backend.
 
 Si cambia una regla o contrato aprobado, actualizar el TDD y obtener nueva aceptación antes de continuar esa parte. La aprobación del documento no sustituye la revisión del código.
+
+Cada TDD define una operación completa: criterios, reglas aplicables, datos, permisos, endpoint, request, response, errores y pruebas. Partir de Trello y las reglas documentadas; consultar las decisiones faltantes antes de cerrar el contrato. No agrupar todo el CRUD en un documento ni dejar decisiones de negocio al agente que implemente. Compartir referencias al modelo común sin duplicar acuerdos.
 
 Los criterios deben tener identificadores como `CA-01`; referenciar `RN-XX` de [REGLAS-NEGOCIO.md](../REGLAS-NEGOCIO.md) cuando corresponda. Las pruebas deben permitir identificar qué criterio verifican. Registrar comandos y resultados en la PR, sin fabricar una fase Red retrospectiva.
 
@@ -47,6 +49,7 @@ Las pruebas con `TEST_DATABASE_URL` deben apuntar a una base descartable de prue
 - Conservar `HU-XX` en mayúsculas; resto en minúsculas, sin espacios, tildes ni `ñ`, con descripción de 2 a 4 palabras separadas por guiones.
 - Ejemplos: `feature/HU-04-back-horarios-disponibles`, `fix/HU-03-back-baja-cancha`, `docs/acuerdos-backend-tdd`.
 - Omitir HU/capa si no corresponden. Las ramas ya existentes conservan su nombre.
+- Separar acuerdos, metodología y reglas compartidas en una rama `docs/...`; los TDD específicos de una HU van en su propia rama, por ejemplo `docs/HU-04-back-tdd-horarios`.
 - Si una dependencia no está integrada en `Desarrollo`, coordinar su integración antes de comenzar la rama dependiente.
 - Actualizar la rama de trabajo y volver a probar antes de pedir revisión. No subir cambios directamente a `Desarrollo` ni descartar trabajo para resolver divergencias.
 

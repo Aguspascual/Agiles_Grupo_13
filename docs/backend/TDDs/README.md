@@ -7,13 +7,13 @@ TDD es desarrollo guiado por pruebas. El documento reúne el negocio y el diseñ
 ## Cómo trabajamos
 
 1. Elegir y coordinar una HU de backend.
-2. Copiar [TEMPLATE.md](TEMPLATE.md) a `TDD-XXXX-hu-XX-descripcion.md`, con ID único.
-3. Definir criterios verificables, datos, API, permisos, errores y reglas relacionadas.
+2. Copiar [TEMPLATE.md](TEMPLATE.md) a `TDD-XXXX-hu-XX-operacion-descripcion.md`, con ID único por operación.
+3. Definir criterios verificables, datos, permisos, reglas y el contrato completo: endpoint, request, response y errores. Consultar las decisiones faltantes antes de cerrar el documento.
 4. Obtener aceptación humana antes de escribir la implementación.
 5. Escribir una prueba que falle por el comportamiento esperado, implementar lo mínimo y refactorizar manteniendo las pruebas verdes.
 6. Registrar evidencia en la PR y actualizar el documento si cambia lo acordado.
 
-Un TDD por CRUD cohesivo. Separar funcionalidades como reservar, bloquear, cancelar o reprogramar cuando tengan reglas propias. No separar por archivo o capa técnica ni duplicar especificaciones.
+Un archivo para **alta**, otro para **baja**, otro para **modificación** y otro para **búsqueda**, cuando correspondan a la funcionalidad. No agrupar el CRUD completo. Reservar, bloquear, cancelar o reprogramar también tienen documentos propios. Cada operación se acuerda antes de implementarla; referenciar el modelo común sin duplicar especificaciones.
 
 ## Verificación
 
@@ -26,6 +26,4 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 
 ## Documentos
 
-| TDD | HU | Estado |
-| --- | --- | --- |
-| [0001: horarios recurrentes](TDD-0001-hu-04-horarios-recurrentes.md) | HU-04 | Borrador |
+Los TDD de cada historia se incorporan desde su propia rama de documentación.
