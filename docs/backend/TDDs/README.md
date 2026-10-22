@@ -23,3 +23,9 @@ Un TDD por CRUD cohesivo. Separar funcionalidades como reservar, bloquear, cance
 - Comprobar casos de borde y registrar omisiones. Un fallo de configuración no cuenta como Red.
 
 Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, PR y trazabilidad. Consultar solo las [reglas](../../REGLAS-NEGOCIO.md) relacionadas con la tarea.
+
+## Documentos
+
+| TDD | HU | Estado |
+| --- | --- | --- |
+| [0001: horarios recurrentes](TDD-0001-hu-04-horarios-recurrentes.md) | HU-04 | Borrador |
