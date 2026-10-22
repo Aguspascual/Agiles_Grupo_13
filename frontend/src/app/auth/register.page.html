@@ -1,0 +1,120 @@
+<main class="auth-page register-page entrance">
+  <div class="register-shell">
+    <header class="register-header">
+      <a class="register-brand" routerLink="/ingresar" aria-label="PádelMatch LP, ir al inicio de sesión">
+        <img class="brand-mark" src="/images/padelmatch-logo.jpg" alt="" width="54" height="54" />
+        <span><strong>PádelMatch <em>LP</em></strong><small>Comunidad de pádel de La Plata</small></span>
+      </a>
+      <div class="header-login">¿Ya tenés cuenta? <a routerLink="/ingresar">Iniciar sesión <span aria-hidden="true">→</span></a></div>
+    </header>
+
+    <div class="register-layout">
+      <section class="auth-card register-card" aria-labelledby="register-title">
+        <h1 id="register-title">Creá tu perfil de jugador</h1>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <section class="form-section" aria-labelledby="personal-title">
+            <h2 id="personal-title" class="section-title"><span>1</span> Datos personales básicos</h2>
+            <div class="personal-grid">
+            <div class="field">
+              <label for="register-name">Nombre y apellido</label>
+              <input id="register-name" name="name" type="text" formControlName="name" autocomplete="name" placeholder="ej. Lucas Marchetti" />
+              @if ((submitted || form.controls.name.touched) && form.controls.name.hasError('required')) {
+                <p class="field-error">Ingresá tu nombre y apellido.</p>
+              }
+            </div>
+            <div class="field">
+              <label for="register-email">Correo electrónico</label>
+              <input id="register-email" name="email" type="email" formControlName="email" autocomplete="email" placeholder="ej. lucas@ejemplo.com" />
+              @if ((submitted || form.controls.email.touched) && form.controls.email.hasError('required')) {
+                <p class="field-error">Ingresá tu correo electrónico.</p>
+              } @else if ((submitted || form.controls.email.touched) && form.controls.email.hasError('email')) {
+                <p class="field-error">Ingresá un correo electrónico válido.</p>
+              }
+            </div>
+              <div class="field">
+                <label for="register-password">Contraseña</label>
+                <input id="register-password" name="password" type="password" formControlName="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+                @if ((submitted || form.controls.password.touched) && form.controls.password.hasError('required')) {
+                  <p class="field-error">Ingresá una contraseña.</p>
+                } @else if ((submitted || form.controls.password.touched) && form.controls.password.hasError('minlength')) {
+                  <p class="field-error">Usá al menos 8 caracteres.</p>
+                }
+              </div>
+              <div class="field">
+                <label for="register-confirm">Confirmar contraseña</label>
+                <input id="register-confirm" name="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repetí tu clave" />
+                @if ((submitted || form.controls.confirmPassword.touched) && form.controls.confirmPassword.hasError('required')) {
+                  <p class="field-error">Repetí tu contraseña.</p>
+                } @else if ((submitted || form.controls.confirmPassword.touched) && form.hasError('passwordMismatch')) {
+                  <p class="field-error">Las contraseñas no coinciden.</p>
+                }
+              </div>
+            </div>
+            <div class="password-meter"><span>Seguridad de contraseña</span><span>{{ form.controls.password.value.length >= 8 ? 'Mínimo alcanzado' : 'Mínimo 8 caracteres' }}</span><progress aria-label="Longitud de la contraseña" max="8" [value]="form.controls.password.value.length > 8 ? 8 : form.controls.password.value.length"></progress></div>
+          </section>
+
+          <section class="form-section" aria-labelledby="zone-title">
+            <h2 id="zone-title" class="section-title"><span>2</span> Zonas habituales</h2>
+            <div class="choice-list" role="group" aria-label="Zonas habituales">
+              @for (zone of zones; track zone) {
+                <label class="choice-chip zone-choice"><input type="checkbox" name="zones" [checked]="form.controls.zones.value.includes(zone)" (change)="toggleZone(zone, $any($event.target).checked)" /><span>{{ zone }}</span></label>
+              }
+            </div>
+            @if (submitted && form.controls.zones.invalid) { <p class="field-error">Elegí una o más zonas habituales.</p> }
+          </section>
+
+          <section class="form-section level-picker" aria-label="Nivel inicial">
+              <label for="register-level">Nivel inicial</label>
+              <div class="level-select-control">
+              <select id="register-level" formControlName="level">
+                <option value="">Elegí tu nivel de pádel</option>
+                @for (level of levels; track level.value) {
+                  <option [value]="level.value">{{ level.value }} · {{ level.detail }}</option>
+                }
+              </select>
+              </div>
+              @if (submitted && form.controls.level.invalid) { <p class="field-error">Elegí tu nivel inicial.</p> }
+          </section>
+
+          <section class="form-section preferences-section" aria-labelledby="preferences-title">
+            <h2 id="preferences-title" class="section-title"><span>3</span> Preferencias de juego <small>(opcional)</small></h2>
+            <div class="field-grid">
+              <div><p class="choice-label">Posición en la cancha</p><div class="choice-list compact" role="group" aria-label="Posición en la cancha">
+                @for (position of ['Drive', 'Revés', 'Indistinto']; track position) { <label class="choice-chip"><input type="radio" formControlName="position" [value]="position" /><span>{{ position }}</span></label> }
+              </div></div>
+              <div><p class="choice-label">Mano hábil</p><div class="choice-list compact" role="group" aria-label="Mano hábil">
+                @for (hand of ['Diestro', 'Zurdo']; track hand) { <label class="choice-chip"><input type="radio" formControlName="hand" [value]="hand" /><span>{{ hand }}</span></label> }
+              </div></div>
+            </div>
+          </section>
+
+          <div class="fair-play">
+            <label><input type="checkbox" formControlName="fairPlay" /><span><strong>Compromiso de juego:</strong> Me comprometo a asistir con puntualidad y respeto hacia quienes juegan conmigo.</span></label>
+            @if (submitted && form.controls.fairPlay.invalid) { <p class="field-error">Aceptá el compromiso de juego para continuar.</p> }
+          </div>
+
+          <button class="primary-button" type="submit">Crear mi cuenta y buscar partidos <span aria-hidden="true">→</span></button>
+          @if (ready) {
+            <app-preview-notice message="Todavía no se creó una cuenta: falta integrar el servicio de autenticación." />
+          }
+        </form>
+      </section>
+
+      <aside class="register-aside" aria-label="La comunidad de PádelMatch">
+        <div class="side-panel">
+          <h2>Una comunidad para encontrarse en la cancha</h2>
+          <ul class="benefits">
+            <li><span>↗</span><div><strong>Partidos a tu medida</strong><p>Elegí una zona y tu nivel para encontrar mejores opciones.</p></div></li>
+            <li><span>⌂</span><div><strong>Clubes de La Plata</strong><p>Conocé dónde se juega en distintos barrios de la ciudad.</p></div></li>
+            <li><span>✦</span><div><strong>Comunidad abierta</strong><p>Sumate a una cancha y compartí el juego con otras personas.</p></div></li>
+          </ul>
+        </div>
+        <div class="photo-grid"><img src="/images/cancha-exterior.jpg" alt="Canchas de pádel al aire libre" /><img src="/images/cancha-interior.jpg" alt="Cancha de pádel cubierta" /></div>
+        <div class="aside-quote">La Plata se juega en equipo. Encontrá tu próximo partido.</div>
+      </aside>
+    </div>
+
+    <footer class="register-footer"><strong>PádelMatch La Plata</strong><span>La Plata, Buenos Aires, Argentina</span></footer>
+  </div>
+</main>

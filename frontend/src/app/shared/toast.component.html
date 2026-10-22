@@ -1,0 +1,7 @@
+@if (message) {
+  <div class="toast" role="status" aria-live="polite">
+    <span class="toast-icon" aria-hidden="true">✓</span>
+    <p>{{ message }}</p>
+    <button type="button" aria-label="Cerrar aviso" (click)="dismiss.emit()">×</button>
+  </div>
+}

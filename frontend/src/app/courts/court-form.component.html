@@ -1,0 +1,113 @@
+<form class="court-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <header class="form-heading">
+    <div>
+      <h2>{{ court ? 'Editá la cancha' : 'Sumá una cancha' }}</h2>
+    </div>
+    <button
+      class="icon-button"
+      type="button"
+      aria-label="Cerrar formulario"
+      (click)="cancel.emit()"
+    >
+      ×
+    </button>
+  </header>
+
+  <label class="field" for="court-name">Nombre o número</label>
+  <input
+    id="court-name"
+    formControlName="name"
+    maxlength="40"
+    placeholder="Ej. Cancha 1"
+    autocomplete="off"
+    [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
+    [attr.aria-describedby]="
+      form.controls.name.touched && form.controls.name.invalid ? 'court-name-error' : null
+    "
+  />
+  @if (form.controls.name.touched && form.controls.name.invalid) {
+    <small id="court-name-error" class="field-error"
+      >Ingresá un nombre de hasta 40 caracteres.</small
+    >
+  }
+
+  <fieldset class="surface-options">
+    <legend>Tipo de cancha</legend>
+    <label class="surface-option" [class.selected]="!form.controls.covered.value"
+      ><input type="radio" formControlName="covered" [value]="false" /><span
+        class="surface-icon"
+        aria-hidden="true"
+        >☀</span
+      ><span><strong>Descubierta</strong><small>Al aire libre</small></span></label
+    >
+    <label class="surface-option" [class.selected]="form.controls.covered.value"
+      ><input type="radio" formControlName="covered" [value]="true" /><span
+        class="surface-icon"
+        aria-hidden="true"
+        >⌂</span
+      ><span><strong>Techada</strong><small>Protegida del clima</small></span></label
+    >
+  </fieldset>
+
+  <section class="image-field" aria-labelledby="court-image-label">
+    <h3 id="court-image-label">Imagen de la cancha</h3>
+    @if (form.controls.imageDataUrl.value; as imageUrl) {
+      <div class="image-preview">
+        <img [src]="imageUrl" alt="Vista previa de la cancha" />
+        <button
+          class="remove-image"
+          type="button"
+          (click)="clearImage(imageInput)"
+          aria-label="Quitar imagen de la cancha"
+        >
+          Quitar imagen
+        </button>
+      </div>
+    }
+    <div class="image-picker">
+      <label class="upload-button">
+        {{ form.controls.imageDataUrl.value ? 'Cambiar imagen' : 'Seleccionar imagen' }}
+        <input
+          #imageInput
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          aria-label="Seleccionar imagen de la cancha"
+          [attr.aria-describedby]="
+            imageError ? 'court-image-help court-image-error' : 'court-image-help'
+          "
+          (change)="onImageSelected($event)"
+        />
+      </label>
+      <small id="court-image-help">PNG, JPG o WebP · máximo 5 MB</small>
+    </div>
+    @if (imageError) {
+      <small class="field-error" id="court-image-error" role="alert">{{ imageError }}</small>
+    }
+  </section>
+
+  <fieldset class="feature-options">
+    <legend>Características</legend>
+    <div class="feature-grid">
+      @for (feature of features; track feature.id) {
+        <label class="feature-option">
+          <span>{{ feature.label }}</span>
+          <input
+            type="checkbox"
+            role="switch"
+            [checked]="hasFeature(feature.id)"
+            [attr.aria-label]="feature.label"
+            (change)="setFeature(feature.id, $any($event.target).checked)"
+          />
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <footer class="form-actions">
+    <button class="secondary-button" type="button" [disabled]="disabled" (click)="cancel.emit()">
+      Cancelar</button
+    ><button class="primary-button" type="submit" [disabled]="disabled || submitted">
+      {{ court ? 'Guardar cambios' : 'Agregar cancha' }}
+    </button>
+  </footer>
+</form>

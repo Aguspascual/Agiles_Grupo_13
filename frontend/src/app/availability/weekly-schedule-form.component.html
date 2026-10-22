@@ -1,0 +1,109 @@
+<section class="schedule-editor" [formGroup]="form">
+  <button
+    class="editor-toggle"
+    type="button"
+    [attr.aria-expanded]="editorOpen"
+    aria-controls="weekly-schedule-panel"
+    (click)="editorOpen = !editorOpen"
+  >
+    <span>
+      <strong>Horario semanal</strong>
+      <small>{{ enabledDayCount }} {{ enabledDayCount === 1 ? 'día activo' : 'días activos' }}</small>
+    </span>
+    <svg class="chevron pm-chevron" [class.is-open]="editorOpen" aria-hidden="true" viewBox="0 0 20 20">
+      <path d="m5 7.5 5 5 5-5" />
+    </svg>
+  </button>
+
+  @if (editorOpen) {
+    <div class="editor-panel" id="weekly-schedule-panel">
+      <div class="day-list" formArrayName="days">
+        @for (day of form.controls.days.controls; track day.controls.weekday.value; let index = $index) {
+          <fieldset class="day-row" [formGroupName]="index">
+            <legend class="visually-hidden">{{ weekdays[index].label }}</legend>
+            <header class="day-heading">
+              <label class="day-toggle">
+                <input type="checkbox" formControlName="enabled" (change)="onDayToggle(index)" />
+                <span class="switch" aria-hidden="true"></span>
+                <span class="day-name">{{ weekdays[index].label }}</span>
+              </label>
+              <span class="day-summary">
+                @if (day.controls.enabled.value) { {{ day.controls.intervals.length }} {{ day.controls.intervals.length === 1 ? 'franja' : 'franjas' }} }
+                @else { Inactivo }
+              </span>
+              <button
+                class="day-disclosure"
+                type="button"
+                [attr.aria-expanded]="isDayOpen(day.controls.weekday.value)"
+                [attr.aria-controls]="'day-panel-' + day.controls.weekday.value"
+                [attr.aria-label]="(isDayOpen(day.controls.weekday.value) ? 'Ocultar horarios de ' : 'Mostrar horarios de ') + weekdays[index].label"
+                (click)="toggleDayDetails(day.controls.weekday.value)"
+              ><svg class="pm-chevron" [class.is-open]="isDayOpen(day.controls.weekday.value)" aria-hidden="true" viewBox="0 0 20 20"><path d="m5 7.5 5 5 5-5" /></svg></button>
+            </header>
+
+            @if (isDayOpen(day.controls.weekday.value)) {
+            <div class="day-content" [class.is-disabled]="!day.controls.enabled.value" [id]="'day-panel-' + day.controls.weekday.value">
+              <div class="interval-list" formArrayName="intervals">
+                @for (interval of day.controls.intervals.controls; track trackInterval($index, interval); let intervalIndex = $index) {
+                  <div class="interval-row" [formGroupName]="intervalIndex">
+                    <label [for]="'opens-' + day.controls.weekday.value + '-' + intervalIndex">Abre</label>
+                    <input
+                      [id]="'opens-' + day.controls.weekday.value + '-' + intervalIndex"
+                      type="time"
+                      formControlName="opensAt"
+                      [attr.disabled]="!day.controls.enabled.value ? '' : null"
+                      [attr.aria-invalid]="day.invalid && day.controls.enabled.value"
+                      [attr.aria-describedby]="day.invalid && day.controls.enabled.value ? 'schedule-error-' + day.controls.weekday.value : null"
+                    />
+                    <label [for]="'closes-' + day.controls.weekday.value + '-' + intervalIndex">Cierra</label>
+                    <input
+                      [id]="'closes-' + day.controls.weekday.value + '-' + intervalIndex"
+                      type="time"
+                      formControlName="closesAt"
+                      [attr.disabled]="!day.controls.enabled.value ? '' : null"
+                      [attr.aria-invalid]="day.invalid && day.controls.enabled.value"
+                      [attr.aria-describedby]="day.invalid && day.controls.enabled.value ? 'schedule-error-' + day.controls.weekday.value : null"
+                    />
+                    <button
+                      class="remove-interval"
+                      type="button"
+                      [attr.aria-label]="'Eliminar franja de ' + weekdays[index].label"
+                      [attr.aria-disabled]="!day.controls.enabled.value || day.controls.intervals.length <= 1"
+                      [tabIndex]="!day.controls.enabled.value || day.controls.intervals.length <= 1 ? -1 : 0"
+                      (click)="removeInterval(index, intervalIndex)"
+                    >−</button>
+                  </div>
+                }
+              </div>
+              <div class="day-options">
+                <button class="add-interval" type="button" [disabled]="!day.controls.enabled.value" (click)="addInterval(index)">
+                  + Agregar franja
+                </button>
+                <label [for]="'duration-' + day.controls.weekday.value">Duración</label>
+                <select [id]="'duration-' + day.controls.weekday.value" formControlName="durationMinutes" [attr.disabled]="!day.controls.enabled.value ? '' : null">
+                  <option [ngValue]="60">60 min</option>
+                  <option [ngValue]="90">90 min</option>
+                </select>
+              </div>
+            </div>
+
+            @if (day.invalid && day.controls.enabled.value) {
+              <small class="field-error" [id]="'schedule-error-' + day.controls.weekday.value" role="alert">
+                @if (day.errors?.['invalidTime']) { Ingresá horarios válidos. }
+                @else if (day.errors?.['closingBeforeOpening']) { El cierre debe ser posterior a la apertura. }
+                @else if (day.errors?.['slotDoesNotFit']) { El horario debe admitir al menos un turno completo. }
+                @else if (day.errors?.['overlappingIntervals']) { Las franjas no pueden superponerse. }
+                @else if (day.errors?.['missingInterval']) { Agregá una franja horaria para este día. }
+                @else { Elegí turnos de 60 o 90 minutos. }
+              </small>
+            }
+            }
+          </fieldset>
+        }
+      </div>
+      @if (validationMessage) {
+        <p class="save-error" role="status">{{ validationMessage }}</p>
+      }
+    </div>
+  }
+</section>

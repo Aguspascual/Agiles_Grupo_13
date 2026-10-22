@@ -1,0 +1,70 @@
+<main class="clubs-page">
+  <app-landing-header />
+
+  <section class="clubs-heading" aria-labelledby="clubs-page-title">
+    <div>
+      <h1 id="clubs-page-title">Clubes de pádel en La Plata</h1>
+      <p>Encontrá tu próximo partido en clubes de la ciudad y alrededores.</p>
+    </div>
+  </section>
+
+  <section class="clubs-directory" aria-label="Directorio de clubes">
+    <div class="clubs-toolbar">
+      <label class="clubs-search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          [(ngModel)]="searchTerm"
+          aria-label="Buscar club"
+          placeholder="Buscar por club o localidad"
+        />
+      </label>
+      <label class="clubs-zone">
+        <span>Zona</span>
+        <select [(ngModel)]="selectedZone" aria-label="Filtrar por zona">
+          @for (zone of zones; track zone) {
+            <option [value]="zone">{{ zone }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="clubs-directory__grid">
+      @for (club of filteredClubs; track club.name) {
+        <article class="directory-card" data-club-card>
+          <div class="directory-card__image">
+            <img
+              [src]="club.image"
+              [alt]="'Cancha de pádel en ' + club.name"
+              [style.object-position]="club.imagePosition"
+              loading="lazy"
+            />
+            <span class="directory-card__rating">★ {{ club.rating }}</span>
+          </div>
+          <div class="directory-card__content">
+            <div class="directory-card__title">
+              <h2>{{ club.name }}</h2>
+              <span>Club adherido</span>
+            </div>
+            <p class="directory-card__location"><span aria-hidden="true">⌖</span>{{ club.zone }}</p>
+            <div class="directory-card__details">
+              <span><i aria-hidden="true">◷</i>{{ club.availabilityLabel }}</span>
+            </div>
+            <a routerLink="/partidos" [queryParams]="{ club: club.matchSearchName ?? club.name }"
+              >Explorar turnos <span aria-hidden="true">→</span></a
+            >
+          </div>
+        </article>
+      } @empty {
+        <div class="clubs-empty">
+          <h2>No encontramos clubes</h2>
+          <p>Probá con otro nombre o localidad.</p>
+          <button type="button" (click)="searchTerm = ''; selectedZone = 'Todas las zonas'">
+            Limpiar búsqueda
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <app-landing-footer />
+</main>

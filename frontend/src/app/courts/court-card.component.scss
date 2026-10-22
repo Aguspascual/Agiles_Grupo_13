@@ -1,0 +1,230 @@
+.court-card {
+  display: grid;
+  height: 100%;
+  gap: 13px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--pm-admin-border);
+  border-radius: 17px;
+  background: var(--pm-admin-surface-strong);
+  box-shadow: 0 5px 16px #141c2a08;
+  animation: court-card-in 0.28s ease both;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.court-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px #141c2a11;
+}
+.court-visual {
+  position: relative;
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0a805a, #005b42);
+}
+.court-photo {
+  width: 100%;
+  height: 130px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.court-visual.covered {
+  background: linear-gradient(135deg, #147e65, #175b60);
+}
+.court-lines {
+  position: absolute;
+  width: 62px;
+  height: 100px;
+  border: 1px solid #ffffffa8;
+  border-radius: 2px;
+}
+.court-lines::before,
+.court-lines::after {
+  position: absolute;
+  content: '';
+}
+.court-lines::before {
+  inset: 33% -1px auto;
+  border-top: 1px solid #ffffffa8;
+}
+.court-lines::after {
+  inset: -1px 50% -1px auto;
+  border-right: 1px solid #ffffffa8;
+}
+.court-ball {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #d8f448;
+  color: transparent;
+  box-shadow: 0 3px 7px #003b2b55;
+}
+.court-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.type-tag {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e5f7ed;
+  color: #006c49;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+.court-number {
+  overflow: hidden;
+  color: #131b2e;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.court-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #27744f;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.court-status > span {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7f7ed;
+  font-size: 0.8rem;
+}
+.court-status.reserved {
+  color: #96601e;
+}
+.court-status.reserved > span {
+  background: #fff4da;
+}
+.reservation-note {
+  margin: -6px 0 0;
+  color: #85622c;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.court-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -3px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.court-features li {
+  padding: 5px 8px;
+  border: 1px solid #ccdcd1;
+  border-radius: 999px;
+  background: #e8f0eb;
+  color: #234a38;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+.card-actions {
+  position: relative;
+  display: flex;
+  justify-content: end;
+  padding-top: 9px;
+  border-top: 1px solid #edf0f6;
+}
+.actions-menu button,
+.actions-menu a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #dce2ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #006c49;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+.actions-trigger {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #dce2ed;
+  border-radius: 12px;
+  background: #f7f9f8;
+  color: #365546;
+  cursor: pointer;
+}
+.actions-trigger svg { width: 19px; height: 19px; }
+.actions-trigger:hover,
+.actions-menu button:hover,
+.actions-menu a:hover {
+  border-color: #10b981;
+  background: #f5fcf8;
+}
+.actions-trigger:focus-visible,
+.actions-menu a:focus-visible,
+.actions-menu button:focus-visible {
+  outline: 3px solid #76d8ad;
+  outline-offset: 2px;
+}
+.actions-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  width: min(190px, calc(100vw - 48px));
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #dce2ed;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 12px 28px #10182826;
+  animation: menu-in 0.14s ease-out;
+}
+.actions-menu button,
+.actions-menu a { justify-content: start; width: 100%; background: #fff; }
+.actions-menu button:disabled { opacity: 0.5; cursor: not-allowed; }
+.actions-menu .danger-action {
+  border-color: #f1cccc;
+  color: #a12828;
+}
+.actions-menu .danger-action:hover:not(:disabled) {
+  background: #fff7f6;
+}
+@keyframes menu-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes court-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .court-card {
+    animation: none;
+    transition: none;
+  }
+  .actions-menu { animation: none; }
+}

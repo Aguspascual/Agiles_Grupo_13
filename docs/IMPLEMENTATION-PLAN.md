@@ -1,5 +1,7 @@
 # Plan de implementación — MVP de partidos abiertos de pádel
 
+> **Actualización:** Trello es la fuente de verdad para la secuencia y alcance actual de HU-01 a HU-22. Este plan conserva decisiones generales del MVP y se ajusta gradualmente por historia; no usar la antigua numeración de HU como criterio de aceptación vigente.
+
 ## Base del plan
 
 Este plan toma como fuente el [tablero Metodologias Agiles](https://trello.com/b/wm7mKo3m/metodologias-agiles), en especial la [idea del proyecto](https://trello.com/c/NLIIQKSX/27-idea-del-proyecto-partidos-abiertos-de-p%C3%A1del) y las historias HU-01 a HU-12, junto con el alcance detallado adjunto por el usuario. El repositorio se encontraba vacío al comenzar. Este documento y [el índice de fases](phases/README.md) describen trabajo futuro: **no se implementó código**.
@@ -82,18 +84,17 @@ Cada fase tendrá una explicación de qué se implementó, archivos creados o mo
 
 **Verificación:** consulta pública y rechazo de mutaciones sin ADMIN. [Detalle de fase](phases/phase-05-clubs.md).
 
-### 06 — Publicar partido (HU-04)
+### 06 — Configurar horarios disponibles (HU-04)
 
-**Objetivo:** crear partidos futuros en clubes existentes.
+**Objetivo:** permitir que un encargado configure horarios recurrentes por cancha, consulte una fecha por vez y bloquee/libere turnos puntuales.
 
-- Implementar formulario de club, fecha, horario, rango de nivel y observaciones.
-- Validar fecha y hora futuras, club existente y rango de nivel correcto.
-- Crear el partido y agregar al organizador como primer jugador en una sola transacción.
-- Fijar cuatro lugares: al publicar habrá un jugador y tres lugares libres.
+- Editar varios intervalos no superpuestos por día y duración de turnos de 60 o 90 minutos.
+- Autoguardar cambios válidos y migrar la demo local de `localStorage` v1 a v2.
+- Calcular únicamente los turnos de la fecha seleccionada; avanzar sin límite de semanas.
+- Guardar los bloqueos puntuales como excepciones locales, sin generar anticipadamente todos los turnos futuros.
+- Mantener el flujo responsive y accesible, sin solicitudes al backend ni cambios de infraestructura.
 
-**Endpoint:** `POST /api/matches`.
-
-**Verificación:** creación válida visible en búsqueda y rechazo de datos inválidos. [Detalle de fase](phases/phase-06-create-match.md).
+**Verificación:** pruebas del generador, formularios, agenda, persistencia local y navegación; build Angular y build del contenedor frontend. La disponibilidad compartida, reservas reales y persistencia remota quedan pendientes de integración backend. [Detalle de fase](phases/phase-06-available-hours.md).
 
 ### 07 — Buscar partidos (HU-05)
 
