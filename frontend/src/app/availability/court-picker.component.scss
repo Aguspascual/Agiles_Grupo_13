@@ -1,0 +1,56 @@
+:host { display: block; position: relative; min-width: min(220px, 100%); }
+.court-picker { position: relative; }
+.court-picker summary {
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 1fr auto 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 13px;
+  border: 1px solid #d8e1dc;
+  border-radius: 12px;
+  background: #fff;
+  color: #17251d;
+  cursor: pointer;
+  list-style: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.court-picker summary::-webkit-details-marker { display: none; }
+.court-picker summary:hover { border-color: #90b5a0; }
+.court-picker[open] summary { border-color: #13865d; box-shadow: 0 0 0 3px #13865d18; }
+.court-picker-label { color: #718078; font-size: 0.69rem; font-weight: 700; }
+.court-picker-current { font-size: 0.8rem; font-weight: 800; }
+.court-picker-chevron { width: 17px; height: 17px; stroke: #53665b; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.18s ease; }
+.court-picker[open] .court-picker-chevron { transform: rotate(180deg); }
+.court-picker-menu {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #d8e1dc;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 14px 30px #1733241a;
+  animation: court-menu-in 0.16s ease-out;
+}
+.court-picker-menu a {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #45564b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.court-picker-menu a:hover, .court-picker-menu a[aria-current="page"] { background: #eaf5ee; color: #08724f; }
+.court-picker-menu a svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.court-picker summary:focus-visible, .court-picker-menu a:focus-visible { outline: 3px solid #76d8ad; outline-offset: 2px; }
+@keyframes court-menu-in { from { opacity: 0; transform: translateY(-4px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .court-picker-chevron, .court-picker-menu { animation: none; transition: none; } }

@@ -1,0 +1,181 @@
+<main class="landing-page">
+  <app-landing-header />
+
+  <section class="home-hero" aria-labelledby="landing-title">
+    <div class="home-hero__copy">
+      <h1 id="landing-title">Encontrá tu próximo<br /><span>partido de pádel</span> en La Plata</h1>
+      <p class="home-hero__description">
+        Conectate con jugadores de tu nivel, completá parejas al instante y reservá canchas en los
+        clubes más emblemáticos de la ciudad.
+      </p>
+      <div class="player-proof">
+        <span aria-hidden="true">✓</span><b>Lucas M. · Nivel 5ta verificado</b
+        ><a routerLink="/registro"
+          >Ver sugerencias para tu categoría <span aria-hidden="true">→</span></a
+        >
+      </div>
+    </div>
+    <article class="featured-court" aria-label="Cancha destacada La Cumbre Pádel">
+      <img
+        src="/images/cancha-interior.jpg"
+        alt="Cancha cubierta de La Cumbre Pádel"
+        fetchpriority="high"
+      />
+      <div class="featured-court__caption">
+        <span>CANCHA DESTACADA</span>
+        <h2>La Cumbre Pádel</h2>
+        <p>Especialidad WPT · Calle 131 y 32</p>
+      </div>
+      <a
+        routerLink="/partidos"
+        class="court-action"
+        aria-label="Explorar partidos en La Cumbre Pádel"
+        >↗</a
+      >
+    </article>
+
+    <form
+      class="home-search"
+      data-home-search
+      aria-label="Buscar partidos"
+      (submit)="$event.preventDefault()"
+    >
+      <label
+        ><span><i aria-hidden="true">⌖</i> Zona en La Plata</span
+        ><select name="zone" [(ngModel)]="zone">
+          <option>Casco Urbano</option>
+          @for (item of zones; track item) {
+            <option>{{ item }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span><i aria-hidden="true">▦</i> Fecha del partido</span
+        ><select name="date" [(ngModel)]="date">
+          <option>Hoy (Tarde/Noche)</option>
+          <option>Mañana</option>
+          <option>Esta semana</option>
+        </select></label
+      >
+      <label
+        ><span><i aria-hidden="true">♙</i> Categoría / Nivel</span
+        ><select name="level" [(ngModel)]="level">
+          @for (item of levels; track item) {
+            <option [value]="item">{{ item }} (Alta / Intermedio - Túnel)</option>
+          }
+        </select></label
+      >
+      <a
+        class="home-search__submit"
+        routerLink="/partidos"
+        [queryParams]="{ zona: zone, nivel: level, fecha: date }"
+        ><span aria-hidden="true">⌕</span> Buscar partidos</a
+      >
+      <a class="home-search__advanced" routerLink="/partidos" aria-label="Más filtros">+</a>
+    </form>
+  </section>
+
+  <section class="home-stats" data-home-stats aria-label="PádelMatch en números">
+    <article>
+      <span aria-hidden="true">⌁</span><strong>42</strong><small>PARTIDOS ABIERTOS HOY</small>
+    </article>
+    <article>
+      <span aria-hidden="true">▦</span><strong>18</strong><small>CLUBES ASOCIADOS</small>
+    </article>
+    <article>
+      <span aria-hidden="true">♙</span><strong>1.250+</strong><small>JUGADORES ACTIVOS</small>
+    </article>
+    <article>
+      <span aria-hidden="true">◎</span><strong>2da a 8va</strong
+      ><small>CATEGORÍAS DISPONIBLES</small>
+    </article>
+  </section>
+
+  <section class="home-section home-section--recommended" aria-labelledby="recommended-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="recommended-title" class="section-heading__title">
+          Partidos recomendados para vos
+        </h2>
+      </div>
+      <a routerLink="/partidos"
+        >Explorar todos los turnos de 5ta <span aria-hidden="true">→</span></a
+      >
+    </div>
+    <div class="recommended-grid" data-recommended-matches>
+      @for (match of recommendedMatches; track match.id) {
+        <app-match-card [match]="match" [searchMode]="true" />
+      }
+    </div>
+  </section>
+
+  <section class="available-section" id="partidos" aria-labelledby="available-title">
+    <div class="available-inner">
+      <div class="section-heading section-heading--available">
+        <div>
+          <h2 id="available-title" class="section-heading__title">
+            Partidos disponibles en La Plata
+          </h2>
+          <p>
+            Explorá turnos abiertos hoy y los próximos días en todos los clubes de Gran La Plata.
+          </p>
+        </div>
+        <div class="filter-chips" aria-label="Filtrar partidos destacados">
+          @for (filter of availableFilters; track filter) {
+            <button
+              type="button"
+              [class.is-selected]="activeFilter === filter"
+              (click)="activeFilter = filter"
+            >
+              {{ filter }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="available-grid">
+        @for (match of availableMatches; track match.id) {
+          <app-match-card [match]="match" [searchMode]="true" />
+        } @empty {
+          <p class="empty-matches">
+            No hay turnos para este filtro. Probá con otra zona o categoría.
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section clubs-section" id="clubes" aria-labelledby="clubs-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="clubs-title">Clubes destacados en La Plata</h2>
+        <p>
+          Instalaciones con canchas panorámicas de blindex, buffet y vestuarios de primer nivel.
+        </p>
+      </div>
+      <a routerLink="/clubes">Ver clubes <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="clubs-grid" data-featured-clubs>
+      @for (club of featuredClubs; track club.name) {
+        <app-club-card [club]="club" />
+      }
+    </div>
+  </section>
+
+  <section class="create-banner" aria-label="Crear partido">
+    <div>
+      <p>¿RESERVASTE CANCHA Y TE FALTAN JUGADORES?</p>
+      <h2>Publicá tu partido en 30 segundos</h2>
+      <span
+        >Elegí el club, tu categoría objetivo y dejá que los jugadores de la comunidad completen los
+        cupos vacantes al instante.</span
+      >
+    </div>
+    <div class="create-banner__actions">
+      <a routerLink="/partidos" class="create-banner__primary"
+        ><span aria-hidden="true">⊕</span> Crear un nuevo partido</a
+      ><a routerLink="/partidos" class="create-banner__secondary">Ver calendario completo</a>
+    </div>
+  </section>
+
+  <app-landing-footer />
+</main>

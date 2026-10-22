@@ -1,0 +1,233 @@
+.availability-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 250px minmax(0, 1fr);
+  background: var(--pm-admin-canvas);
+  color: #172238;
+}
+
+.availability-workspace {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+  width: min(100%, 1440px);
+  min-width: 0;
+  margin: 0 auto;
+  padding: 17px clamp(18px, 3.4vw, 48px) 28px;
+  animation: availability-in 0.28s ease both;
+}
+
+.page-header,
+.schedule-panel {
+  min-width: 0;
+  padding: 17px clamp(16px, 2.2vw, 26px);
+  border: 1px solid var(--pm-admin-border);
+  border-radius: 15px;
+  background: var(--pm-admin-surface-strong);
+  box-shadow: 0 8px 25px #08141020;
+}
+
+.schedule-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.heading-copy {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.heading-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  letter-spacing: -0.04em;
+}
+
+.heading-row p {
+  margin-top: 3px;
+  color: #59685d;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.missing-state a:focus-visible {
+  outline: 3px solid #76d8ad;
+  outline-offset: 2px;
+}
+
+.schedule-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.section-heading h2 {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.section-heading p {
+  margin-top: 4px;
+  color: #667365;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.turns-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.turns-heading h2 {
+  color: #17251d;
+}
+
+.date-navigation { display: flex; gap: 8px; }
+.date-navigation button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #d8e1dc;
+  border-radius: 11px;
+  background: #fff;
+  color: #315a45;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.date-navigation button:hover:not(:disabled) { background: #f1f7f3; border-color: #a6c5b1; }
+.date-navigation button:disabled { border-color: #d8e1dc; background: #fff; color: #809087; opacity: 0.75; cursor: not-allowed; }
+.date-navigation button:focus-visible { outline: 3px solid #76d8ad; outline-offset: 2px; }
+.storage-notice { color: #8d351f; font-size: 0.74rem; font-weight: 700; }
+
+.missing-state {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 60vh;
+  padding: 30px 16px;
+  border-radius: 17px;
+  background: #fff;
+  text-align: center;
+}
+
+.missing-state > span {
+  color: #07835a;
+  font-size: 1.7rem;
+}
+
+.missing-state h1 {
+  margin: 10px 0 5px;
+  font-size: 1.1rem;
+}
+
+.missing-state p {
+  color: #667365;
+  font-size: 0.8rem;
+}
+
+.missing-state a {
+  margin-top: 13px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #07835a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@keyframes availability-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 840px) {
+  .availability-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .availability-workspace {
+    gap: 13px;
+    padding: 12px 14px 20px;
+  }
+
+  .page-header {
+    padding: 13px;
+    border-radius: 13px;
+  }
+
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .heading-row {
+    align-items: start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .heading-row p {
+    font-size: 0.73rem;
+  }
+
+  app-court-picker { min-width: 0; }
+
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .turns-heading {
+    flex-direction: row;
+    align-items: end;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .availability-workspace {
+    animation: none;
+  }
+}
