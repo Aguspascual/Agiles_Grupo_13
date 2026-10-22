@@ -115,3 +115,12 @@ func TestRegisterRejectsPrimaryValidationFailures(t *testing.T) {
 		})
 	}
 }
+
+func TestRegisterCannotSetAdminRole(t *testing.T) {
+	body := `{"name":"A","email":"a@b.com","password":"password123","zone":"Gonnet","level":"7ma","fairPlay":true,"role":"ADMIN"}`
+	w := httptest.NewRecorder()
+	NewService(newMemoryRepo(), []byte(strings.Repeat("s", 32))).RegisterHandler().ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body)))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("public role assignment status %d, body %s", w.Code, w.Body)
+	}
+}

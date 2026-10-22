@@ -14,7 +14,7 @@ CRUD de complejos, asignación de encargados y CRUD de canchas con control de ac
 
 ## Backend
 
-`backend/internal/clubs/`.
+HU-02 implementa la API de complejos en `backend/internal/complexes/`: administración autenticada, alta y edición, baja lógica y asignación de encargados. ADMIN puede administrar complejos; los encargados consultan y actualizan únicamente los complejos asignados, sin cambiar esa asignación. El backend de canchas HU-03 se gestiona en su rama/PR y no forma parte de esta integración.
 
 ## Frontend
 
@@ -22,7 +22,7 @@ Listado, tarjetas y formularios para alta/edición/baja de complejos, asignació
 
 ## Base de datos
 
-Tablas de complejos, encargados y canchas con seeds de La Plata.
+HU-02 agrega `users.role`, `complexes` y `complex_managers` mediante `backend/migrations/002_complexes.sql`. No agrega seeds de complejos. La tabla `courts` corresponde a HU-03 y no se incorpora en esta integración.
 
 ## Caché
 
@@ -30,21 +30,21 @@ Sin cambios.
 
 ## Archivos a crear o modificar
 
-- `backend/internal/clubs/`.
+- `backend/internal/complexes/`, `backend/internal/auth/`, `backend/internal/database/` y `backend/migrations/002_complexes.sql`.
 - Vistas y formularios admin para complejos, encargados y canchas.
 - Documentación: `docs/phases/phase-05-clubs.md`, `docs/phases/README.md`, `docs/CHANGELOG-DEVELOPMENT.md`.
 
 ## Criterios de aceptación
 
-El administrador puede crear, editar y dar de baja complejos y asignar encargados. Un encargado solo puede gestionar sus complejos. La baja de canchas con reservas futuras se rechaza.
+Con JWT, ADMIN puede listar, crear, editar y dar de baja complejos y asignar encargados. Un encargado solo puede listar y actualizar los complejos asignados y no puede alterar su asignación. HU-03 mantiene sus propios criterios para canchas y reservas.
 
 ## Cómo verificar la fase
 
-Probar CRUD y permisos con/sin usuario encargado, además de reglas de baja de canchas.
+Ejecutar `go test -count=1 ./...` desde `backend/`. Las pruebas de persistencia de `internal/database` requieren `TEST_DATABASE_URL` apuntando a una base desechable. Verificar la interfaz Angular por separado: en esta integración sigue usando stores locales y no consume la API de complejos.
 
 ## Estado
 
-PARCIAL — frontend de HU-02 y HU-03 implementado en modo de demostración local. Backend, persistencia y validación real de reservas quedan pendientes.
+HU-02: backend implementado en Go con persistencia PostgreSQL, autorización por rol/asignación y baja lógica. El frontend de complejos sigue en modo de demostración local y aún no consume estos endpoints; la integración Angular/backend queda pendiente. HU-03 frontend continúa siendo una demostración local; su backend se revisa en el PR separado de canchas.
 
 ## Límite de HU-03 frontend
 
@@ -82,4 +82,4 @@ La lista y las operaciones de canchas se mantienen en un store Angular local par
 - “Cerrar sesión” tiene un estado verde visible, un hover de mayor contraste y foco accesible.
 - Validación: suite completa de 23 pruebas y revisión manual posterior al rebuild Docker.
 
-La integración con backend debe definir el contrato para cargar y persistir imágenes y características; esta entrega solo prepara la presentación frontend y sus datos locales.
+Para HU-02, la interfaz de complejos todavía necesita conectarse a la API y reemplazar sus datos locales. La interfaz HU-03 también sigue en memoria; aunque el backend de canchas define su contrato en la rama/PR correspondiente, la validación de bajas depende de integrar una fuente real de reservas.

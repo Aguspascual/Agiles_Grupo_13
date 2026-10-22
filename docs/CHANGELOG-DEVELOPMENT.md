@@ -175,3 +175,10 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
   - `availability-calendar.component.spec.ts` — `shows an explicit empty state when no turns are generated`: esperaba `No hay turnos para mostrar`, pero la vista mostró `Sin turnos para esta fecha`.
   - `court-availability.page.spec.ts` — `offers a designed keyboard-accessible court picker with the selected court marked`: esperaba que no hubiera un `<select>`, pero encontró `select#demo-role`.
 - El árbol `frontend/` coincide con `origin/Desarrollo`; estos fallos están en el frontend recibido y no fueron causados por la resolución documental. No se modificaron tests ni componentes HU-04.
+
+## HU-02 backend — integración para revisión — 22/10/2026
+
+- Se integró en la rama de HU-02 el backend de autenticación HU-01 y el frontend actualizado de Desarrollo, conservando la API de complejos y encargados y la migración `backend/migrations/002_complexes.sql`.
+- HU-02 implementa persistencia PostgreSQL y autorización por rol/asignación. Las pantallas Angular de complejos siguen usando datos locales y todavía no consumen esos endpoints; la integración de extremo a extremo queda pendiente.
+- Backend: `go test -count=1 ./...` pasó. La prueba de migración PostgreSQL se omitió porque no hay `TEST_DATABASE_URL` configurada; no se usó el contenedor local ya que no se confirmó que fuera una base desechable.
+- Frontend: `npm run build` pasó. La suite obtuvo 61 pruebas correctas y los mismos 3 fallos HU-04 documentados arriba. No se modificaron componentes ni pruebas Angular.

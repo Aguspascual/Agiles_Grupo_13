@@ -34,28 +34,12 @@ func (s *Service) me(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "no autorizado")
 		return
 	}
-	parts := strings.Split(strings.TrimPrefix(header, "Bearer "), ".")
-	if len(parts) != 3 {
+	id, err := UserIDFromToken(strings.TrimSpace(strings.TrimPrefix(header, "Bearer ")), s.jwtSecret)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "no autorizado")
 		return
 	}
-	mac := hmac.New(sha256.New, s.jwtSecret)
-	_, _ = mac.Write([]byte(parts[0] + "." + parts[1]))
-	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
-	if err != nil || !hmac.Equal(sig, mac.Sum(nil)) {
-		writeError(w, http.StatusUnauthorized, "no autorizado")
-		return
-	}
-	claimsJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
-	var claims struct {
-		Sub string `json:"sub"`
-		Exp int64  `json:"exp"`
-	}
-	if err != nil || json.Unmarshal(claimsJSON, &claims) != nil || claims.Sub == "" || claims.Exp <= time.Now().Unix() {
-		writeError(w, http.StatusUnauthorized, "no autorizado")
-		return
-	}
-	user, err := s.repository.FindUserByID(claims.Sub)
+	user, err := s.repository.FindUserByID(id)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "no autorizado")
 		return
@@ -152,8 +136,16 @@ func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
 }
 
+func WriteError(w http.ResponseWriter, status int, message string) { writeError(w, status, message) }
+
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
+}
+
+func WriteJSON(w http.ResponseWriter, status int, value any) { writeJSON(w, status, value) }
+
+func DecodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
+	return decodeJSON(w, r, destination)
 }
