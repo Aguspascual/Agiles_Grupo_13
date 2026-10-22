@@ -1,0 +1,82 @@
+<main class="court-admin-shell">
+  <app-complex-admin-sidebar
+    [complexId]="currentComplexId()"
+    [showRoleSimulation]="true"
+    [role]="role()"
+    [managers]="managers"
+    [managerId]="managerId()"
+    (roleChange)="role.set($event)"
+    (managerChange)="managerId.set($event)"
+  />
+  <section class="court-workspace">
+    @if (complex(); as currentComplex) {
+      <header class="page-header">
+        <div class="heading-row">
+          <div class="heading-copy">
+            <h1>Canchas</h1>
+            <p>
+              {{ currentComplex.name }} <span aria-hidden="true">·</span> {{ currentComplex.zone }}
+            </p>
+          </div>
+          <button class="add-button" type="button" (click)="openCreate()">
+            <span aria-hidden="true">＋</span> Agregar cancha
+          </button>
+        </div>
+      </header>
+
+      <section class="court-section" aria-label="Canchas del complejo">
+        <div class="section-heading">
+          <div>
+            <h2>Espacios de juego</h2>
+            <p>Administrá las canchas disponibles para este complejo.</p>
+          </div>
+        </div>
+        @if (courts().length) {
+          <div class="court-grid">
+            @for (court of courts(); track court.id) {
+              <app-court-card
+                [court]="court"
+                (edit)="openEdit($event)"
+                (remove)="requestDelete($event)"
+              />
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">⌂</span>
+            <h3>Todavía no hay canchas</h3>
+            <p>Agregá la primera cancha para empezar a organizar los turnos.</p>
+            <button type="button" (click)="openCreate()">Agregar primera cancha</button>
+          </div>
+        }
+      </section>
+    } @else {
+      <section class="missing-complex">
+        <span aria-hidden="true">⌂</span>
+        <h1>No encontramos este complejo</h1>
+        <p>Volvé al listado para elegir uno disponible.</p>
+        <a routerLink="/admin/complejos">Ir a complejos</a>
+      </section>
+    }
+  </section>
+</main>
+
+@if (formOpen()) {
+  <app-court-form-dialog
+    [court]="editing()"
+    [closing]="formClosing()"
+    (save)="save($event)"
+    (close)="closeForm()"
+    (closed)="finishFormClose()"
+  />
+}
+@if (deleteTarget(); as target) {
+  <app-confirm-dialog
+    [title]="'¿Dar de baja ' + target.name + '?'"
+    message="Esta cancha se quitará de la vista de demostración local."
+    confirmLabel="Confirmar baja"
+    (cancel)="deleteTarget.set(null)"
+    (confirm)="confirmDelete()"
+  />
+}
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

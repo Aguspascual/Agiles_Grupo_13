@@ -1,0 +1,23 @@
+<form class="complex-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <header class="form-heading">
+    <h2>{{ complex ? 'Actualizá los datos' : 'Sumá un complejo' }}</h2>
+    <button class="icon-button" type="button" aria-label="Cerrar formulario" (click)="cancel.emit()">×</button>
+  </header>
+
+  <div class="field-grid">
+    <label class="field wide">Nombre del complejo<input formControlName="name" placeholder="Ej. Club Universitario Gonnet" />@if (form.controls.name.touched && form.controls.name.invalid) { <small>Ingresá un nombre de hasta 80 caracteres.</small> }</label>
+    <label class="field wide">Dirección<input formControlName="address" placeholder="Calle y número" />@if (form.controls.address.touched && form.controls.address.invalid) { <small>Ingresá la dirección.</small> }</label>
+    <div class="field zone-field"><span id="zone-label">Zona</span><div class="zone-select" [class.open]="zoneOpen"><button class="zone-trigger" type="button" aria-labelledby="zone-label zone-value" aria-haspopup="listbox" [attr.aria-expanded]="zoneOpen" aria-controls="zone-options" (click)="zoneOpen = !zoneOpen" (keydown.escape)="zoneOpen = false"><span id="zone-value">{{ form.controls.zone.value || 'Elegí una zona' }}</span><svg aria-hidden="true" viewBox="0 0 20 20"><path d="m5 7.5 5 5 5-5" /></svg></button>@if (zoneOpen) { <div id="zone-options" class="zone-options" role="listbox" aria-labelledby="zone-label">@for (zone of zones; track zone) { <button type="button" role="option" [attr.aria-selected]="form.controls.zone.value === zone" (click)="selectZone(zone)"><span>{{ zone }}</span><span class="zone-check" aria-hidden="true">✓</span></button> }</div> }</div>@if (form.controls.zone.touched && form.controls.zone.invalid) { <small>Elegí una zona.</small> }</div>
+    <label class="field">Teléfono<input formControlName="phone" type="tel" autocomplete="tel" placeholder="221 555-0123" />@if (form.controls.phone.touched && form.controls.phone.invalid) { <small>Ingresá un teléfono de contacto.</small> }</label>
+  </div>
+
+  <fieldset class="manager-picker">
+    <legend>Encargados <span>Podés elegir más de uno</span></legend>
+    @for (manager of managers; track manager.id) {
+      <label class="manager-option"><input type="checkbox" [checked]="isSelected(manager.id)" (change)="toggleManager(manager.id, $any($event.target).checked)" /><span><strong>{{ manager.name }}</strong><small>{{ manager.email }}</small></span></label>
+    }
+    @if (form.controls.managerIds.touched && form.controls.managerIds.invalid) { <small class="field-error">Asigná al menos un encargado.</small> }
+  </fieldset>
+
+  <footer class="form-actions"><button class="secondary-button" type="button" (click)="cancel.emit()">Cancelar</button><button class="primary-button" type="submit">{{ complex ? 'Guardar cambios' : 'Crear complejo' }}</button></footer>
+</form>

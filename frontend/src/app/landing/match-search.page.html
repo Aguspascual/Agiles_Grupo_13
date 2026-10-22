@@ -1,0 +1,181 @@
+<main class="search-page">
+  <app-landing-header />
+  <section class="search-heading" aria-labelledby="search-title">
+    <div>
+      <h1 id="search-title">Explorá partidos abiertos</h1>
+      <p>28 partidos disponibles en Gran La Plata y zona norte.</p>
+    </div>
+  </section>
+
+  <section class="search-layout" aria-label="Partidos y filtros">
+    <aside class="filter-sidebar" aria-label="Filtros de partidos">
+      <div class="filter-sidebar__heading">
+        <h2>Filtros</h2>
+        <span>{{ activeFiltersCount }} activos</span
+        ><button type="button" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+      <label class="open-toggle"
+        ><input type="checkbox" [checked]="onlyOpen" (change)="onlyOpen = !onlyOpen" /><span
+          >Solo con lugares libres</span
+        ><i aria-hidden="true">✓</i></label
+      >
+      <fieldset>
+        <legend>
+          Zona / Localidad <small>{{ zones.length }} zonas</small>
+        </legend>
+        @for (zone of zones; track zone; let index = $index) {
+          <label class="check-row"
+            ><input
+              type="checkbox"
+              [checked]="selectedZones.includes(zone)"
+              (change)="selectedZones = toggleSelection(selectedZones, zone)"
+            /><span>{{ zone }}</span
+            ><small>{{ [11, 6, 5, 4, 2][index] }}</small></label
+          >
+        }
+      </fieldset>
+      <fieldset>
+        <legend>Fecha de juego</legend>
+        <div class="day-pills">
+          @for (day of days; track day) {
+            <button
+              type="button"
+              [class.is-active]="selectedDay === day"
+              (click)="selectedDay = day; dayFilterEnabled = true"
+            >
+              {{ day }}
+            </button>
+          }
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Categoría / Nivel <small>APA oficial</small></legend>
+        <div class="level-pills">
+          @for (level of levels; track level) {
+            <button
+              type="button"
+              [class.is-active]="selectedLevels.includes(level)"
+              (click)="selectedLevels = toggleSelection(selectedLevels, level)"
+            >
+              {{ level }}
+            </button>
+          }
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Horario preferido</legend>
+        @for (time of preferredTimes; track time) {
+          <label class="check-row check-row--text"
+            ><input
+              type="checkbox"
+              [checked]="selectedTimes.includes(time)"
+              (change)="selectedTimes = toggleSelection(selectedTimes, time)"
+            /><span>{{ time }}</span></label
+          >
+        }
+      </fieldset>
+      <fieldset>
+        <legend>Características de cancha</legend>
+        @for (feature of courtFeatures; track feature) {
+          <label class="check-row check-row--text"
+            ><input
+              type="checkbox"
+              [checked]="selectedFeatures.includes(feature)"
+              (change)="selectedFeatures = toggleSelection(selectedFeatures, feature)"
+            /><span>{{ feature }}</span></label
+          >
+        }
+      </fieldset>
+      <label class="club-select"
+        ><span>Club específico</span
+        ><select name="club" [(ngModel)]="selectedClub">
+          <option>Todos los clubes de La Plata</option>
+          @for (match of matches; track match.club) {
+            <option [value]="match.club">{{ match.club }}</option>
+          }
+        </select></label
+      >
+      <article class="organize-card">
+        <small>CIRCUITO PLATENSE</small>
+        <h3>¿Organizás tu propio torneo?</h3>
+        <p>Habilitá inscripciones, cuadros automatizados y ranking mensual en APA.</p>
+        <a routerLink="/registro">Publicar torneo <span aria-hidden="true">→</span></a>
+      </article>
+    </aside>
+
+    <div class="search-results">
+      <div class="results-toolbar">
+        <label class="match-search-input"
+          ><span aria-hidden="true">⌕</span
+          ><input
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar por club, organizador o zona (ej. La Cumbre, Juan, Gonnet)"
+        /></label>
+        <label class="sort-control"
+          ><span>Ordenar por:</span
+          ><select name="sortBy" [(ngModel)]="sortBy">
+            <option>Más cercanos en horario</option>
+            <option>Menor precio</option>
+          </select></label
+        >
+        <div class="view-switch" role="group" aria-label="Vista de resultados">
+          <button
+            type="button"
+            aria-label="Vista en cuadrícula"
+            [class.is-active]="viewMode === 'grid'"
+            (click)="viewMode = 'grid'"
+          >
+            ▦</button
+          ><button
+            type="button"
+            aria-label="Vista en lista"
+            [class.is-active]="viewMode === 'list'"
+            (click)="viewMode = 'list'"
+          >
+            ☰
+          </button>
+        </div>
+      </div>
+      <div class="search-match-grid" [class.is-list]="viewMode === 'list'">
+        @for (match of filteredMatches; track match.id) {
+          <app-match-card [match]="match" [searchMode]="true" />
+        } @empty {
+          <div class="search-empty">
+            <span aria-hidden="true">⌕</span>
+            <h3>No encontramos partidos con esos filtros</h3>
+            <p>Probá con otra zona, nivel u horario para ver más opciones.</p>
+            <button type="button" (click)="clearFilters()">Limpiar filtros</button>
+          </div>
+        }
+      </div>
+      @if (filteredMatches.length > 0) {
+        <div class="results-pagination">
+          <span>Mostrando 1–{{ filteredMatches.length }} de 28 partidos encontrados</span>
+          <div>
+            <button type="button" aria-label="Página anterior">‹</button
+            ><button type="button" class="is-active">1</button><button type="button">2</button
+            ><button type="button">3</button><button type="button">4</button
+            ><button type="button" aria-label="Página siguiente">›</button>
+          </div>
+        </div>
+      }
+      <a class="map-promo" data-map-promo routerLink="/partidos"
+        ><div>
+          <span class="eyebrow"><span></span> VISTA DE MAPA INTERACTIVO</span>
+          <h2>Descubrí partidos cerca de tu casa o trabajo</h2>
+          <p>
+            Visualizá turnos abiertos hoy y los próximos días en un mapa con filtros por distancia y
+            clubes.
+          </p>
+          <b>Abrir mapa LP <span aria-hidden="true">→</span></b>
+        </div>
+        <span class="mini-map" aria-hidden="true"
+          ><i class="map-road map-road--one"></i><i class="map-road map-road--two"></i
+          ><i class="map-park"></i><i class="map-pin">⌖</i></span
+        ></a
+      >
+    </div>
+  </section>
+  <app-landing-footer />
+</main>
