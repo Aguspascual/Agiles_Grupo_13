@@ -157,3 +157,21 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 - Archivos principales: `frontend/src/app/auth/register.page.html`, `frontend/src/app/auth/register.page.ts`, `frontend/src/styles/_auth.scss`, `frontend/src/styles/_register.scss`, `frontend/src/styles/_motion.scss`, `frontend/src/app/complexes/complex-admin.page.html`, `.scss` y `complex-admin-sidebar.component.scss`.
 - Validación: suite completa de 23 pruebas, build Angular y Docker; verificaciones visuales manuales después del rebuild.
 - Alcance: cambios solo frontend; autenticación y persistencia continúan en modo local de prueba.
+
+## HU-01 backend y PostgreSQL
+
+- Se incorporó la API Go de registro, inicio de sesión y consulta de la sesión (`/api/v1/auth/register`, `/api/v1/auth/login` y `/api/v1/auth/me`), con contraseñas bcrypt y tokens JWT.
+- El registro valida y normaliza los datos, y guarda el usuario y su perfil inicial en PostgreSQL dentro de una transacción.
+- La migración inicial está en `backend/migrations/001_auth.sql`; no crea tablas `zones` ni `user_zones`.
+- Se requieren `DATABASE_URL` y `JWT_SECRET` (mínimo 32 bytes); `PORT` es opcional y usa `8000` por defecto.
+- Alcance: backend implementado. Las pantallas Angular de HU-01 siguen en modo de demostración local y todavía no consumen estos endpoints; no se afirma integración de extremo a extremo.
+
+## Verificación de integración HU-01 — 22/10/2026
+
+- Backend: `go test -count=1 ./...` pasó; `internal/auth` pasó y los demás paquetes no tienen tests directos.
+- Frontend: `npm run build` pasó. La suite `npm test -- --watch=false` terminó con 61 pruebas correctas y 3 fallidas (14 archivos de prueba).
+- Fallas HU-04 para revisión del equipo frontend:
+  - `availability-calendar.component.spec.ts` — `renders each received date and omits a turn counter`: no encontró `.day-heading h3`.
+  - `availability-calendar.component.spec.ts` — `shows an explicit empty state when no turns are generated`: esperaba `No hay turnos para mostrar`, pero la vista mostró `Sin turnos para esta fecha`.
+  - `court-availability.page.spec.ts` — `offers a designed keyboard-accessible court picker with the selected court marked`: esperaba que no hubiera un `<select>`, pero encontró `select#demo-role`.
+- El árbol `frontend/` coincide con `origin/Desarrollo`; estos fallos están en el frontend recibido y no fueron causados por la resolución documental. No se modificaron tests ni componentes HU-04.
