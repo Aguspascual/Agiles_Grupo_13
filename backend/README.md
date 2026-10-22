@@ -35,3 +35,14 @@ UPDATE users SET role = 'ADMIN', updated_at = now() WHERE email = 'admin@example
 ```
 
 Los complejos se eliminan de forma lógica (`deleted_at`), se excluyen de listados y conservan sus asignaciones. No se crean todavía canchas, horarios ni reservas.
+
+## HU-03 — Canchas
+
+- `GET /api/v1/complexes/{complexId}/courts`: ADMIN o encargado asignado al complejo activo.
+- `POST /api/v1/complexes/{complexId}/courts`: crea una cancha en el complejo autorizado; recibe `name`, `covered`, `features` e `imageDataUrl` opcional.
+- `PUT /api/v1/complexes/{complexId}/courts/{courtId}`: actualiza esos mismos campos.
+- `DELETE /api/v1/complexes/{complexId}/courts/{courtId}`: la baja lógica se rechaza con `503` hasta integrar una fuente real de reservas.
+
+Las características admitidas son `lighting`, `electronicScoreboard`, `wifi` y `acrylicSurface`. PostgreSQL las guarda en cuatro columnas booleanas. La imagen opcional llega como Data URL JSON, se valida como PNG, JPEG o WebP real y hasta 5 MiB; la base guarda los bytes en `BYTEA` y su tipo MIME.
+
+La migración `003_courts.sql` crea canchas con FK restrictiva a `complexes`, baja lógica e índice de canchas activas por complejo. No agrega datos ficticios de reservas ni una columna `hasFutureReservations`. Mientras no exista una fuente de reservas PostgreSQL, no se puede determinar si una cancha tiene turnos futuros y la API falla de forma segura al intentar darla de baja. La baja efectiva y el tercer criterio de Trello quedan pendientes de integrar la consulta de reservas y coordinarla transaccionalmente con la operación que las cree.

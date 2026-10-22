@@ -14,7 +14,7 @@ CRUD de complejos, asignación de encargados y CRUD de canchas con control de ac
 
 ## Backend
 
-HU-02 implementa la API de complejos en `backend/internal/complexes/`: administración autenticada, alta y edición, baja lógica y asignación de encargados. ADMIN puede administrar complejos; los encargados consultan y actualizan únicamente los complejos asignados, sin cambiar esa asignación. El backend de canchas HU-03 se gestiona en su rama/PR y no forma parte de esta integración.
+HU-02 implementa la API de complejos en `backend/internal/complexes/`: administración autenticada, alta y edición, baja lógica y asignación de encargados. ADMIN puede administrar complejos; los encargados consultan y actualizan únicamente los complejos asignados, sin cambiar esa asignación. HU-03 agrega el CRUD de canchas en `backend/internal/courts/` con control de acceso por complejo; la baja lógica responde HTTP 503 hasta integrar una fuente real de reservas.
 
 ## Frontend
 
@@ -22,7 +22,7 @@ Listado, tarjetas y formularios para alta/edición/baja de complejos, asignació
 
 ## Base de datos
 
-HU-02 agrega `users.role`, `complexes` y `complex_managers` mediante `backend/migrations/002_complexes.sql`. No agrega seeds de complejos. La tabla `courts` corresponde a HU-03 y no se incorpora en esta integración.
+HU-02 agrega `users.role`, `complexes` y `complex_managers` mediante `backend/migrations/002_complexes.sql`; no agrega seeds de complejos. HU-03 crea `courts` mediante `backend/migrations/003_courts.sql`. No hay datos ficticios de reservas ni una fuente real para verificar turnos futuros.
 
 ## Caché
 
@@ -44,7 +44,7 @@ Ejecutar `go test -count=1 ./...` desde `backend/`. Las pruebas de persistencia 
 
 ## Estado
 
-HU-02: backend implementado en Go con persistencia PostgreSQL, autorización por rol/asignación y baja lógica. El frontend de complejos sigue en modo de demostración local y aún no consume estos endpoints; la integración Angular/backend queda pendiente. HU-03 frontend continúa siendo una demostración local; su backend se revisa en el PR separado de canchas.
+HU-02: backend implementado en Go con persistencia PostgreSQL, autorización por rol/asignación y baja lógica. El frontend de complejos sigue en modo de demostración local y aún no consume estos endpoints; la integración Angular/backend queda pendiente. HU-03: CRUD de canchas implementado en el backend, pero la baja continúa protegida con HTTP 503 hasta integrar la consulta real de reservas; este criterio sigue pendiente y la historia no se presenta como completamente finalizada. El frontend HU-03 continúa siendo una demostración local.
 
 ## Límite de HU-03 frontend
 
@@ -82,4 +82,4 @@ La lista y las operaciones de canchas se mantienen en un store Angular local par
 - “Cerrar sesión” tiene un estado verde visible, un hover de mayor contraste y foco accesible.
 - Validación: suite completa de 23 pruebas y revisión manual posterior al rebuild Docker.
 
-Para HU-02, la interfaz de complejos todavía necesita conectarse a la API y reemplazar sus datos locales. La interfaz HU-03 también sigue en memoria; aunque el backend de canchas define su contrato en la rama/PR correspondiente, la validación de bajas depende de integrar una fuente real de reservas.
+Para HU-02, la interfaz de complejos todavía necesita conectarse a la API y reemplazar sus datos locales. La interfaz HU-03 también sigue en memoria; aunque el backend de canchas está implementado, la baja efectiva depende de integrar una fuente real de reservas y coordinar la consulta con la operación que las crea.

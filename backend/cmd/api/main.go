@@ -9,6 +9,7 @@ import (
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/courts"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/database"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,6 +50,12 @@ func main() {
 	protectedComplexes := auth.RequireUser([]byte(jwtSecret), auth.NewPostgresRepository(db), complexService.Handler())
 	mux.Handle("/api/v1/complexes", protectedComplexes)
 	mux.Handle("/api/v1/complexes/", protectedComplexes)
+	courtService := courts.NewService(courts.NewPostgresRepository(db), complexes.NewPostgresRepository(db))
+	protectedCourts := auth.RequireUser([]byte(jwtSecret), auth.NewPostgresRepository(db), courtService.Handler())
+	mux.Handle("GET /api/v1/complexes/{complexId}/courts", protectedCourts)
+	mux.Handle("POST /api/v1/complexes/{complexId}/courts", protectedCourts)
+	mux.Handle("PUT /api/v1/complexes/{complexId}/courts/{courtId}", protectedCourts)
+	mux.Handle("DELETE /api/v1/complexes/{complexId}/courts/{courtId}", protectedCourts)
 
 	port := os.Getenv("PORT")
 	if port == "" {

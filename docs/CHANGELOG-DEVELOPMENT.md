@@ -182,3 +182,12 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 - HU-02 implementa persistencia PostgreSQL y autorización por rol/asignación. Las pantallas Angular de complejos siguen usando datos locales y todavía no consumen esos endpoints; la integración de extremo a extremo queda pendiente.
 - Backend: `go test -count=1 ./...` pasó. La prueba de migración PostgreSQL se omitió porque no hay `TEST_DATABASE_URL` configurada; no se usó el contenedor local ya que no se confirmó que fuera una base desechable.
 - Frontend: `npm run build` pasó. La suite obtuvo 61 pruebas correctas y los mismos 3 fallos HU-04 documentados arriba. No se modificaron componentes ni pruebas Angular.
+
+## HU-03 canchas
+
+- Se agregó el CRUD de canchas por complejo en Go. Solo ADMIN y encargados asignados al complejo activo pueden consultar o modificar sus canchas; los complejos dados de baja no son accesibles.
+- La migración `003_courts.sql` agrega canchas con baja lógica, características booleanas y claves foráneas restrictivas. La imagen opcional acepta PNG, JPEG o WebP decodificable, con límite de 5 MiB y dimensiones acotadas.
+- La baja se rechaza con `503` porque todavía no hay una fuente real de reservas para comprobar turnos futuros de forma segura. El punto de extensión revisa reservas dentro de la misma transacción que marca la cancha como inactiva.
+- Verificación: `go test ./...` pasó. La prueba PostgreSQL de HU-03 es optativa y se omite si `TEST_DATABASE_URL` no está configurada.
+- Integración HU-03 — 22/10/2026: `go test -count=1 ./...` y `npm run build` pasaron. La suite Angular reportó 61 pruebas correctas y los 3 fallos HU-04 ya documentados; no se cambiaron componentes ni pruebas frontend. No se ejecutaron pruebas contra PostgreSQL porque no hay `TEST_DATABASE_URL` para una base desechable.
+- Estado: la API de canchas está implementada, pero la baja devuelve HTTP 503 hasta integrar reservas reales. El criterio de baja con reservas sigue pendiente y HU-03 no se considera completamente finalizada.
