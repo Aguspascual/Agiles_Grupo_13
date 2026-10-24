@@ -49,7 +49,7 @@
             <div class="directory-card__details">
               <span><i aria-hidden="true">◷</i>{{ club.availabilityLabel }}</span>
             </div>
-            <a routerLink="/partidos" [queryParams]="{ club: club.matchSearchName ?? club.name }"
+            <a [routerLink]="['/clubes', club.complexId, 'turnos']"
               >Explorar turnos <span aria-hidden="true">→</span></a
             >
           </div>

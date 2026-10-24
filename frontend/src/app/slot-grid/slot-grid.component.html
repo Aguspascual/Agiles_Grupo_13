@@ -1,0 +1,100 @@
+@if (layout(); as grid) {
+  <div class="slot-grid-scroll" #scroller>
+    <div
+      class="slot-grid"
+      [style.--courts]="courts().length"
+      [style.--rows]="grid.rowCount"
+      [style.--row-h.px]="rowHeight()"
+      [style.--hour-h.px]="hourHeight()"
+      [style.--header-h.px]="headerHeight"
+    >
+      <div class="slot-grid__corner" aria-hidden="true"></div>
+
+      @for (column of columns(); track column.court.id) {
+        <div class="slot-grid__court" [style.grid-column]="column.gridColumn">
+          <strong>{{ column.court.name }}</strong>
+          <small>{{ column.court.covered ? 'Techada' : 'Descubierta' }}</small>
+        </div>
+        <div
+          class="slot-grid__lane"
+          [style.grid-column]="column.gridColumn"
+          aria-hidden="true"
+        ></div>
+      }
+
+      <div class="slot-grid__gutter" aria-hidden="true"></div>
+      @for (mark of grid.hourMarks; track mark.label) {
+        <span class="slot-grid__hour" [style.grid-row]="mark.row + 1" aria-hidden="true">{{
+          mark.label
+        }}</span>
+      }
+
+      @for (column of columns(); track column.court.id) {
+        <ul
+          class="slot-grid__slots"
+          [attr.aria-label]="'Turnos de ' + column.court.name"
+          role="list"
+        >
+          @for (placed of column.slots; track placed.slot.id) {
+            <li
+              class="slot-grid__item"
+              [style.grid-column]="column.gridColumn"
+              [style.grid-row]="placed.gridRow"
+            >
+              @if (placed.selectable) {
+                <button
+                  type="button"
+                  [class]="'slot-cell is-' + placed.slot.state"
+                  [class.is-selected]="placed.slot.id === selectedSlotId()"
+                  [attr.aria-pressed]="placed.slot.id === selectedSlotId()"
+                  [attr.aria-label]="placed.label"
+                  (click)="select(placed)"
+                >
+                  <ng-container
+                    *ngTemplateOutlet="
+                      cellTemplate() ?? defaultCell;
+                      context: { $implicit: placed.slot, court: column.court }
+                    "
+                  />
+                </button>
+              } @else {
+                <div
+                  [class]="'slot-cell is-' + placed.slot.state"
+                  [class.is-past]="placed.slot.isPast"
+                  [attr.aria-label]="placed.label"
+                  role="img"
+                >
+                  <ng-container
+                    *ngTemplateOutlet="
+                      cellTemplate() ?? defaultCell;
+                      context: { $implicit: placed.slot, court: column.court }
+                    "
+                  />
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+    </div>
+  </div>
+} @else {
+  <div class="slot-grid-empty" role="status">
+    <span aria-hidden="true">◷</span>
+    <h3>No hay turnos para este día</h3>
+    <p>Probá con otra fecha.</p>
+  </div>
+}
+
+<ng-template #defaultCell let-slot>
+  <span class="slot-cell__state"
+    ><i class="slot-icon" aria-hidden="true"></i>{{ stateLabel(slot) }}</span
+  >
+  <span class="slot-cell__time">{{ slot.startsAt }} a {{ slot.endsAt }}</span>
+  @if (slot.state === 'pending' && slot.pendingMatch) {
+    <span class="slot-cell__meta"
+      >{{ missingLabel(slot.pendingMatch.missingPlayers) }} · {{ slot.pendingMatch.level }}</span
+    >
+  }
+</ng-template>

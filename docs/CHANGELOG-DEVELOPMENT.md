@@ -157,3 +157,50 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 - Archivos principales: `frontend/src/app/auth/register.page.html`, `frontend/src/app/auth/register.page.ts`, `frontend/src/styles/_auth.scss`, `frontend/src/styles/_register.scss`, `frontend/src/styles/_motion.scss`, `frontend/src/app/complexes/complex-admin.page.html`, `.scss` y `complex-admin-sidebar.component.scss`.
 - Validación: suite completa de 23 pruebas, build Angular y Docker; verificaciones visuales manuales después del rebuild.
 - Alcance: cambios solo frontend; autenticación y persistencia continúan en modo local de prueba.
+
+## HU-05 — Grilla de turnos del complejo
+
+### Frontend completado y probado
+
+- Se agregó la ruta pública `/clubes/:complexId/turnos`, visible sin sesión. "Explorar turnos" del directorio de clubes ahora abre la grilla de cada club en lugar de la búsqueda de partidos.
+- La grilla muestra las canchas por horario para el día elegido. Los turnos de 60 y 90 minutos se ubican según su duración, aunque cada cancha tenga horarios distintos.
+- Cada turno se ve como Libre, Partido abierto, Reservado o Clase, con color, ícono y texto propios. Los partidos abiertos muestran cuántos jugadores faltan y el nivel buscado. Los turnos cerrados por el complejo en HU-04 se ven como "No disponible".
+- Navegación por día con flechas y accesos a los próximos 14 días, sin poder volver antes de hoy. La fecha queda en la URL (`?fecha=AAAA-MM-DD`).
+- Los turnos que ya empezaron se muestran en gris, solo con el horario, y no se pueden elegir. Hoy la grilla se ubica en la hora actual.
+- Al elegir un turno libre o un partido abierto aparece un resumen con cancha, día y horario que invita a ingresar. La reserva real queda para HU-06 y la unión a partidos para HU-11.
+- `SlotGridComponent` es reutilizable: la agenda del complejo (HU-07) puede pasarle su propio contenido de celda con `cellTemplate`.
+
+### Datos de demostración
+
+- La grilla usa los horarios y bloqueos guardados en HU-04. Si una cancha no tiene horarios guardados, usa un horario de ejemplo para que la demo no quede vacía; la pantalla de HU-04 no cambia su comportamiento.
+- `BookingPreviewStore` genera reservas, partidos abiertos y clases de ejemplo de forma determinística por turno, con más reservas desde las 18:00 y más clases durante el día.
+- Se sumaron como complejos de demo los tres clubes del directorio (La Cumbre Pádel, City Bell Padel Hub y Estudiantes de La Plata) con sus canchas. Se agregó "San Carlos" a las zonas del formulario de complejos, que ya existía en las zonas del backend y del registro.
+
+### Otros cambios
+
+- Las pantallas de administración se cargan bajo demanda. El bundle inicial bajó de 495 kB a 391 kB y la build quedó sin advertencias de presupuesto.
+- `AvailabilityPreviewStore.slotsWithFallback()` agrega la consulta de turnos con horario de ejemplo sin modificar los métodos existentes.
+
+### Archivos principales
+
+- `frontend/src/app/slot-grid/`: página, grilla, selector de día, leyenda, resumen, armado de la grilla, horario de ejemplo y servicio de datos.
+- `frontend/src/app/bookings/`: modelo de reserva y reservas de demostración.
+- `frontend/src/app/shared/local-date.ts`: utilidades de fecha y hora local.
+- `frontend/src/styles/_slot-states.scss`: colores de estado compartidos.
+- `frontend/src/app/app.routes.ts`, `landing/club-directory.page.html`, `landing/landing.data.ts`, `complexes/complex-preview.store.ts`, `courts/court-preview.store.ts`, `complexes/complex-form.component.ts` y `availability/availability-preview.store.ts`.
+- `docs/contracts/hu-05-grilla-de-turnos.md` y `docs/phases/phase-07-slot-grid.md`.
+
+### Validación
+
+- `npm run build`: aprobado sin advertencias.
+- `npm test -- --watch=false`: 85 pruebas aprobadas (24 nuevas de HU-05). Fallan 3 pruebas de HU-04 que ya fallaban antes de este cambio, porque esperan textos y estructura anteriores: `availability-calendar.component.spec.ts` (2) y `court-availability.page.spec.ts` (selector de rol del sidebar).
+- Se actualizaron dos pruebas existentes por el cambio de comportamiento: el enlace "Explorar turnos" del directorio y la cantidad de complejos de demo (de 2 a 5).
+- Recorrido en Chromium a 1280 × 860 y 390 × 844: directorio → Explorar turnos → día siguiente → partido abierto → resumen → cierre con Escape, sin errores de consola.
+
+### Pendiente de backend
+
+`GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`, según el contrato propuesto. Al integrarlo, solo cambia `SlotGridService.dayGrid()`.
+
+### Commit sugerido
+
+`HU-05: implementar grilla de turnos del complejo en el frontend`

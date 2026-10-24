@@ -1,0 +1,75 @@
+<main class="slots-page">
+  <app-landing-header />
+
+  @switch (state().status) {
+    @case ('loading') {
+      <section class="slots-message" role="status">
+        <p>Cargando turnos…</p>
+      </section>
+    }
+    @case ('not-found') {
+      <section class="slots-message">
+        <span aria-hidden="true">⌂</span>
+        <h1>No encontramos este club</h1>
+        <p>Puede que ya no esté adherido. Elegí otro club para ver sus turnos.</p>
+        <a routerLink="/clubes">Ver clubes</a>
+      </section>
+    }
+    @default {
+      @if (grid(); as day) {
+        <section class="slots-heading">
+          <a class="slots-back" routerLink="/clubes"><span aria-hidden="true">←</span> Clubes</a>
+          <h1>{{ day.complex.name }}</h1>
+          <p>
+            <span aria-hidden="true">⌖</span>{{ day.complex.address }} · {{ day.complex.zone }}
+            @if (day.courts.length) {
+              <span class="slots-heading__dot" aria-hidden="true">·</span>{{ courtSummary() }}
+            }
+          </p>
+        </section>
+
+        <section class="slots-board" aria-labelledby="slots-date">
+          <div class="slots-toolbar">
+            <h2 id="slots-date">{{ dateLabel() }}</h2>
+            <app-day-strip
+              [selected]="dateKey()"
+              [today]="todayKey"
+              [windowDays]="windowDays"
+              (dateChange)="changeDate($event)"
+            />
+          </div>
+
+          @if (day.courts.length) {
+            <div class="slots-card">
+              <div class="slots-card__head">
+                <app-slot-legend />
+              </div>
+              <app-slot-grid
+                [courts]="day.courts"
+                [selectedSlotId]="selectedSlotId()"
+                [nowMinute]="nowMinute()"
+                (slotSelected)="selectSlot($event)"
+              />
+            </div>
+          } @else {
+            <div class="slots-card slots-card--empty" role="status">
+              <h3>Este club todavía no cargó sus canchas</h3>
+              <p>Volvé a intentar más tarde o elegí otro club.</p>
+            </div>
+          }
+
+          @if (selection(); as chosen) {
+            <app-slot-summary
+              [slot]="chosen.slot"
+              [courtName]="chosen.courtName"
+              [dateLabel]="dateLabel()"
+              (closed)="clearSelection()"
+            />
+          }
+        </section>
+      }
+    }
+  }
+
+  <app-landing-footer />
+</main>
