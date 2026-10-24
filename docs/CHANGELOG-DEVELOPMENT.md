@@ -204,3 +204,36 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 ### Commit sugerido
 
 `HU-05: implementar grilla de turnos del complejo en el frontend`
+## HU-01 backend y PostgreSQL
+
+- Se incorporó la API Go de registro, inicio de sesión y consulta de la sesión (`/api/v1/auth/register`, `/api/v1/auth/login` y `/api/v1/auth/me`), con contraseñas bcrypt y tokens JWT.
+- El registro valida y normaliza los datos, y guarda el usuario y su perfil inicial en PostgreSQL dentro de una transacción.
+- La migración inicial está en `backend/migrations/001_auth.sql`; no crea tablas `zones` ni `user_zones`.
+- Se requieren `DATABASE_URL` y `JWT_SECRET` (mínimo 32 bytes); `PORT` es opcional y usa `8000` por defecto.
+- Alcance: backend implementado. Las pantallas Angular de HU-01 siguen en modo de demostración local y todavía no consumen estos endpoints; no se afirma integración de extremo a extremo.
+
+## Verificación de integración HU-01 — 22/10/2026
+
+- Backend: `go test -count=1 ./...` pasó; `internal/auth` pasó y los demás paquetes no tienen tests directos.
+- Frontend: `npm run build` pasó. La suite `npm test -- --watch=false` terminó con 61 pruebas correctas y 3 fallidas (14 archivos de prueba).
+- Fallas HU-04 para revisión del equipo frontend:
+  - `availability-calendar.component.spec.ts` — `renders each received date and omits a turn counter`: no encontró `.day-heading h3`.
+  - `availability-calendar.component.spec.ts` — `shows an explicit empty state when no turns are generated`: esperaba `No hay turnos para mostrar`, pero la vista mostró `Sin turnos para esta fecha`.
+  - `court-availability.page.spec.ts` — `offers a designed keyboard-accessible court picker with the selected court marked`: esperaba que no hubiera un `<select>`, pero encontró `select#demo-role`.
+- El árbol `frontend/` coincide con `origin/Desarrollo`; estos fallos están en el frontend recibido y no fueron causados por la resolución documental. No se modificaron tests ni componentes HU-04.
+
+## HU-02 backend — integración para revisión — 22/10/2026
+
+- Se integró en la rama de HU-02 el backend de autenticación HU-01 y el frontend actualizado de Desarrollo, conservando la API de complejos y encargados y la migración `backend/migrations/002_complexes.sql`.
+- HU-02 implementa persistencia PostgreSQL y autorización por rol/asignación. Las pantallas Angular de complejos siguen usando datos locales y todavía no consumen esos endpoints; la integración de extremo a extremo queda pendiente.
+- Backend: `go test -count=1 ./...` pasó. La prueba de migración PostgreSQL se omitió porque no hay `TEST_DATABASE_URL` configurada; no se usó el contenedor local ya que no se confirmó que fuera una base desechable.
+- Frontend: `npm run build` pasó. La suite obtuvo 61 pruebas correctas y los mismos 3 fallos HU-04 documentados arriba. No se modificaron componentes ni pruebas Angular.
+
+## HU-03 canchas
+
+- Se agregó el CRUD de canchas por complejo en Go. Solo ADMIN y encargados asignados al complejo activo pueden consultar o modificar sus canchas; los complejos dados de baja no son accesibles.
+- La migración `003_courts.sql` agrega canchas con baja lógica, características booleanas y claves foráneas restrictivas. La imagen opcional acepta PNG, JPEG o WebP decodificable, con límite de 5 MiB y dimensiones acotadas.
+- La baja se rechaza con `503` porque todavía no hay una fuente real de reservas para comprobar turnos futuros de forma segura. El punto de extensión revisa reservas dentro de la misma transacción que marca la cancha como inactiva.
+- Verificación: `go test ./...` pasó. La prueba PostgreSQL de HU-03 es optativa y se omite si `TEST_DATABASE_URL` no está configurada.
+- Integración HU-03 — 22/10/2026: `go test -count=1 ./...` y `npm run build` pasaron. La suite Angular reportó 61 pruebas correctas y los 3 fallos HU-04 ya documentados; no se cambiaron componentes ni pruebas frontend. No se ejecutaron pruebas contra PostgreSQL porque no hay `TEST_DATABASE_URL` para una base desechable.
+- Estado: la API de canchas está implementada, pero la baja devuelve HTTP 503 hasta integrar reservas reales. El criterio de baja con reservas sigue pendiente y HU-03 no se considera completamente finalizada.
