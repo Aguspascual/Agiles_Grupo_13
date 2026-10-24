@@ -15,7 +15,7 @@ export class ComplexFormComponent implements OnChanges {
   @Output() save = new EventEmitter<ComplexDraft>();
   @Output() cancel = new EventEmitter<void>();
 
-  readonly zones = ['Casco Urbano', 'Gonnet', 'City Bell', 'Tolosa', 'Villa Elisa', 'Berisso / Ensenada'];
+  readonly zones = ['Casco Urbano', 'Gonnet', 'City Bell', 'San Carlos', 'Tolosa', 'Villa Elisa', 'Berisso / Ensenada'];
   zoneOpen = false;
   readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(80)] }),

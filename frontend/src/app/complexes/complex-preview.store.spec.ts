@@ -5,7 +5,7 @@ describe('HU-02: vista previa de complejos', () => {
     const store = new ComplexPreviewStore();
 
     expect(store.forActor('manager', 'manager-ana').map(complex => complex.id)).toEqual(['complex-gonnet']);
-    expect(store.forActor('admin', 'manager-ana')).toHaveLength(2);
+    expect(store.forActor('admin', 'manager-ana')).toHaveLength(5);
   });
 
   it('permite alta, edición y baja locales sin servidor', () => {

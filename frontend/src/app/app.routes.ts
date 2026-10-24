@@ -1,9 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginPage } from './auth/login.page';
 import { RegisterPage } from './auth/register.page';
-import { ComplexAdminPage } from './complexes/complex-admin.page';
-import { CourtAdminPage } from './courts/court-admin.page';
-import { CourtAvailabilityPage } from './availability/court-availability.page';
 import { LandingPage } from './landing/landing.page';
 import { MatchSearchPage } from './landing/match-search.page';
 
@@ -21,21 +18,30 @@ export const routes: Routes = [
       import('./landing/club-directory.page').then((page) => page.ClubDirectoryPage),
     title: 'Clubes de pádel en La Plata | PádelMatch',
   },
+  {
+    // HU-05: grilla pública de turnos. El título lo define la página con el nombre del club.
+    path: 'clubes/:complexId/turnos',
+    loadComponent: () =>
+      import('./slot-grid/complex-slots.page').then((page) => page.ComplexSlotsPage),
+  },
   { path: 'ingresar', component: LoginPage, title: 'Iniciar sesión | PádelMatch LP' },
   { path: 'registro', component: RegisterPage, title: 'Registro | PádelMatch LP' },
+  // Las pantallas de administración se cargan bajo demanda para aliviar la carga inicial del jugador.
   {
     path: 'admin/complejos',
-    component: ComplexAdminPage,
+    loadComponent: () =>
+      import('./complexes/complex-admin.page').then((page) => page.ComplexAdminPage),
     title: 'Administrar complejos | PádelMatch LP',
   },
   {
     path: 'admin/complejos/:complexId/canchas/:courtId/horarios',
-    component: CourtAvailabilityPage,
+    loadComponent: () =>
+      import('./availability/court-availability.page').then((page) => page.CourtAvailabilityPage),
     title: 'Horarios disponibles | PádelMatch LP',
   },
   {
     path: 'admin/complejos/:complexId/canchas',
-    component: CourtAdminPage,
+    loadComponent: () => import('./courts/court-admin.page').then((page) => page.CourtAdminPage),
     title: 'Administrar canchas | PádelMatch LP',
   },
   { path: '**', redirectTo: 'ingresar' },
