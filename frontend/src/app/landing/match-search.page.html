@@ -1,18 +1,21 @@
 <main class="search-page">
   <app-landing-header />
   <section class="search-heading" aria-labelledby="search-title">
-    <div>
-      <h1 id="search-title">Explorá partidos abiertos</h1>
-      <p>28 partidos disponibles en Gran La Plata y zona norte.</p>
-    </div>
+    <h1 id="search-title">Explorá partidos abiertos</h1>
+    <button #mobileFilterTrigger class="mobile-filter-trigger" type="button" aria-label="Abrir filtros de búsqueda" (click)="openMobileFilters()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" /></svg>
+      <span class="mobile-filter-trigger__text">Filtros</span><b>{{ activeFiltersCount }}</b>
+    </button>
   </section>
 
   <section class="search-layout" aria-label="Partidos y filtros">
-    <aside class="filter-sidebar" aria-label="Filtros de partidos">
+    <div class="filter-panel-host" [class.is-open]="filtersOpen" (click)="closeMobileFilters()">
+    <aside class="filter-sidebar" aria-label="Filtros de partidos" [attr.role]="filtersOpen ? 'dialog' : null" [attr.aria-modal]="filtersOpen ? 'true' : null" (click)="$event.stopPropagation()">
       <div class="filter-sidebar__heading">
         <h2>Filtros</h2>
         <span>{{ activeFiltersCount }} activos</span
         ><button type="button" (click)="clearFilters()">Limpiar filtros</button>
+        <button #mobileFilterClose class="mobile-filter-close" type="button" aria-label="Cerrar filtros" (click)="closeMobileFilters()">×</button>
       </div>
       <label class="open-toggle"
         ><input type="checkbox" [checked]="onlyOpen" (change)="onlyOpen = !onlyOpen" /><span
@@ -21,7 +24,7 @@
       >
       <fieldset>
         <legend>
-          Zona / Localidad <small>{{ zones.length }} zonas</small>
+          Zona / Localidad
         </legend>
         @for (zone of zones; track zone; let index = $index) {
           <label class="check-row"
@@ -49,7 +52,7 @@
         </div>
       </fieldset>
       <fieldset>
-        <legend>Categoría / Nivel <small>APA oficial</small></legend>
+        <legend>Categoría / Nivel</legend>
         <div class="level-pills">
           @for (level of levels; track level) {
             <button
@@ -102,44 +105,12 @@
         <a routerLink="/registro">Publicar torneo <span aria-hidden="true">→</span></a>
       </article>
     </aside>
+    </div>
 
     <div class="search-results">
-      <div class="results-toolbar">
-        <label class="match-search-input"
-          ><span aria-hidden="true">⌕</span
-          ><input
-            name="searchTerm"
-            [(ngModel)]="searchTerm"
-            placeholder="Buscar por club, organizador o zona (ej. La Cumbre, Juan, Gonnet)"
-        /></label>
-        <label class="sort-control"
-          ><span>Ordenar por:</span
-          ><select name="sortBy" [(ngModel)]="sortBy">
-            <option>Más cercanos en horario</option>
-            <option>Menor precio</option>
-          </select></label
-        >
-        <div class="view-switch" role="group" aria-label="Vista de resultados">
-          <button
-            type="button"
-            aria-label="Vista en cuadrícula"
-            [class.is-active]="viewMode === 'grid'"
-            (click)="viewMode = 'grid'"
-          >
-            ▦</button
-          ><button
-            type="button"
-            aria-label="Vista en lista"
-            [class.is-active]="viewMode === 'list'"
-            (click)="viewMode = 'list'"
-          >
-            ☰
-          </button>
-        </div>
-      </div>
-      <div class="search-match-grid" [class.is-list]="viewMode === 'list'">
+      <div class="search-match-grid">
         @for (match of filteredMatches; track match.id) {
-          <app-match-card [match]="match" [searchMode]="true" />
+          <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
         } @empty {
           <div class="search-empty">
             <span aria-hidden="true">⌕</span>
@@ -179,3 +150,7 @@
   </section>
   <app-landing-footer />
 </main>
+@if (selectedMatch; as match) {
+  <app-match-detail-dialog [match]="match" (close)="closeDetails()" (join)="joinMatch($event)" />
+}
+<app-toast [message]="toastMessage" (dismiss)="toastMessage = ''" />

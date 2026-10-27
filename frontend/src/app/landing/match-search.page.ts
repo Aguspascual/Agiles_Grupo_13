@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LandingFooterComponent } from './landing-footer.component';
 import { LEVELS, MATCHES, MatchPreview, ZONES } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { MatchDetailDialogComponent } from './match-detail-dialog.component';
+import { ToastComponent } from '../shared/toast.component';
 
 @Component({
   selector: 'app-match-search-page',
@@ -14,10 +16,18 @@ import { MatchCardComponent } from './match-card.component';
     LandingHeaderComponent,
     LandingFooterComponent,
     MatchCardComponent,
+    MatchDetailDialogComponent,
+    ToastComponent,
   ],
   templateUrl: './match-search.page.html',
 })
 export class MatchSearchPage implements OnInit {
+  @ViewChild('mobileFilterTrigger') private mobileFilterTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('mobileFilterClose') private mobileFilterClose?: ElementRef<HTMLButtonElement>;
+  filtersOpen = false;
+  selectedMatch: MatchPreview | null = null;
+  toastMessage = '';
+  private lastDetailTrigger: HTMLElement | null = null;
   readonly matches = MATCHES;
   readonly zones = ZONES;
   readonly levels = LEVELS;
@@ -33,7 +43,6 @@ export class MatchSearchPage implements OnInit {
     'Grava sintética',
     'Estacionamiento',
   ];
-  searchTerm = '';
   selectedZones: string[] = [];
   selectedLevels: string[] = [];
   selectedDay = 'Hoy';
@@ -42,10 +51,38 @@ export class MatchSearchPage implements OnInit {
   selectedFeatures: string[] = [];
   selectedClub = 'Todos los clubes de La Plata';
   onlyOpen = true;
-  sortBy = 'Más cercanos en horario';
-  viewMode: 'grid' | 'list' = 'grid';
 
   constructor(private readonly route: ActivatedRoute) {}
+
+  openDetails(detail: { match: MatchPreview; trigger: HTMLElement }): void {
+    this.lastDetailTrigger = detail.trigger;
+    this.selectedMatch = detail.match;
+  }
+
+  closeDetails(): void {
+    this.selectedMatch = null;
+    setTimeout(() => this.lastDetailTrigger?.focus());
+  }
+
+  joinMatch(match: MatchPreview): void {
+    this.toastMessage = `Solicitud para unirte enviada · ${match.club}`;
+  }
+
+  openMobileFilters(): void {
+    this.filtersOpen = true;
+    setTimeout(() => this.mobileFilterClose?.nativeElement.focus());
+  }
+
+  closeMobileFilters(): void {
+    if (!this.filtersOpen) return;
+    this.filtersOpen = false;
+    setTimeout(() => this.mobileFilterTrigger?.nativeElement.focus());
+  }
+
+  @HostListener('document:keydown.escape')
+  closeFiltersOnEscape(): void {
+    this.closeMobileFilters();
+  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
@@ -81,10 +118,8 @@ export class MatchSearchPage implements OnInit {
   }
 
   get filteredMatches(): MatchPreview[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    const filtered = this.matches.filter(
+    return this.matches.filter(
       (match) =>
-        (!term || `${match.club} ${match.zone} ${match.address}`.toLowerCase().includes(term)) &&
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
         (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&
         (!this.dayFilterEnabled ||
@@ -97,11 +132,6 @@ export class MatchSearchPage implements OnInit {
         this.matchesPreferredTime(match) &&
         this.selectedFeatures.every((feature) => this.matchesCourtFeature(match, feature)),
     );
-    return this.sortBy === 'Menor precio'
-      ? [...filtered].sort(
-          (a, b) => Number(a.price.replace(/\D/g, '')) - Number(b.price.replace(/\D/g, '')),
-        )
-      : filtered;
   }
 
   toggleSelection(collection: string[], value: string): string[] {
@@ -129,7 +159,6 @@ export class MatchSearchPage implements OnInit {
   }
 
   clearFilters(): void {
-    this.searchTerm = '';
     this.selectedZones = [];
     this.selectedLevels = [];
     this.selectedDay = 'Todos';

@@ -95,7 +95,7 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('permite probar la acción de unirse sin enviar al login', () => {
+  it('abre el detalle al presionar Unirme al partido sin enviar al login', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -105,7 +105,7 @@ describe('HU-00: landing pública', () => {
     expect(root.querySelector('.match-card__bottom a[href="/ingresar"]')).toBeNull();
     action.click();
     fixture.detectChanges();
-    expect(action.textContent).toContain('Solicitud enviada');
+    expect(root.querySelector('app-match-detail-dialog')).not.toBeNull();
     fixture.destroy();
   });
 

@@ -17,6 +17,8 @@
     transform 0.18s ease,
     box-shadow 0.18s ease;
 }
+.match-card--interactive { cursor: pointer; }
+.match-card--interactive:focus-visible { outline: 3px solid #43c593; outline-offset: 3px; }
 .match-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px #26264a12;
@@ -220,8 +222,12 @@
 }
 @media (max-width: 500px) {
   .match-card__club {
-    flex-direction: column;
+    align-items: flex-start;
+    flex-direction: row;
   }
+  .match-card__club > div { min-width: 0; flex: 1 1 auto; }
+  .match-card__club h3 { overflow-wrap: anywhere; }
+  .match-card__club > strong { padding-left: 8px; text-align: right; }
   .match-card__club > strong small {
     display: inline;
     margin-left: 3px;
@@ -234,4 +240,5 @@
   .match-card {
     transition: none;
   }
+  .match-card--interactive:hover { transform: none; }
 }
