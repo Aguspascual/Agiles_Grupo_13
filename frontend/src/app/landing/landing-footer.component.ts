@@ -30,7 +30,7 @@ import { RouterLink } from '@angular/router';
         ><a routerLink="/ingresar">Términos y condiciones</a>
       </nav>
       <small class="footer-copyright"
-        >© 2025 PádelMatch La Plata. Todos los derechos reservados.</small
+        >© 2026 PádelMatch La Plata. Todos los derechos reservados.</small
       >
       <small class="footer-tagline">Impulsando el pádel amateur platense.</small>
     </footer>

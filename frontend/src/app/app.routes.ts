@@ -26,6 +26,11 @@ export const routes: Routes = [
   },
   { path: 'ingresar', component: LoginPage, title: 'Iniciar sesión | PádelMatch LP' },
   { path: 'registro', component: RegisterPage, title: 'Registro | PádelMatch LP' },
+  {
+    path: 'perfil',
+    loadComponent: () => import('./profile/player-profile.page').then((page) => page.PlayerProfilePage),
+    title: 'Editar perfil | PádelMatch',
+  },
   // Las pantallas de administración se cargan bajo demanda para aliviar la carga inicial del jugador.
   {
     path: 'admin/complejos',
