@@ -1,0 +1,39 @@
+<nav class="day-strip" aria-label="Elegir día">
+  <button
+    type="button"
+    class="day-strip__arrow"
+    aria-label="Día anterior"
+    [disabled]="!canGoBack()"
+    (click)="shift(-1)"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+  </button>
+
+  <ol class="day-strip__days">
+    @for (chip of chips(); track chip.key) {
+      <li>
+        <button
+          type="button"
+          class="day-chip"
+          [class.is-active]="chip.key === selected()"
+          [attr.aria-current]="chip.key === selected() ? 'date' : null"
+          [attr.aria-label]="chip.fullLabel"
+          (click)="choose(chip.key)"
+        >
+          <span>{{ chip.top }}</span>
+          <small>{{ chip.bottom }}</small>
+        </button>
+      </li>
+    }
+  </ol>
+
+  <button
+    type="button"
+    class="day-strip__arrow"
+    aria-label="Día siguiente"
+    [disabled]="!canGoForward()"
+    (click)="shift(1)"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+  </button>
+</nav>

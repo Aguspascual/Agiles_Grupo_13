@@ -157,3 +157,83 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 - Archivos principales: `frontend/src/app/auth/register.page.html`, `frontend/src/app/auth/register.page.ts`, `frontend/src/styles/_auth.scss`, `frontend/src/styles/_register.scss`, `frontend/src/styles/_motion.scss`, `frontend/src/app/complexes/complex-admin.page.html`, `.scss` y `complex-admin-sidebar.component.scss`.
 - Validación: suite completa de 23 pruebas, build Angular y Docker; verificaciones visuales manuales después del rebuild.
 - Alcance: cambios solo frontend; autenticación y persistencia continúan en modo local de prueba.
+
+## HU-05 — Grilla de turnos del complejo
+
+### Frontend completado y probado
+
+- Se agregó la ruta pública `/clubes/:complexId/turnos`, visible sin sesión. "Explorar turnos" del directorio de clubes ahora abre la grilla de cada club en lugar de la búsqueda de partidos.
+- La grilla muestra las canchas por horario para el día elegido. Los turnos de 60 y 90 minutos se ubican según su duración, aunque cada cancha tenga horarios distintos.
+- Cada turno se ve como Libre, Partido abierto, Reservado o Clase, con color, ícono y texto propios. Los partidos abiertos muestran cuántos jugadores faltan y el nivel buscado. Los turnos cerrados por el complejo en HU-04 se ven como "No disponible".
+- Navegación por día con flechas y accesos a los próximos 14 días, sin poder volver antes de hoy. La fecha queda en la URL (`?fecha=AAAA-MM-DD`).
+- Los turnos que ya empezaron se muestran en gris, solo con el horario, y no se pueden elegir. Hoy la grilla se ubica en la hora actual.
+- Al elegir un turno libre o un partido abierto aparece un resumen con cancha, día y horario que invita a ingresar. La reserva real queda para HU-06 y la unión a partidos para HU-11.
+- `SlotGridComponent` es reutilizable: la agenda del complejo (HU-07) puede pasarle su propio contenido de celda con `cellTemplate`.
+
+### Datos de demostración
+
+- La grilla usa los horarios y bloqueos guardados en HU-04. Si una cancha no tiene horarios guardados, usa un horario de ejemplo para que la demo no quede vacía; la pantalla de HU-04 no cambia su comportamiento.
+- `BookingPreviewStore` genera reservas, partidos abiertos y clases de ejemplo de forma determinística por turno, con más reservas desde las 18:00 y más clases durante el día.
+- Se sumaron como complejos de demo los tres clubes del directorio (La Cumbre Pádel, City Bell Padel Hub y Estudiantes de La Plata) con sus canchas. Se agregó "San Carlos" a las zonas del formulario de complejos, que ya existía en las zonas del backend y del registro.
+
+### Otros cambios
+
+- Las pantallas de administración se cargan bajo demanda. El bundle inicial bajó de 495 kB a 391 kB y la build quedó sin advertencias de presupuesto.
+- `AvailabilityPreviewStore.slotsWithFallback()` agrega la consulta de turnos con horario de ejemplo sin modificar los métodos existentes.
+
+### Archivos principales
+
+- `frontend/src/app/slot-grid/`: página, grilla, selector de día, leyenda, resumen, armado de la grilla, horario de ejemplo y servicio de datos.
+- `frontend/src/app/bookings/`: modelo de reserva y reservas de demostración.
+- `frontend/src/app/shared/local-date.ts`: utilidades de fecha y hora local.
+- `frontend/src/styles/_slot-states.scss`: colores de estado compartidos.
+- `frontend/src/app/app.routes.ts`, `landing/club-directory.page.html`, `landing/landing.data.ts`, `complexes/complex-preview.store.ts`, `courts/court-preview.store.ts`, `complexes/complex-form.component.ts` y `availability/availability-preview.store.ts`.
+- `docs/contracts/hu-05-grilla-de-turnos.md` y `docs/phases/phase-07-slot-grid.md`.
+
+### Validación
+
+- `npm run build`: aprobado sin advertencias.
+- `npm test -- --watch=false`: 85 pruebas aprobadas (24 nuevas de HU-05). Fallan 3 pruebas de HU-04 que ya fallaban antes de este cambio, porque esperan textos y estructura anteriores: `availability-calendar.component.spec.ts` (2) y `court-availability.page.spec.ts` (selector de rol del sidebar).
+- Se actualizaron dos pruebas existentes por el cambio de comportamiento: el enlace "Explorar turnos" del directorio y la cantidad de complejos de demo (de 2 a 5).
+- Recorrido en Chromium a 1280 × 860 y 390 × 844: directorio → Explorar turnos → día siguiente → partido abierto → resumen → cierre con Escape, sin errores de consola.
+
+### Pendiente de backend
+
+`GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`, según el contrato propuesto. Al integrarlo, solo cambia `SlotGridService.dayGrid()`.
+
+### Commit sugerido
+
+`HU-05: implementar grilla de turnos del complejo en el frontend`
+## HU-01 backend y PostgreSQL
+
+- Se incorporó la API Go de registro, inicio de sesión y consulta de la sesión (`/api/v1/auth/register`, `/api/v1/auth/login` y `/api/v1/auth/me`), con contraseñas bcrypt y tokens JWT.
+- El registro valida y normaliza los datos, y guarda el usuario y su perfil inicial en PostgreSQL dentro de una transacción.
+- La migración inicial está en `backend/migrations/001_auth.sql`; no crea tablas `zones` ni `user_zones`.
+- Se requieren `DATABASE_URL` y `JWT_SECRET` (mínimo 32 bytes); `PORT` es opcional y usa `8000` por defecto.
+- Alcance: backend implementado. Las pantallas Angular de HU-01 siguen en modo de demostración local y todavía no consumen estos endpoints; no se afirma integración de extremo a extremo.
+
+## Verificación de integración HU-01 — 22/10/2026
+
+- Backend: `go test -count=1 ./...` pasó; `internal/auth` pasó y los demás paquetes no tienen tests directos.
+- Frontend: `npm run build` pasó. La suite `npm test -- --watch=false` terminó con 61 pruebas correctas y 3 fallidas (14 archivos de prueba).
+- Fallas HU-04 para revisión del equipo frontend:
+  - `availability-calendar.component.spec.ts` — `renders each received date and omits a turn counter`: no encontró `.day-heading h3`.
+  - `availability-calendar.component.spec.ts` — `shows an explicit empty state when no turns are generated`: esperaba `No hay turnos para mostrar`, pero la vista mostró `Sin turnos para esta fecha`.
+  - `court-availability.page.spec.ts` — `offers a designed keyboard-accessible court picker with the selected court marked`: esperaba que no hubiera un `<select>`, pero encontró `select#demo-role`.
+- El árbol `frontend/` coincide con `origin/Desarrollo`; estos fallos están en el frontend recibido y no fueron causados por la resolución documental. No se modificaron tests ni componentes HU-04.
+
+## HU-02 backend — integración para revisión — 22/10/2026
+
+- Se integró en la rama de HU-02 el backend de autenticación HU-01 y el frontend actualizado de Desarrollo, conservando la API de complejos y encargados y la migración `backend/migrations/002_complexes.sql`.
+- HU-02 implementa persistencia PostgreSQL y autorización por rol/asignación. Las pantallas Angular de complejos siguen usando datos locales y todavía no consumen esos endpoints; la integración de extremo a extremo queda pendiente.
+- Backend: `go test -count=1 ./...` pasó. La prueba de migración PostgreSQL se omitió porque no hay `TEST_DATABASE_URL` configurada; no se usó el contenedor local ya que no se confirmó que fuera una base desechable.
+- Frontend: `npm run build` pasó. La suite obtuvo 61 pruebas correctas y los mismos 3 fallos HU-04 documentados arriba. No se modificaron componentes ni pruebas Angular.
+
+## HU-03 canchas
+
+- Se agregó el CRUD de canchas por complejo en Go. Solo ADMIN y encargados asignados al complejo activo pueden consultar o modificar sus canchas; los complejos dados de baja no son accesibles.
+- La migración `003_courts.sql` agrega canchas con baja lógica, características booleanas y claves foráneas restrictivas. La imagen opcional acepta PNG, JPEG o WebP decodificable, con límite de 5 MiB y dimensiones acotadas.
+- La baja se rechaza con `503` porque todavía no hay una fuente real de reservas para comprobar turnos futuros de forma segura. El punto de extensión revisa reservas dentro de la misma transacción que marca la cancha como inactiva.
+- Verificación: `go test ./...` pasó. La prueba PostgreSQL de HU-03 es optativa y se omite si `TEST_DATABASE_URL` no está configurada.
+- Integración HU-03 — 22/10/2026: `go test -count=1 ./...` y `npm run build` pasaron. La suite Angular reportó 61 pruebas correctas y los 3 fallos HU-04 ya documentados; no se cambiaron componentes ni pruebas frontend. No se ejecutaron pruebas contra PostgreSQL porque no hay `TEST_DATABASE_URL` para una base desechable.
+- Estado: la API de canchas está implementada, pero la baja devuelve HTTP 503 hasta integrar reservas reales. El criterio de baja con reservas sigue pendiente y HU-03 no se considera completamente finalizada.

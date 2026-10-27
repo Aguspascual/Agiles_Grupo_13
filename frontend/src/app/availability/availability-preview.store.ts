@@ -48,6 +48,15 @@ export class AvailabilityPreviewStore {
     );
   }
 
+  /**
+   * HU-05: turnos de la fecha para la grilla del jugador. Si la cancha todavía no tiene horarios
+   * guardados, usa `fallbackRules` (horarios de ejemplo) para que la demo no quede vacía.
+   */
+  slotsWithFallback(courtId: string, date: Date, fallbackRules: WeeklyScheduleRule[]): AvailabilitySlot[] {
+    const saved = this.rulesByCourt()[courtId];
+    return generateAvailabilitySlots(courtId, cloneRules(saved ?? fallbackRules), date, this.blockedSlotIds());
+  }
+
   toggleBlocked(slotId: string): void {
     if (!slotId) return;
     this.blockedSlotIds.update((current) => {

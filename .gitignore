@@ -9,3 +9,4 @@ frontend/dist/
 frontend/.angular/
 coverage/
 *.log
+.atl/

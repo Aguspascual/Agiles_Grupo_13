@@ -1,0 +1,106 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.day-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-strip__days {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  li {
+    scroll-snap-align: start;
+  }
+}
+
+.day-chip {
+  min-width: 64px;
+  padding: 7px 10px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  border: 1px solid #e6e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #3b4554;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+
+  span {
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  small {
+    color: #7b8492;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    border-color: #9edcc2;
+  }
+
+  &.is-active {
+    border-color: #08a878;
+    background: #08a878;
+    color: #fff;
+
+    small {
+      color: #e3fff4;
+    }
+  }
+}
+
+.day-strip__arrow {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e6e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #2f3a48;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-chip {
+    transition: none;
+  }
+}

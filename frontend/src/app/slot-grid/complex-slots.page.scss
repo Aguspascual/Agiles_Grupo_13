@@ -1,0 +1,143 @@
+:host {
+  display: block;
+}
+
+.slots-page {
+  min-height: 100vh;
+  background: #f8f8ff;
+  color: #202838;
+}
+
+.slots-heading,
+.slots-board,
+.slots-message {
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.slots-heading {
+  padding: 26px 0 18px;
+
+  h1 {
+    margin: 8px 0 0;
+    color: #202737;
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 850;
+    letter-spacing: -0.045em;
+  }
+
+  p {
+    margin: 6px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    color: #6f7987;
+    font-size: 0.88rem;
+  }
+
+  p > span:first-child {
+    color: #12845f;
+  }
+}
+
+.slots-heading__dot {
+  color: #b5bcc6;
+}
+
+.slots-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #12845f;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.slots-board {
+  padding-bottom: 40px;
+}
+
+.slots-toolbar {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+
+  h2 {
+    margin: 0;
+    color: #202737;
+    font-size: 1.05rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}
+
+.slots-card {
+  border: 1px solid #e8e8f1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 14px #20244b09;
+}
+
+.slots-card__head {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef0f5;
+}
+
+.slots-card--empty,
+.slots-message {
+  padding: 48px 20px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: #6b7482;
+  text-align: center;
+
+  h1,
+  h3 {
+    margin: 0;
+    color: #202737;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.86rem;
+  }
+
+  a {
+    margin-top: 8px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    background: #08a878;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  > span {
+    color: #08a878;
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .slots-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .slots-heading,
+  .slots-board,
+  .slots-message {
+    width: calc(100% - 32px);
+  }
+
+  .slots-heading {
+    padding-top: 18px;
+  }
+}

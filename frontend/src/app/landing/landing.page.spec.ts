@@ -76,8 +76,9 @@ describe('HU-00: landing pública', () => {
     expect(root.querySelector('.clubs-kicker')).toBeNull();
     expect(root.querySelectorAll('[data-club-card]').length).toBe(3);
     expect(root.querySelector('[data-club-card] img')).not.toBeNull();
-    expect(root.querySelector('a[href*="club="]')?.getAttribute('href')).toContain(
-      'club=La%20Cumbre%20P%C3%A1del',
+    // HU-05: "Explorar turnos" abre la grilla de turnos del club.
+    expect(root.querySelector('a[href="/clubes/complex-cumbre/turnos"]')?.textContent).toContain(
+      'Explorar turnos',
     );
 
     const search = root.querySelector('input[aria-label="Buscar club"]') as HTMLInputElement;
