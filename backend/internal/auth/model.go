@@ -4,9 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"regexp"
 	"strings"
 	"time"
 )
+
+var uuidPattern = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
+
+// ValidUUID keeps identifier validation consistent across authenticated resources.
+func ValidUUID(value string) bool { return uuidPattern.MatchString(value) }
 
 var (
 	ErrEmailTaken         = errors.New("email ya registrado")

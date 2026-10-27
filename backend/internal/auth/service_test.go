@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,36 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+func TestDecodeJSONWithLimit(t *testing.T) {
+	for _, tt := range []struct {
+		name, body        string
+		limit             int64
+		invalid, trailing bool
+	}{
+		{"valid", `{"name":"ok"}`, 64, false, false},
+		{"unknown field", `{"extra":"x"}`, 64, true, false},
+		{"malformed", `{`, 64, true, false},
+		{"second document", `{"name":"ok"} {}`, 64, true, true},
+		{"trailing garbage", `{"name":"ok"} x`, 64, true, true},
+		{"limit exceeded", `{"name":"too long"}`, 8, true, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var value struct {
+				Name string `json:"name"`
+			}
+			req := httptest.NewRequest("POST", "/", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			err := DecodeJSONWithLimit(rec, req, &value, tt.limit)
+			if (err != nil) != tt.invalid || errors.Is(err, ErrTrailingJSON) != tt.trailing {
+				t.Fatalf("error=%v", err)
+			}
+			if rec.Body.Len() != 0 || rec.Code != 200 {
+				t.Fatal("decoder must not write a response")
+			}
+		})
+	}
+}
 
 type memoryRepo struct {
 	users      map[string]User
