@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatchPreview } from './landing.data';
 
 @Component({
@@ -54,15 +54,15 @@ import { MatchPreview } from './landing.data';
       </div>
       <footer class="match-card__bottom">
         <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
-        <button
-          type="button"
-          data-match-action
-          [disabled]="actionCompleted"
-          (click)="completeDemoAction()"
-          [attr.aria-label]="actionLabel + ' · ' + match.club"
-        >
-          {{ actionLabel }} <span aria-hidden="true">→</span>
-        </button>
+        @if (detailsMode) {
+          <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
+            Ver partido <span aria-hidden="true">↗</span>
+          </button>
+        } @else {
+          <button type="button" data-match-action [disabled]="actionCompleted" (click)="completeDemoAction()" [attr.aria-label]="actionLabel + ' · ' + match.club">
+            {{ actionLabel }} <span aria-hidden="true">→</span>
+          </button>
+        }
       </footer>
     </article>
   `,
@@ -71,6 +71,8 @@ import { MatchPreview } from './landing.data';
 export class MatchCardComponent {
   @Input({ required: true }) match!: MatchPreview;
   @Input() searchMode = false;
+  @Input() detailsMode = false;
+  @Output() viewDetails = new EventEmitter<{ match: MatchPreview; trigger: HTMLElement }>();
   actionCompleted = false;
 
   get actionLabel(): string {
@@ -80,6 +82,10 @@ export class MatchCardComponent {
 
   completeDemoAction(): void {
     this.actionCompleted = true;
+  }
+
+  openDetails(event: Event): void {
+    this.viewDetails.emit({ match: this.match, trigger: event.currentTarget as HTMLElement });
   }
 
   get emptySlots(): number[] {

@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LandingFooterComponent } from './landing-footer.component';
 import { LEVELS, MATCHES, MatchPreview, ZONES } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { MatchDetailDialogComponent } from './match-detail-dialog.component';
+import { ToastComponent } from '../shared/toast.component';
 
 @Component({
   selector: 'app-match-search-page',
@@ -14,10 +16,16 @@ import { MatchCardComponent } from './match-card.component';
     LandingHeaderComponent,
     LandingFooterComponent,
     MatchCardComponent,
+    MatchDetailDialogComponent,
+    ToastComponent,
   ],
   templateUrl: './match-search.page.html',
 })
-export class MatchSearchPage implements OnInit {
+export class MatchSearchPage implements OnInit, OnDestroy {
+  selectedMatch: MatchPreview | null = null;
+  toastMessage = '';
+  private lastDetailTrigger: HTMLElement | null = null;
+  private toastTimer?: ReturnType<typeof setTimeout>;
   readonly matches = MATCHES;
   readonly zones = ZONES;
   readonly levels = LEVELS;
@@ -46,6 +54,26 @@ export class MatchSearchPage implements OnInit {
   viewMode: 'grid' | 'list' = 'grid';
 
   constructor(private readonly route: ActivatedRoute) {}
+
+  openDetails(detail: { match: MatchPreview; trigger: HTMLElement }): void {
+    this.lastDetailTrigger = detail.trigger;
+    this.selectedMatch = detail.match;
+  }
+
+  closeDetails(): void {
+    this.selectedMatch = null;
+    setTimeout(() => this.lastDetailTrigger?.focus());
+  }
+
+  joinMatch(match: MatchPreview): void {
+    this.toastMessage = `Solicitud para unirte enviada · ${match.club}`;
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => (this.toastMessage = ''), 3500);
+  }
+
+  ngOnDestroy(): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {

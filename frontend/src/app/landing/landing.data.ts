@@ -3,6 +3,7 @@ export interface PlayerPreview {
   name: string;
   level: string;
   tone: string;
+  position?: 'Drive' | 'Revés' | 'Indistinto';
 }
 
 export interface MatchPreview {
@@ -11,6 +12,7 @@ export interface MatchPreview {
   time: string;
   duration: string;
   club: string;
+  courtName: string;
   image: string;
   imageAlt: string;
   address: string;
@@ -29,6 +31,7 @@ export const MATCHES: MatchPreview[] = [
     time: '20:30 hs',
     duration: '90 min',
     club: 'Club Universitario Gonnet',
+    courtName: 'Cancha 2',
     image: '/images/cancha-interior.jpg',
     imageAlt: 'Cancha de pádel techada del club',
     address: 'Calle 14 y 501, Gonnet',
@@ -37,9 +40,9 @@ export const MATCHES: MatchPreview[] = [
     price: '$4.500',
     openSpots: 1,
     players: [
-      { initials: 'JM', name: 'Juan M.', level: '5ta', tone: 'mint' },
-      { initials: 'MV', name: 'Martín V.', level: '5ta', tone: 'lavender' },
-      { initials: 'FC', name: 'Facundo T.', level: '6ta', tone: 'peach' },
+      { initials: 'JM', name: 'Juan M.', level: '5ta', tone: 'mint', position: 'Drive' },
+      { initials: 'MV', name: 'Martín V.', level: '5ta', tone: 'lavender', position: 'Revés' },
+      { initials: 'FC', name: 'Facundo T.', level: '6ta', tone: 'peach', position: 'Drive' },
     ],
     features: ['Techado', 'Iluminación'],
   },
@@ -49,6 +52,7 @@ export const MATCHES: MatchPreview[] = [
     time: '22:00 hs',
     duration: '90 min',
     club: 'La Cumbre Pádel',
+    courtName: 'Cancha 1',
     image: '/images/cancha-exterior.jpg',
     imageAlt: 'Cancha de pádel exterior en La Cumbre',
     address: 'Av. 31 y 523, La Cumbre',
@@ -57,8 +61,8 @@ export const MATCHES: MatchPreview[] = [
     price: '$4.800',
     openSpots: 2,
     players: [
-      { initials: 'LR', name: 'Lucía R.', level: '6ta', tone: 'peach' },
-      { initials: 'AG', name: 'Agustín G.', level: '6ta', tone: 'mint' },
+      { initials: 'LR', name: 'Lucía R.', level: '6ta', tone: 'peach', position: 'Drive' },
+      { initials: 'AG', name: 'Agustín G.', level: '6ta', tone: 'mint', position: 'Revés' },
     ],
     features: ['Aire libre', 'Iluminación'],
   },
@@ -68,6 +72,7 @@ export const MATCHES: MatchPreview[] = [
     time: '19:00 hs',
     duration: '90 min',
     club: 'Pádel City Bell',
+    courtName: 'Cancha 3',
     image: '/images/cancha-exterior.jpg',
     imageAlt: 'Cancha de pádel exterior en City Bell',
     address: 'Camino Centenario 2800',
@@ -76,9 +81,9 @@ export const MATCHES: MatchPreview[] = [
     price: '$5.200',
     openSpots: 1,
     players: [
-      { initials: 'GC', name: 'Gonzalo C.', level: '4ta', tone: 'lavender' },
-      { initials: 'EB', name: 'Esteban D.', level: '4ta', tone: 'mint' },
-      { initials: 'AQ', name: 'Joaquín F.', level: '4ta', tone: 'peach' },
+      { initials: 'GC', name: 'Gonzalo C.', level: '4ta', tone: 'lavender', position: 'Drive' },
+      { initials: 'EB', name: 'Esteban D.', level: '4ta', tone: 'mint', position: 'Revés' },
+      { initials: 'AQ', name: 'Joaquín F.', level: '4ta', tone: 'peach', position: 'Drive' },
     ],
     features: ['Panorámica', 'Estacionamiento'],
   },
@@ -88,6 +93,7 @@ export const MATCHES: MatchPreview[] = [
     time: '21:00 hs',
     duration: '90 min',
     club: 'Estudiantes de La Plata',
+    courtName: 'Cancha 1',
     image: '/images/cancha-interior.jpg',
     imageAlt: 'Cancha de pádel del club Estudiantes',
     address: 'Calle 53 y 7, Casco Histórico',
@@ -95,7 +101,7 @@ export const MATCHES: MatchPreview[] = [
     level: '3ra',
     price: '$5.800',
     openSpots: 3,
-    players: [{ initials: 'IG', name: 'Ignacio G.', level: '3ra', tone: 'peach' }],
+    players: [{ initials: 'IG', name: 'Ignacio G.', level: '3ra', tone: 'peach', position: 'Drive' }],
     features: ['Techado', 'Iluminación'],
   },
   {
@@ -104,6 +110,7 @@ export const MATCHES: MatchPreview[] = [
     time: '20:30 hs',
     duration: '90 min',
     club: 'Círculo de Suboficiales',
+    courtName: 'Cancha 4',
     image: '/images/cancha-interior.jpg',
     imageAlt: 'Cancha de pádel techada en La Plata',
     address: 'Calle 44 y 11, La Plata',
@@ -112,8 +119,8 @@ export const MATCHES: MatchPreview[] = [
     price: '$4.900',
     openSpots: 2,
     players: [
-      { initials: 'NL', name: 'Nicolás L.', level: '5ta', tone: 'lavender' },
-      { initials: 'BM', name: 'Belén M.', level: '5ta', tone: 'peach' },
+      { initials: 'NL', name: 'Nicolás L.', level: '5ta', tone: 'lavender', position: 'Drive' },
+      { initials: 'BM', name: 'Belén M.', level: '5ta', tone: 'peach', position: 'Revés' },
     ],
     features: ['Techado', 'Iluminación'],
   },
@@ -123,6 +130,7 @@ export const MATCHES: MatchPreview[] = [
     time: '21:30 hs',
     duration: '90 min',
     club: 'El Balcón Pádel',
+    courtName: 'Cancha 1',
     image: '/images/cancha-exterior.jpg',
     imageAlt: 'Cancha de pádel al aire libre en Tolosa',
     address: 'Calle 528 y 125, Tolosa',
@@ -131,9 +139,9 @@ export const MATCHES: MatchPreview[] = [
     price: '$3.800',
     openSpots: 1,
     players: [
-      { initials: 'RA', name: 'Rodrigo A.', level: '7ma', tone: 'mint' },
-      { initials: 'VC', name: 'Valeria C.', level: '7ma', tone: 'lavender' },
-      { initials: 'TM', name: 'Tomás G.', level: '7ma', tone: 'peach' },
+      { initials: 'RA', name: 'Rodrigo A.', level: '7ma', tone: 'mint', position: 'Drive' },
+      { initials: 'VC', name: 'Valeria C.', level: '7ma', tone: 'lavender', position: 'Revés' },
+      { initials: 'TM', name: 'Tomás G.', level: '7ma', tone: 'peach', position: 'Drive' },
     ],
     features: ['Aire libre', 'Iluminación'],
   },
@@ -143,6 +151,7 @@ export const MATCHES: MatchPreview[] = [
     time: '20:00 hs',
     duration: '90 min',
     club: 'Complejo La Terraza Pádel',
+    courtName: 'Cancha 2',
     image: '/images/cancha-exterior.jpg',
     imageAlt: 'Cancha de pádel del complejo La Terraza',
     address: 'Camino Centenario 352 y 72',
@@ -151,10 +160,10 @@ export const MATCHES: MatchPreview[] = [
     price: '$4.800',
     openSpots: 0,
     players: [
-      { initials: 'FD', name: 'Franco S.', level: '4ta', tone: 'mint' },
-      { initials: 'DM', name: 'Damián L.', level: '4ta', tone: 'lavender' },
-      { initials: 'AS', name: 'Agustín B.', level: '4ta', tone: 'peach' },
-      { initials: 'MR', name: 'Mariano Z.', level: '4ta', tone: 'mint' },
+      { initials: 'FD', name: 'Franco S.', level: '4ta', tone: 'mint', position: 'Drive' },
+      { initials: 'DM', name: 'Damián L.', level: '4ta', tone: 'lavender', position: 'Revés' },
+      { initials: 'AS', name: 'Agustín B.', level: '4ta', tone: 'peach', position: 'Drive' },
+      { initials: 'MR', name: 'Mariano Z.', level: '4ta', tone: 'mint', position: 'Revés' },
     ],
     features: ['Techado', 'Estacionamiento'],
   },
@@ -164,6 +173,7 @@ export const MATCHES: MatchPreview[] = [
     time: '22:30 hs',
     duration: '90 min',
     club: 'Club La Cumbre Pádel',
+    courtName: 'Cancha 1',
     image: '/images/cancha-exterior.jpg',
     imageAlt: 'Cancha panorámica de pádel en Gonnet',
     address: 'Camino Belgrano y 489',
@@ -172,8 +182,8 @@ export const MATCHES: MatchPreview[] = [
     price: '$4.200',
     openSpots: 2,
     players: [
-      { initials: 'NP', name: 'Nicolás P.', level: '5ta', tone: 'lavender' },
-      { initials: 'SL', name: 'Sofía L.', level: '5ta', tone: 'peach' },
+      { initials: 'NP', name: 'Nicolás P.', level: '5ta', tone: 'lavender', position: 'Drive' },
+      { initials: 'SL', name: 'Sofía L.', level: '5ta', tone: 'peach', position: 'Revés' },
     ],
     features: ['Panorámica', 'Iluminación'],
   },
