@@ -4,6 +4,7 @@ import { LandingPage } from './landing.page';
 import { MatchSearchPage } from './match-search.page';
 import { ClubDirectoryPage } from './club-directory.page';
 import { routes } from '../app.routes';
+import { CreateMatchModalStore } from '../create-match/create-match-modal.store';
 
 describe('HU-00: landing pública', () => {
   beforeEach(async () => {
@@ -113,6 +114,19 @@ describe('HU-00: landing pública', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-demo-links]')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('abre el modal de reserva desde el botón principal del inicio', () => {
+    const fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+    const store = TestBed.inject(CreateMatchModalStore);
+    const action = fixture.nativeElement.querySelector('.create-banner__primary') as HTMLButtonElement;
+
+    expect(action.textContent).toContain('Crear un nuevo partido');
+    expect(store.isOpen()).toBe(false);
+    action.click();
+    expect(store.isOpen()).toBe(true);
     fixture.destroy();
   });
 

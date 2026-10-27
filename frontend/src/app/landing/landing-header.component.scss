@@ -83,6 +83,9 @@ nav a.is-active {
   font-size: 0.62rem;
   font-weight: 800;
   white-space: nowrap;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 .create-match-link:hover {
   background: #07865f;

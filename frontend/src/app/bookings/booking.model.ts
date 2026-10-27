@@ -14,8 +14,20 @@ export interface BookingRecord {
   kind: BookingKind;
   holderName: string;
   holderPhone: string;
+  /** Datos de una reserva completa creada localmente por HU-06. */
+  reservation?: ReservationGroup;
   /** Solo en partidos pendientes. */
   pendingMatch?: PendingMatchInfo;
+}
+
+export interface ReservationGroup {
+  responsibleName: string;
+  contactPhone: string;
+  players: [string, string, string, string];
+  preferences?: {
+    category: string;
+    gender: string;
+  };
 }
 
 export interface PendingMatchInfo {

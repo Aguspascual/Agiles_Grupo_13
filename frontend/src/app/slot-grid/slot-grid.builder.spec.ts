@@ -1,5 +1,6 @@
 import { AvailabilitySlot } from '../availability/availability.model';
 import { BookingRecord } from '../bookings/booking.model';
+import { BookingPreviewStore, demoBookingFor } from '../bookings/booking-preview.store';
 import { buildDayGrid, hasStarted, layoutFor, placementFor } from './slot-grid.builder';
 import { GridCourt, GridSlot } from './slot-grid.model';
 
@@ -37,6 +38,30 @@ function booking(slotId: string, kind: BookingRecord['kind']): BookingRecord {
 }
 
 describe('HU-05: armado de la grilla de turnos', () => {
+  it('muestra como reservado un slot creado con el store de HU-06', () => {
+    const store = new BookingPreviewStore();
+    const candidate = Array.from({ length: 100 }, (_, index) => slot(
+      'court-1', `${String(8 + Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}`,
+      `${String(9 + Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}`,
+    )).find((item) => !demoBookingFor(item));
+    expect(candidate).toBeDefined();
+    store.reserve(candidate!, {
+      responsibleName: 'Ana Martínez', contactPhone: '221 555-0101',
+      players: ['Ana Martínez', 'Mateo Ruiz', 'Lucía Díaz', 'Juan Pérez'],
+    });
+
+    const grid = buildDayGrid({
+      complex,
+      courts: [{ id: 'court-1', name: 'Cancha 1', covered: true }],
+      date,
+      now: new Date(2026, 9, 23, 9, 0),
+      slotsFor: () => [candidate!],
+      bookingFor: (ref) => store.bookingFor(ref),
+    });
+
+    expect(grid.courts[0].slots[0].state).toBe('reserved');
+  });
+
   it('combina horarios, bloqueos, reservas y clases con la prioridad correcta', () => {
     const slots = [
       slot('court-1', '18:00', '19:30'),

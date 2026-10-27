@@ -13,6 +13,11 @@ export const routes: Routes = [
   },
   { path: 'partidos', component: MatchSearchPage, title: 'Buscar partidos | PádelMatch' },
   {
+    path: 'partidos/crear',
+    loadComponent: () => import('./create-match/create-match-route.component').then((page) => page.CreateMatchRouteComponent),
+    title: 'Crear partido | PádelMatch',
+  },
+  {
     path: 'clubes',
     loadComponent: () =>
       import('./landing/club-directory.page').then((page) => page.ClubDirectoryPage),

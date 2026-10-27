@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ClubCardComponent } from './club-card.component';
@@ -13,6 +13,7 @@ import {
 } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { CreateMatchModalStore } from '../create-match/create-match-modal.store';
 
 @Component({
   selector: 'app-landing-page',
@@ -27,6 +28,7 @@ import { MatchCardComponent } from './match-card.component';
   templateUrl: './landing.page.html',
 })
 export class LandingPage {
+  private readonly createMatchModal = inject(CreateMatchModalStore);
   readonly zones = ZONES;
   readonly levels = LEVELS;
   readonly recommendedMatches = RECOMMENDED_MATCHES;
@@ -42,6 +44,10 @@ export class LandingPage {
   level = '5ta';
   date = 'Hoy (Tarde/Noche)';
   activeFilter = 'Todos (42)';
+
+  openCreateMatch(): void {
+    this.createMatchModal.open();
+  }
 
   get availableMatches(): MatchPreview[] {
     if (this.activeFilter === 'Urgentes: falta 1')

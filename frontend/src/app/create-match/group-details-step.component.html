@@ -1,0 +1,48 @@
+<section class="roster-section" aria-labelledby="roster-heading" [formGroup]="form">
+  <div class="roster-heading">
+    <h3 id="roster-heading"><span>5</span> Alineación y cupos</h3>
+    <span class="roster-status">{{ playerCount() }}/4 jugadores</span>
+  </div>
+  <input type="hidden" formControlName="responsibleName" />
+  <input type="hidden" formControlName="contactPhone" />
+  <input type="hidden" formControlName="player1" />
+  <div class="account-holder" aria-label="Responsable de la reserva">
+    <span class="account-avatar" aria-hidden="true">LM</span>
+    <span><small>Responsable de la reserva · Tu cuenta</small><strong>{{ accountName() }}</strong></span>
+    <span class="account-badge">Reservás vos</span>
+  </div>
+  <div class="teams-grid">
+    <section class="team-card" aria-label="Equipo 1, tu lado">
+      <div class="team-heading"><h4>Equipo 1 <span>(tu lado)</span></h4><span>Drive &amp; Revés</span></div>
+      <div class="player-card player-card--organizer">
+        <span class="player-avatar" aria-hidden="true">LM</span>
+        <span class="player-entry"><small>Jugador 1 · Organizador (vos)</small><strong>{{ accountName() }}</strong></span>
+        <span class="player-check" aria-hidden="true">✓</span>
+      </div>
+      <label class="player-card">
+        <span class="player-avatar" aria-hidden="true">＋</span>
+        <span class="player-entry"><small>Jugador 2</small>
+          <input formControlName="player2" autocomplete="off" placeholder="Nombre y apellido" aria-label="Nombre del jugador 2" />
+          @if (form.controls.player2.touched && form.controls.player2.invalid) { <small class="field-error" role="alert">Completá el nombre.</small> }
+        </span>
+      </label>
+    </section>
+    <section class="team-card" aria-label="Equipo 2, rivales">
+      <div class="team-heading"><h4>Equipo 2 <span>(rivales)</span></h4><span>Por confirmar</span></div>
+      <label class="player-card">
+        <span class="player-avatar" aria-hidden="true">＋</span>
+        <span class="player-entry"><small>Jugador 3</small>
+          <input formControlName="player3" autocomplete="off" placeholder="Nombre y apellido" aria-label="Nombre del jugador 3" />
+          @if (form.controls.player3.touched && form.controls.player3.invalid) { <small class="field-error" role="alert">Completá el nombre.</small> }
+        </span>
+      </label>
+      <label class="player-card">
+        <span class="player-avatar" aria-hidden="true">＋</span>
+        <span class="player-entry"><small>Jugador 4</small>
+          <input formControlName="player4" autocomplete="off" placeholder="Nombre y apellido" aria-label="Nombre del jugador 4" />
+          @if (form.controls.player4.touched && form.controls.player4.invalid) { <small class="field-error" role="alert">Completá el nombre.</small> }
+        </span>
+      </label>
+    </section>
+  </div>
+</section>

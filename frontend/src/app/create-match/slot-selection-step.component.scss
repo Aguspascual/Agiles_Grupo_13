@@ -1,0 +1,52 @@
+:host { display: grid; gap: 1.35rem; }
+.booking-location, .booking-availability { display: grid; gap: .75rem; }
+.booking-section-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.booking-section-heading h3 { display: flex; align-items: center; gap: .55rem; margin: 0; color: #182332; font-size: .98rem; font-weight: 800; }
+.booking-section-heading h3 > span { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #e8e9ff; color: #087658; font-size: .72rem; }
+.booking-section-heading > small { color: #687276; font-size: .74rem; }
+.map-link { border: 0; background: transparent; color: #07835e; font: inherit; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.location-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.location-fields label, .date-input, .complex-field { display: grid; gap: .38rem; color: #48535a; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.complex-field { min-width: 0; position: relative; }
+.complex-select { position: relative; z-index: 2; text-transform: none; letter-spacing: 0; }
+.complex-select summary { min-height: 43px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; border: 1px solid #d8e1dc; border-radius: 9px; background: #fff; color: #27313e; padding: .35rem .75rem; cursor: pointer; list-style: none; transition: border-color .16s ease, box-shadow .16s ease; }
+.complex-select summary::-webkit-details-marker { display: none; }
+.complex-select summary:hover, .complex-select[open] summary { border-color: #13865d; box-shadow: 0 0 0 3px #13865d18; }
+.complex-current { min-width: 0; display: grid; gap: .12rem; }
+.complex-current strong { overflow: hidden; color: #27313e; font-size: .8rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.complex-current small { overflow: hidden; color: #68756d; font-size: .65rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.complex-select summary svg { flex: 0 0 18px; width: 18px; height: 18px; fill: none; stroke: #52635a; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .16s ease; }
+.complex-select[open] summary svg { transform: rotate(180deg); }
+.complex-options { position: absolute; z-index: 5; top: calc(100% + 6px); right: 0; left: 0; display: grid; gap: 4px; max-height: 230px; overflow-y: auto; padding: 6px; border: 1px solid #d8e1dc; border-radius: 12px; background: #fff; box-shadow: 0 14px 30px #1733241a; animation: complex-menu-in .16s ease-out both; }
+.complex-options button { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: .6rem; border: 0; border-radius: 8px; background: transparent; color: #34443a; padding: .55rem .6rem; text-align: left; cursor: pointer; }
+.complex-options button:hover, .complex-options button[aria-selected="true"] { background: #eaf5ee; color: #08724f; }
+.complex-options button > span:first-child { min-width: 0; display: grid; gap: .16rem; }
+.complex-options strong { font-size: .76rem; }
+.complex-options small { overflow: hidden; color: #6b7970; font-size: .64rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.complex-check { color: #087e5d; font-size: .88rem; font-weight: 900; }
+select, input { width: 100%; min-width: 0; min-height: 43px; border: 1px solid #e0e3ef; border-radius: 9px; background: #fff; padding: 0 .75rem; color: #27313e; font: 500 .82rem 'Plus Jakarta Sans', sans-serif; text-transform: none; letter-spacing: 0; }
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid #36bd91; outline-offset: 2px; }
+.complex-select summary:focus-visible, .complex-options button:focus-visible { outline: 3px solid #36bd91; outline-offset: 2px; }
+.date-input input[type="date"] { color-scheme: light; }
+.date-input input[type="date"]::-webkit-calendar-picker-indicator { filter: brightness(0); opacity: .92; cursor: pointer; }
+.date-controls { display: flex; align-items: end; justify-content: space-between; gap: .8rem; }
+.quick-dates { display: flex; flex-wrap: wrap; gap: .5rem; }
+.quick-dates button { min-height: 38px; border: 1px solid #e3e5f2; border-radius: 9px; background: #f1f1ff; color: #34404c; padding: 0 .8rem; font: 700 .75rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+.quick-dates button.is-active { border-color: #07835e; background: #07835e; color: #fff; }
+.date-input { width: min(190px, 42%); }
+.available-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .7rem; margin-top: .15rem; }
+.available-heading h4 { margin: 0; color: #313e48; font-size: .84rem; font-weight: 800; }
+.available-heading > span { color: #737d82; font-size: .72rem; }
+.available-slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; }
+.available-slot { min-width: 0; min-height: 66px; display: grid; align-content: center; gap: .22rem; border: 1px dashed #d0d5e3; border-radius: 10px; background: #f2f2ff; color: #29343e; padding: .6rem .7rem; text-align: left; cursor: pointer; transition: border-color .17s ease, background .17s ease, box-shadow .17s ease; }
+.available-slot b { color: #1e2938; font-size: .8rem; }
+.available-slot span { color: #6b7479; font-size: .65rem; }
+.available-slot small { color: #087658; font-size: .65rem; font-weight: 800; }
+.available-slot:hover { border-color: #20a778; }
+.available-slot.is-selected { border-style: solid; border-color: #07835e; background: #e6f8ef; box-shadow: inset 0 0 0 1px #07835e; }
+.availability-message { margin: .1rem 0; color: #66717b; font-size: .8rem; }
+.retry-button { justify-self: start; min-height: 38px; border: 1px solid #d8e1db; border-radius: 8px; background: #fff; color: #087e5d; padding: 0 .8rem; font: inherit; font-size: .75rem; font-weight: 800; cursor: pointer; }
+@media (max-width: 680px) { .location-fields { grid-template-columns: 1fr; } .available-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); } .date-controls { align-items: stretch; flex-direction: column; } .date-input { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .available-slot { transition: none; } }
+@keyframes complex-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .complex-options, .complex-select summary, .complex-select summary svg { animation: none; transition: none; } }

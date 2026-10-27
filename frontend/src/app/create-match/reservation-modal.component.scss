@@ -1,0 +1,59 @@
+:host { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+app-toast { pointer-events: auto; }
+.reservation-dialog { width: min(1120px, calc(100vw - 32px)); max-width: none; max-height: 85vh; margin: auto; padding: 0; overflow: hidden; border: 0; border-radius: 20px; background: #fff; color: #182332; box-shadow: 0 24px 70px #171d2a3d; pointer-events: auto; }
+.reservation-dialog[open] { display: flex; flex-direction: column; animation: modal-enter 1s ease-out both; }
+.reservation-dialog[open].is-closing { animation: modal-exit 1s ease-in both; }
+.reservation-dialog::backdrop { background: #1f263b55; backdrop-filter: blur(8px); }
+.reservation-modal { position: relative; min-height: 0; display: flex; flex: 1; flex-direction: column; }
+.modal-header { flex: 0 0 auto; display: flex; align-items: center; gap: .9rem; padding: 1.15rem 1.6rem .9rem; }
+.modal-title-icon { flex: 0 0 48px; display: grid; width: 48px; height: 48px; place-items: center; border-radius: 13px; background: #e9e9ff; color: #087e5d; }
+.modal-title-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.modal-header h2 { flex: 1; margin: 0; color: #172334; font-size: 1.35rem; font-weight: 800; letter-spacing: -.04em; }
+.modal-header h2:focus { outline: none; }
+.modal-close { flex: 0 0 40px; display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #4f5a5f; cursor: pointer; }
+.modal-close:hover { background: #f0f0ff; color: #172334; }
+.modal-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .25rem 1.6rem 1.15rem; display: grid; gap: 1.3rem; scrollbar-width: none; }
+.modal-content::-webkit-scrollbar { display: none; }
+.section-title-row { display: flex; align-items: center; gap: .6rem; margin-bottom: .65rem; }
+.section-title-row h3 { display: flex; align-items: center; gap: .55rem; margin: 0; color: #182332; font-size: .98rem; font-weight: 800; }
+.section-title-row h3 > span { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #e8e9ff; color: #087658; font-size: .72rem; }
+.mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.mode-card { min-height: 68px; display: flex; align-items: center; gap: .6rem; border: 1px solid #e1e4ef; border-radius: 13px; background: #fff; color: #26333e; padding: .55rem .75rem; text-align: left; cursor: pointer; transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.mode-card.is-active { border-color: #bfc4ef; background: #f0f0ff; box-shadow: inset 0 0 0 1px #dedfff; }
+.mode-icon { flex: 0 0 30px; display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #e5e6ff; color: #087e5d; font-weight: 900; }
+.mode-copy { min-width: 0; display: grid; gap: .2rem; }
+.mode-copy b { color: #202d38; font-size: .82rem; }
+.mode-copy small { color: #53616a; font-size: .73rem; font-weight: 700; }
+.mode-copy > span { color: #657078; font-size: .67rem; line-height: 1.4; }
+.modal-alert { margin: 0; border-radius: 9px; background: #fff3e7; color: #83431d; padding: .7rem .85rem; font-size: .77rem; }
+.validation-alert { flex: 0 0 auto; margin: 0 1.6rem; }
+.modal-alert.is-success { background: #e5f7ee; color: #087658; }
+.success-actions { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-radius: 11px; background: #e8f7ef; padding: .75rem .9rem; }
+.success-actions h3 { margin: 0; color: #096c4e; font-size: .85rem; }
+.success-actions button { min-height: 36px; border: 1px solid #95d3ba; border-radius: 8px; background: #fff; color: #087658; padding: 0 .7rem; font: inherit; font-size: .72rem; font-weight: 800; cursor: pointer; }
+.modal-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: #f0f0ff; padding: .9rem 1.6rem; }
+.modal-footer > p { display: flex; align-items: center; gap: .5rem; margin: 0; color: #4b585f; font-size: .68rem; font-weight: 700; }
+.modal-footer > p > span { color: #087e5d; font-size: 1rem; }
+.footer-actions { display: flex; flex: 0 0 auto; gap: .65rem; }
+.footer-actions button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 0; border-radius: 9px; padding: 0 1rem; font: 800 .82rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+.cancel-button { background: #e6e7fb; color: #26313c; }
+.confirm-button { min-width: 280px; background: #10b981; color: #fff; box-shadow: 0 5px 12px #087e5d24; transition: background .16s ease, transform .16s ease, opacity .16s ease; }
+.confirm-button:hover:not(:disabled) { background: #079a6b; transform: translateY(-1px); }
+.confirm-button:disabled { cursor: not-allowed; opacity: .48; box-shadow: none; }
+.confirm-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+button:focus-visible { outline: 3px solid #36bd91; outline-offset: 2px; }
+@keyframes modal-enter { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes modal-exit { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(12px) scale(.985); } }
+.confirmation-overlay { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 1.25rem; background: #18233261; backdrop-filter: blur(5px); }
+.confirmation-prompt { width: min(440px, 100%); display: grid; justify-items: center; gap: .8rem; border: 1px solid #e5ede8; border-radius: 18px; background: #fff; padding: 1.6rem; text-align: center; box-shadow: 0 20px 60px #17233433; }
+.confirmation-icon { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 50%; background: #e5f7ee; color: #087e5d; font-size: 1.55rem; font-weight: 900; }
+.confirmation-prompt h2 { margin: 0; color: #182332; font-size: 1.25rem; letter-spacing: -.03em; }
+.confirmation-prompt p { margin: 0; color: #53616a; font-size: .9rem; line-height: 1.5; }
+.confirmation-actions { width: 100%; display: flex; justify-content: flex-end; gap: .65rem; margin-top: .3rem; }
+.confirmation-actions button { min-height: 44px; border-radius: 9px; padding: 0 .9rem; font: 800 .78rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+.confirmation-actions .cancel-button { border: 1px solid #e1e4ef; }
+.confirmation-actions .confirm-button { min-width: 0; flex: 1; }
+@media (max-width: 700px) { .reservation-dialog { width: 100vw; max-height: 100dvh; height: 100dvh; border-radius: 0; } .modal-header { padding: .8rem 1rem; } .modal-content { padding: .2rem 1rem .8rem; } .modal-footer { align-items: stretch; flex-direction: column; padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom)); } .footer-actions { display: grid; grid-template-columns: minmax(90px, .6fr) 1.5fr; } .footer-actions button { min-width: 0; padding: 0 .55rem; font-size: .69rem; } }
+@media (max-width: 480px) { .mode-options { grid-template-columns: 1fr; } .modal-header h2 { font-size: 1.15rem; } .modal-title-icon { flex-basis: 42px; width: 42px; height: 42px; } .modal-footer > p { font-size: .62rem; } .confirmation-overlay { padding: .75rem; } .confirmation-prompt { padding: 1.2rem; } .confirmation-actions button { padding: 0 .65rem; } }
+@media (prefers-reduced-motion: reduce) { .reservation-dialog[open] { animation: none; } .mode-card, .confirm-button { transition: none; } }

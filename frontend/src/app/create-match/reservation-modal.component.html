@@ -1,0 +1,63 @@
+<dialog #dialog class="reservation-dialog" [class.is-closing]="isClosing()" aria-labelledby="reservation-title"
+  (cancel)="onCancel($event)" (click)="onBackdropClick($event)" (close)="onDialogClosed()">
+  @if (modal.isOpen()) {
+    <div class="reservation-modal">
+      <header class="modal-header">
+          <span class="modal-title-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+          </span>
+          <h2 id="reservation-title" tabindex="-1">Crear Nuevo Partido</h2>
+          <button class="modal-close" type="button" aria-label="Cerrar modal" (click)="close()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+          </button>
+      </header>
+      <div class="modal-content">
+          <section class="mode-section" aria-labelledby="mode-heading">
+            <div class="section-title-row"><h3 id="mode-heading"><span>1</span> Modalidad de convocatoria</h3></div>
+            <div class="mode-options">
+              <button type="button" class="mode-card" [class.is-active]="mode() === 'complete'"
+                [attr.aria-pressed]="mode() === 'complete'" (click)="setMode('complete')">
+                <span class="mode-icon" aria-hidden="true">✓</span>
+                <span class="mode-copy"><b>Partido Completo</b><small>Tengo mis 4 jugadores</small></span>
+              </button>
+              <button type="button" class="mode-card" [class.is-active]="mode() === 'open'"
+                [attr.aria-pressed]="mode() === 'open'" (click)="setMode('open')">
+                <span class="mode-icon" aria-hidden="true">＋</span>
+                <span class="mode-copy"><b>Partido Abierto</b><small>Buscando compañeros o rivales</small></span>
+              </button>
+            </div>
+          </section>
+          <app-slot-selection-step [initialSelection]="null" (selectionChange)="onSelectionChange($event)" />
+          <app-match-preferences (preferencesChange)="onPreferencesChange($event)" />
+          <app-group-details-step [initialGroup]="null" (groupChange)="onGroupChange($event)" />
+          <app-reservation-cost-summary />
+      </div>
+      @if (message()) { <p class="modal-alert validation-alert" role="alert">{{ message() }}</p> }
+      <footer class="modal-footer">
+          <p><span aria-hidden="true">ⓘ</span> Cancelación gratuita hasta 4 horas antes del turno.</p>
+          <div class="footer-actions">
+            <button class="cancel-button" type="button" (click)="close()">Cancelar</button>
+            <button class="confirm-button" type="button" [disabled]="!canConfirm()" (click)="confirm()">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 20c0-3.2 2.8-5 7-5M18 14v7M14.5 17.5h7"/></svg>
+              Confirmar y registrar partido
+            </button>
+          </div>
+      </footer>
+      @if (status() === 'confirming') {
+        <div class="confirmation-overlay">
+          <section class="confirmation-prompt" role="alertdialog" aria-modal="true"
+            aria-labelledby="confirm-registration-title" aria-describedby="confirm-registration-question">
+            <span class="confirmation-icon" aria-hidden="true">?</span>
+            <h2 id="confirm-registration-title">Confirmar turno</h2>
+            <p id="confirm-registration-question">{{ confirmationQuestion() }}</p>
+            <div class="confirmation-actions">
+              <button class="cancel-button" type="button" (click)="cancelConfirmation()">Volver</button>
+              <button #confirmRegistrationButton class="confirm-button" type="button" (click)="register()">Sí, registrar turno</button>
+            </div>
+          </section>
+        </div>
+      }
+    </div>
+  }
+</dialog>
+<app-toast [message]="toastMessage()" (dismiss)="dismissToast()" />

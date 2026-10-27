@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { BookingRecord, PendingMatchInfo } from './booking.model';
+import { BookingRecord, PendingMatchInfo, ReservationGroup } from './booking.model';
 
 /** Datos mínimos de un turno para buscar su reserva. */
 export interface SlotRef {
@@ -8,6 +8,10 @@ export interface SlotRef {
   date: string;
   startsAt: string;
 }
+
+export type ReservationResult =
+  | { status: 'created'; booking: BookingRecord }
+  | { status: 'conflict' };
 
 const DEMO_LEVELS = ['8va', '7ma', '6ta', '5ta', '4ta', '3ra'];
 const DEMO_HOLDERS = [
@@ -38,6 +42,46 @@ export class BookingPreviewStore {
 
   bookingFor(slot: SlotRef): BookingRecord | null {
     return this.created().find((booking) => booking.slotId === slot.id) ?? demoBookingFor(slot);
+  }
+
+  reserve(slot: SlotRef, group: ReservationGroup): ReservationResult {
+    if (this.bookingFor(slot)) return { status: 'conflict' };
+
+    const booking: BookingRecord = {
+      id: `local:${slot.id}`,
+      slotId: slot.id,
+      courtId: slot.courtId,
+      date: slot.date,
+      startsAt: slot.startsAt,
+      kind: 'full',
+      holderName: group.responsibleName,
+      holderPhone: group.contactPhone,
+      reservation: {
+        ...group,
+        players: [group.players[0], group.players[1], group.players[2], group.players[3]],
+        preferences: group.preferences ? { ...group.preferences } : undefined,
+      },
+    };
+    this.created.update((bookings) => [...bookings, booking]);
+    return { status: 'created', booking };
+  }
+
+  reserveOpen(slot: SlotRef, holderName: string, level: string): ReservationResult {
+    if (this.bookingFor(slot)) return { status: 'conflict' };
+
+    const booking: BookingRecord = {
+      id: `local:${slot.id}`,
+      slotId: slot.id,
+      courtId: slot.courtId,
+      date: slot.date,
+      startsAt: slot.startsAt,
+      kind: 'pending',
+      holderName,
+      holderPhone: '',
+      pendingMatch: { missingPlayers: 3, level },
+    };
+    this.created.update((bookings) => [...bookings, booking]);
+    return { status: 'created', booking };
   }
 }
 

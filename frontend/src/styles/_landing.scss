@@ -427,7 +427,8 @@
     flex: 0 0 auto;
     gap: 7px;
   }
-  .create-banner__actions a {
+  .create-banner__actions a,
+  .create-banner__actions button {
     min-height: 30px;
     padding: 0 12px;
     display: inline-flex;
@@ -436,6 +437,9 @@
     border-radius: 5px;
     font-size: 0.51rem;
     font-weight: 800;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
   }
   .create-banner__primary {
     background: #09b57e;
@@ -598,7 +602,8 @@
       width: 100%;
       flex-wrap: wrap;
     }
-    .create-banner__actions a {
+    .create-banner__actions a,
+    .create-banner__actions button {
       justify-content: center;
     }
     .create-banner__primary {

@@ -1,0 +1,30 @@
+<section class="preferences-section" aria-labelledby="preferences-heading">
+  <div class="section-title-row">
+    <h3 id="preferences-heading"><span>4</span> Nivel de juego y modalidad</h3>
+    <span class="apa-label">Categorías APA La Plata</span>
+  </div>
+  <fieldset>
+    <legend>Categoría objetivo</legend>
+    <div class="option-pills">
+      @for (level of categories; track level) {
+        <button type="button" [class.is-active]="category() === level"
+          [attr.aria-pressed]="category() === level" (click)="updateCategory(level)">
+          {{ level === 'Nivel flexible (5ta a 6ta)' ? 'Nivel Flexible (5ta a 6ta)' : level + ' División' }}
+          @if (level === '5ta' && category() === level) { <small>Tu nivel</small> }
+        </button>
+      }
+    </div>
+  </fieldset>
+  <div class="preference-columns">
+    <fieldset>
+      <legend>Modalidad de género</legend>
+      <div class="segmented-control" role="group" aria-label="Modalidad de género">
+        @for (option of ['Masculino', 'Femenino', 'Mixto']; track option) {
+          <button type="button" [class.is-active]="gender() === option"
+            [attr.aria-pressed]="gender() === option"
+            (click)="updateGender($any(option))">{{ option }}</button>
+        }
+      </div>
+    </fieldset>
+  </div>
+</section>

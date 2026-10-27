@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { CreateMatchModalStore } from '../create-match/create-match-modal.store';
 
 @Component({
   selector: 'app-landing-header',
@@ -25,9 +26,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         >
       </nav>
       <div class="header-actions">
-        <a class="create-match-link" routerLink="/partidos"
-          ><span aria-hidden="true">+</span> Crear partido</a
-        >
+        <button class="create-match-link" type="button" (click)="openCreateMatch()">
+          <span aria-hidden="true">+</span> Crear partido
+        </button>
         <a class="notification-link" routerLink="/ingresar" aria-label="Notificaciones"
           ><svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
@@ -45,4 +46,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   `,
   styleUrl: './landing-header.component.scss',
 })
-export class LandingHeaderComponent {}
+export class LandingHeaderComponent {
+  private readonly createMatchModal = inject(CreateMatchModalStore);
+
+  openCreateMatch(): void {
+    this.createMatchModal.open();
+  }
+}

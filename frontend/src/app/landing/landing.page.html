@@ -171,9 +171,10 @@
       >
     </div>
     <div class="create-banner__actions">
-      <a routerLink="/partidos" class="create-banner__primary"
-        ><span aria-hidden="true">⊕</span> Crear un nuevo partido</a
-      ><a routerLink="/partidos" class="create-banner__secondary">Ver calendario completo</a>
+      <button type="button" class="create-banner__primary" (click)="openCreateMatch()">
+        <span aria-hidden="true">⊕</span> Crear un nuevo partido
+      </button>
+      <a routerLink="/partidos" class="create-banner__secondary">Ver calendario completo</a>
     </div>
   </section>
 

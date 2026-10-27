@@ -1,0 +1,81 @@
+<section class="booking-location" aria-labelledby="location-heading">
+  <div class="booking-section-heading">
+    <h3 id="location-heading"><span>2</span> Club y tipo de pista</h3>
+  </div>
+  <div class="location-fields">
+    <div class="complex-field">
+      <span id="complex-label">Complejo deportivo</span>
+      <details #complexMenu class="complex-select">
+        <summary aria-labelledby="complex-label" aria-haspopup="listbox">
+          <span class="complex-current">
+            <strong>{{ selectedComplex()?.name ?? 'Seleccioná un complejo' }}</strong>
+            @if (selectedComplex()) { <small>{{ selectedComplex()?.zone }} · {{ selectedComplex()?.address }}</small> }
+          </span>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
+        </summary>
+        <div class="complex-options" role="listbox" aria-labelledby="complex-label">
+        @for (complex of complexes(); track complex.id) {
+          <button type="button" role="option" [attr.aria-selected]="complex.id === complexId()"
+            (click)="selectComplex(complex.id)">
+            <span><strong>{{ complex.name }}</strong><small>{{ complex.zone }} · {{ complex.address }}</small></span>
+            @if (complex.id === complexId()) { <span class="complex-check" aria-hidden="true">✓</span> }
+          </button>
+        }
+        </div>
+      </details>
+    </div>
+    <label>
+      <span>Superficie / pista</span>
+      <select [value]="courtId()" [disabled]="!courts().length"
+        (change)="changeCourt($any($event.target).value)">
+        @for (court of courts(); track court.id) {
+          <option [value]="court.id">{{ court.name }} · {{ court.covered ? 'Techada' : 'Descubierta' }}</option>
+        }
+      </select>
+    </label>
+  </div>
+</section>
+
+<section class="booking-availability" aria-labelledby="availability-heading">
+  <div class="booking-section-heading">
+    <h3 id="availability-heading"><span>3</span> Fecha y horario</h3>
+  </div>
+  <div class="date-controls">
+    <div class="quick-dates" aria-label="Fechas rápidas">
+      @if (dateKey() === minDate) {
+        <button type="button" class="is-active" (click)="selectQuickDate(minDate)">Hoy · {{ dateLabel() }}</button>
+      }
+    </div>
+    <label class="date-input">
+      <input type="date" aria-label="Seleccionar otra fecha" [min]="minDate" [max]="maxDate" [value]="dateKey()"
+        (change)="changeDate($any($event.target).value)" />
+    </label>
+  </div>
+
+  <div class="available-heading">
+    <h4>Horarios disponibles para {{ grid()?.complex?.name }}</h4>
+    @if (grid()) { <span>{{ dateLabel() }}</span> }
+  </div>
+  @if (state().status === 'loading') {
+    <p class="availability-message" role="status">Buscando horarios…</p>
+  } @else if (state().status === 'error') {
+    <p class="availability-message" role="alert">No pudimos cargar los horarios. Probá de nuevo.</p>
+    <button type="button" class="retry-button" (click)="changeComplex(complexId())">Reintentar</button>
+  } @else if (state().status === 'not-found') {
+    <p class="availability-message">Elegí un complejo para consultar sus horarios.</p>
+  } @else if (availableSlots().length) {
+    <div class="available-slots" aria-label="Horarios disponibles">
+      @for (slot of availableSlots(); track slot.id) {
+        <button type="button" class="available-slot"
+          [class.is-selected]="selectedSlotId() === slot.id"
+          [attr.aria-pressed]="selectedSlotId() === slot.id"
+          (click)="chooseSlot(slot)">
+          <b>{{ slot.startsAt }} a {{ slot.endsAt }} hs</b>
+          @if (selectedSlotId() === slot.id) { <small>Seleccionado</small> }
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="availability-message">No hay horarios disponibles para esta cancha y fecha.</p>
+  }
+</section>
