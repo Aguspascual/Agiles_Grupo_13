@@ -1,0 +1,55 @@
+name: agiles-grupo13-backend
+
+x-postgres: &postgres
+  image: postgres:17.11-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+  command: ["postgres", "-c", "timezone=America/Argentina/Buenos_Aires"]
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U padelmatch -d $$POSTGRES_DB"]
+    interval: 2s
+    timeout: 3s
+    retries: 30
+    start_period: 5s
+
+services:
+  postgres-dev:
+    <<: *postgres
+    environment:
+      POSTGRES_USER: padelmatch
+      POSTGRES_DB: padelmatch
+      POSTGRES_PASSWORD_FILE: /run/secrets/dev_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      TZ: America/Argentina/Buenos_Aires
+      PGTZ: America/Argentina/Buenos_Aires
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    secrets:
+      - dev_password
+
+  postgres-test:
+    <<: *postgres
+    profiles: [test]
+    environment:
+      POSTGRES_USER: padelmatch
+      POSTGRES_DB: padelmatch_test
+      POSTGRES_PASSWORD_FILE: /run/secrets/test_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      TZ: America/Argentina/Buenos_Aires
+      PGTZ: America/Argentina/Buenos_Aires
+    ports:
+      - "127.0.0.1:15433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    secrets:
+      - test_password
+
+volumes:
+  postgres-dev-data:
+    name: agiles-grupo13-backend-postgres-dev-data
+
+secrets:
+  dev_password:
+    file: ./.local/postgres-dev-password
+  test_password:
+    file: ./.local/postgres-test-password

@@ -14,6 +14,9 @@ Los [acuerdos backend](../docs/backend/AGENTS_BACK.md) reúnen el detalle de est
 
 ## Configuración
 
+Para preparar PostgreSQL local de desarrollo y una instancia independiente de
+pruebas descartables, consultar [PostgreSQL local](LOCAL.md).
+
 Definir `DATABASE_URL`, `JWT_SECRET` (secreto de al menos 32 bytes) y, opcionalmente, `PORT` (por defecto `8000`). Al iniciar, el servidor comprueba PostgreSQL y aplica la migración incluida.
 
 ```powershell
