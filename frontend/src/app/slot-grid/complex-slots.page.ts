@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, map, startWith, switchMap } from 'rxjs';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
+import { isPendingReplacementWindowOpen } from '../bookings/booking.model';
 import {
   addDays,
   capitalize,
@@ -77,7 +78,14 @@ export class ComplexSlotsPage {
 
   readonly grid = computed(() => {
     const state = this.state();
-    return state.status === 'ok' ? state.grid : null;
+    if (state.status !== 'ok') return null;
+    const replaced = new Set(this.replacedSlotIds());
+    return { ...state.grid, courts: state.grid.courts.map((court) => ({
+      ...court,
+      slots: court.slots.map((slot) => replaced.has(slot.id)
+        ? { ...slot, state: 'reserved' as const, pendingMatch: undefined }
+        : slot),
+    })) };
   });
 
   readonly dateLabel = computed(() => {
@@ -103,6 +111,9 @@ export class ComplexSlotsPage {
   });
 
   readonly selectedSlotId = signal<string | null>(null);
+  readonly replacedSlotIds = signal<string[]>([]);
+  readonly replaceDialogOpen = signal(false);
+  readonly replacementNotice = signal('');
   readonly selection = computed(() => {
     const id = this.selectedSlotId();
     for (const court of this.grid()?.courts ?? []) {
@@ -110,6 +121,13 @@ export class ComplexSlotsPage {
       if (slot) return { slot, courtName: court.name };
     }
     return null;
+  });
+
+  readonly canReplacePending = computed(() => {
+    const slot = this.selection()?.slot;
+    if (!slot || slot.state !== 'pending' || slot.isPast) return false;
+    const startsAt = new Date(`${this.dateKey()}T${slot.startsAt}:00`);
+    return isPendingReplacementWindowOpen(startsAt, this.clock());
   });
 
   constructor() {
@@ -131,6 +149,18 @@ export class ComplexSlotsPage {
 
   clearSelection(): void {
     this.selectedSlotId.set(null);
+  }
+
+  requestPendingReplacement(): void {
+    if (this.canReplacePending()) this.replaceDialogOpen.set(true);
+  }
+
+  confirmPendingReplacement(): void {
+    const slot = this.selection()?.slot;
+    if (!slot || !this.canReplacePending()) return;
+    this.replacedSlotIds.update((ids) => [...ids, slot.id]);
+    this.replaceDialogOpen.set(false);
+    this.replacementNotice.set('Turno reservado para el grupo. El partido pendiente fue cancelado.');
   }
 
   changeDate(key: string): void {
