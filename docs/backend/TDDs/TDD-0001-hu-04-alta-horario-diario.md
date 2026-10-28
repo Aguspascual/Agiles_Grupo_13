@@ -1,6 +1,6 @@
 ---
 id: "0001"
-estado: Borrador
+estado: Aprobado
 version: 1
 autor: "Pedro Moyano Amaya"
 fecha: "2026-10-22"
@@ -12,7 +12,8 @@ trello: "https://trello.com/c/PfnE8VXU"
 
 # TDD-0001: Alta de horario diario recurrente
 
-> Reglas RN-09 a RN-15 acordadas. El modelo, contrato y demás validaciones siguen propuestos; requieren aprobación antes de implementar. Ver [contrato común](README.md#hu-04-acuerdos-y-contrato-común-propuesto).
+> Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Implementación y límites: [HU-04 backend](../../../backend/HU-04.md). Las comprobaciones con reservas reales siguen pendientes.
+
 
 ## Contexto de Negocio (PRD)
 
@@ -23,14 +24,14 @@ Registrar las franjas de un día de la semana para una cancha, sin reemplazar lo
 - **Nombre / rol:** encargado de un complejo.
 - **Necesidad:** configurar, por ejemplo, los lunes de 09:00 a 13:00 y de 17:00 a 22:00, con turnos de 60 minutos.
 
-### Criterios de Aceptación propuestos
+### Criterios de Aceptación
 - **CA-01:** crear solo un día no configurado de una cancha y complejo activos. Permitir al encargado asignado a ese complejo y al administrador general (RN-12); denegar a otros roles o encargados ajenos.
 - **CA-02:** persistir juntas todas sus franjas y la duración del día; no modificar los otros días.
 - **CA-03:** exigir una duración de 60 o 90 minutos para nuevas reservas, común a todas las franjas del día ([RN-14](../../REGLAS-NEGOCIO.md)). Rechazar días duplicados, otras duraciones, horas inválidas y franjas superpuestas. Franjas contiguas sí se permiten; cada franja debe admitir al menos un turno.
 - **CA-04:** horas `00:00..23:59` del mismo día, con cierre posterior a apertura; no aceptar cruces de medianoche ([RN-11](../../REGLAS-NEGOCIO.md)). Si está habilitado, se propone exigir al menos una franja.
 - **CA-05:** un error no persiste parte del día; dos altas concurrentes del mismo día producen una sola configuración.
 
-## Diseño Técnico (RFC) propuesto
+## Diseño Técnico (RFC)
 
 ### Modelo de Datos
 - Entidad Go `ScheduleDay`; tabla propuesta `court_schedule_days`: `court_id` UUID FK a cancha, `weekday` entero `1..7`, `enabled` booleano, `duration_minutes` entero `60/90`, `revision` UUID. Unicidad `(court_id, weekday)`.
@@ -39,7 +40,7 @@ Registrar las franjas de un día de la semana para una cancha, sin reemplazar lo
 
 ### Contrato de API
 - **Endpoint:** `POST /api/v1/complexes/{complexId}/courts/{courtId}/weekly-schedule/days`.
-- Autenticación, permisos y formato de errores: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-propuesto).
+- Autenticación, permisos y formato de errores: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-aprobado).
 - **Request Body** (todos los campos mostrados son obligatorios; franjas sin IDs):
 
 ```json
@@ -84,4 +85,4 @@ Registrar las franjas de un día de la semana para una cancha, sin reemplazar lo
 1. Revisar las propuestas técnicas y aprobar documento y contrato frontend. Duraciones, permisos y diferencia entre deshabilitar y dar de baja ya están acordados.
 2. Red → Green de CA-03/04: duraciones, horas, contigüidad, solapamiento y datos faltantes.
 3. Red → Green HTTP de CA-01 y PostgreSQL real de CA-02/05: permisos, unicidad concurrente y rollback.
-4. Refactor con pruebas verdes; registrar comandos/resultados y trazabilidad en la PR. No hay ciclos ejecutados ni aprobación de implementación.
+4. Refactor con pruebas verdes; registrar comandos/resultados y trazabilidad en la PR. Los ciclos ejecutados y los límites de implementación están registrados en la documentación backend vinculada.

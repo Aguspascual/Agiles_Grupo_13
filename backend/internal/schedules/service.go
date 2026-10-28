@@ -23,6 +23,8 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("GET "+BasePath, s.list)
 	mux.HandleFunc("GET "+BasePath+"/{weekday}", s.get)
 	mux.HandleFunc("POST "+BasePath, s.create)
+	mux.HandleFunc("PUT "+BasePath+"/{weekday}", s.update)
+	mux.HandleFunc("DELETE "+BasePath+"/{weekday}", s.delete)
 	return mux
 }
 
@@ -120,6 +122,50 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", r.URL.Path+"/"+strconv.Itoa(day.Weekday))
 	writeDay(w, 201, day)
+}
+
+func (s *Service) update(w http.ResponseWriter, r *http.Request) {
+	scope, ok := s.request(w, r)
+	if !ok {
+		return
+	}
+	revision, err := readRevision(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	draft, err := readDraft(w, r, scope.weekday)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	day, err := s.repository.Update(r.Context(), scope.complexID, scope.courtID, scope.actorID, scope.admin, revision, draft)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeDay(w, 200, day)
+}
+
+func (s *Service) delete(w http.ResponseWriter, r *http.Request) {
+	scope, ok := s.request(w, r)
+	if !ok {
+		return
+	}
+	revision, err := readRevision(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := requireEmptyBody(r); err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := s.repository.Delete(r.Context(), scope.complexID, scope.courtID, scope.actorID, scope.admin, scope.weekday, revision); err != nil {
+		writeError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeDay(w http.ResponseWriter, status int, day Day) {

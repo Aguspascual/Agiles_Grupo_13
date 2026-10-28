@@ -32,7 +32,8 @@ func newHandler(db *pgxpool.Pool, secret []byte) http.Handler {
 	scheduleService := schedules.NewService(schedules.NewPostgresRepository(db), complexes.NewPostgresRepository(db))
 	protectedSchedules := auth.RequireUser(secret, auth.NewPostgresRepository(db), scheduleService.Handler())
 	for _, pattern := range []string{"POST " + schedules.BasePath, "GET " + schedules.BasePath,
-		"GET " + schedules.BasePath + "/{weekday}"} {
+		"GET " + schedules.BasePath + "/{weekday}", "PUT " + schedules.BasePath + "/{weekday}",
+		"DELETE " + schedules.BasePath + "/{weekday}"} {
 		mux.Handle(pattern, protectedSchedules)
 	}
 	return mux

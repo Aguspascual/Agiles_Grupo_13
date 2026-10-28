@@ -168,6 +168,22 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 	if headers.Get("ETag") != `"`+created.Day.Revision+`"` || headers.Get("Location") != base+"/1" {
 		t.Fatalf("headers=%v", headers)
 	}
+	oldRevision := headers.Get("ETag")
+	data, _ = request("PUT", base+"/1", manager.Token, `{"enabled":false,"durationMinutes":90,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`, oldRevision, 200)
+	var updated struct {
+		Day schedules.Day `json:"day"`
+	}
+	if err := json.Unmarshal(data, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.Day.Enabled || updated.Day.DurationMinutes != 90 || updated.Day.Revision == created.Day.Revision || !reflect.DeepEqual(updated.Day.Intervals, created.Day.Intervals) {
+		t.Fatalf("updated=%+v", updated.Day)
+	}
+	revision := `"` + updated.Day.Revision + `"`
+	request("PUT", base+"/1", manager.Token, `{"enabled":true,"durationMinutes":90,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`, oldRevision, 412)
+	request("PUT", base+"/1", manager.Token, `{"enabled":false,"durationMinutes":90,"intervals":[{"opensAt":"10:00","closesAt":"13:00"}]}`, revision, 503)
+	request("DELETE", base+"/1", manager.Token, "", revision, 503)
+	request("DELETE", courtsPath+"/"+courtResponse.Court.ID, admin.Token, "", "", 503)
 	// Restart the HTTP application, keeping only PostgreSQL as shared state.
 	server.Close()
 	server = httptest.NewServer(newHandler(db, secret))
@@ -176,7 +192,7 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 	var persisted struct {
 		Day schedules.Day `json:"day"`
 	}
-	if err := json.Unmarshal(data, &persisted); err != nil || !reflect.DeepEqual(persisted, created) {
+	if err := json.Unmarshal(data, &persisted); err != nil || !reflect.DeepEqual(persisted, updated) {
 		t.Fatalf("persisted=%s err=%v", data, err)
 	}
 }

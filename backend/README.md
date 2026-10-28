@@ -64,7 +64,6 @@ La migración `003_courts.sql` crea canchas con FK restrictiva a `complexes`, ba
 
 La configuración diaria se persiste mediante `004_weekly_schedules.sql`.
 Consultar [contratos, ejemplos y límites de HU-04](HU-04.md).
-Esta unidad implementa solo el alta y la consulta semanal/individual.
-PUT y DELETE de horarios aún no se exponen; sus contratos aprobados se
-implementarán en la siguiente unidad. HU-04 completa, reservas reales, generación
-y bloqueos puntuales siguen pendientes.
+El alta, la consulta y los cambios de habilitación/duración están implementados.
+La baja y el reemplazo de franjas responden `503` mientras no esté integrada la
+fuente real de reservas. HU-04 completa, generación y bloqueos puntuales siguen pendientes.

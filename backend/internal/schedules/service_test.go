@@ -46,6 +46,14 @@ func (f *contractRepository) Create(_ context.Context, _, _, _ string, _ bool, d
 	f.draft = d
 	return f.result()
 }
+func (f *contractRepository) Update(_ context.Context, _, _, _ string, _ bool, _ string, d Draft) (Day, error) {
+	f.draft = d
+	return f.result()
+}
+func (f *contractRepository) Delete(context.Context, string, string, string, bool, int, string) error {
+	f.calls++
+	return f.err
+}
 
 type contractIdentity struct{}
 
@@ -63,9 +71,10 @@ func signedTestToken(id string) string {
 }
 
 // These are isolated HTTP contract tests, not proof of reservation integration.
-// TDD-0001 CA-01/03/04 and TDD-0004 CA-02/03.
+// TDD-0001 CA-01/03/04, 0002 CA-04, 0003 CA-03/05, 0004 CA-02/03.
 func TestHTTPContracts(t *testing.T) {
 	post := `{"weekday":1,"enabled":true,"durationMinutes":60,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`
+	put := `{"enabled":false,"durationMinutes":60,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`
 	tests := []struct {
 		name, method, path, body, match string
 		err                             error
@@ -83,6 +92,19 @@ func TestHTTPContracts(t *testing.T) {
 		{"trailing json", "POST", testBase, post + " {}", "", nil, 400, 0},
 		{"invalid intervals", "POST", testBase, strings.Replace(post, "13:00", "02:00", 1), "", nil, 400, 0},
 		{"duplicate day", "POST", testBase, post, "", ErrConflict, 409, 1},
+		{"update", "PUT", testBase + "/1", put, `"` + testRevision + `"`, nil, 200, 1},
+		{"partial update", "PUT", testBase + "/1", `{"enabled":false}`, `"` + testRevision + `"`, nil, 400, 0},
+		{"weekday in update", "PUT", testBase + "/1", strings.Replace(put, "{", `{"weekday":1,`, 1), `"` + testRevision + `"`, nil, 400, 0},
+		{"missing revision", "PUT", testBase + "/1", put, "", nil, 428, 0},
+		{"wildcard revision", "PUT", testBase + "/1", put, "*", nil, 400, 0},
+		{"weak revision", "PUT", testBase + "/1", put, `W/"` + testRevision + `"`, nil, 400, 0},
+		{"stale revision", "PUT", testBase + "/1", put, `"` + testRevision + `"`, ErrStaleRevision, 412, 1},
+		{"unavailable reservation source", "PUT", testBase + "/1", put, `"` + testRevision + `"`, ErrReservationSourceUnavailable, 503, 1},
+		{"reservation conflict", "PUT", testBase + "/1", put, `"` + testRevision + `"`, ErrFutureReservations, 409, 1},
+		{"delete", "DELETE", testBase + "/1", "", `"` + testRevision + `"`, nil, 204, 1},
+		{"delete requires revision", "DELETE", testBase + "/1", "", "", nil, 428, 0},
+		{"delete body rejected", "DELETE", testBase + "/1", "{}", `"` + testRevision + `"`, nil, 400, 0},
+		{"deleted day", "DELETE", testBase + "/1", "", `"` + testRevision + `"`, ErrNotFound, 404, 1},
 		{"weekly empty", "GET", testBase, "", "", nil, 200, 1},
 		{"head week", "HEAD", testBase, "", "", nil, 200, 0},
 		{"head existing day", "HEAD", testBase + "/1", "", "", nil, 200, 0},
@@ -109,6 +131,9 @@ func TestHTTPContracts(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 			if rec.Code != tt.status || repo.calls != tt.calls {
 				t.Fatalf("status=%d body=%s calls=%d; want %d/%d", rec.Code, rec.Body, repo.calls, tt.status, tt.calls)
+			}
+			if tt.status == 204 && rec.Body.Len() != 0 {
+				t.Fatal("DELETE must have no body")
 			}
 			if tt.status == 201 || (tt.status == 200 && tt.path == testBase+"/1" && tt.method != "HEAD") {
 				if rec.Header().Get("ETag") != `"`+testRevision+`"` {
