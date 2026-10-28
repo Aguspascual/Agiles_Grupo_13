@@ -1,4 +1,4 @@
-# Backend HU-01 y HU-02
+# Backend HU-01 a HU-04
 
 API Go para registro e inicio de sesión, con PostgreSQL como almacenamiento.
 
@@ -59,3 +59,12 @@ Los complejos se eliminan de forma lógica (`deleted_at`), se excluyen de listad
 Las características admitidas son `lighting`, `electronicScoreboard`, `wifi` y `acrylicSurface`. PostgreSQL las guarda en cuatro columnas booleanas. La imagen opcional llega como Data URL JSON, se valida como PNG, JPEG o WebP real y hasta 5 MiB; la base guarda los bytes en `BYTEA` y su tipo MIME.
 
 La migración `003_courts.sql` crea canchas con FK restrictiva a `complexes`, baja lógica e índice de canchas activas por complejo. No agrega datos ficticios de reservas ni una columna `hasFutureReservations`. Mientras no exista una fuente de reservas PostgreSQL, no se puede determinar si una cancha tiene turnos futuros y la API falla de forma segura al intentar darla de baja. La baja efectiva y el tercer criterio de Trello quedan pendientes de integrar la consulta de reservas y coordinarla transaccionalmente con la operación que las cree.
+
+## HU-04 — Horarios recurrentes
+
+La configuración diaria se persiste mediante `004_weekly_schedules.sql`.
+Consultar [contratos, ejemplos y límites de HU-04](HU-04.md).
+Esta unidad implementa solo el alta y la consulta semanal/individual.
+PUT y DELETE de horarios aún no se exponen; sus contratos aprobados se
+implementarán en la siguiente unidad. HU-04 completa, reservas reales, generación
+y bloqueos puntuales siguen pendientes.
