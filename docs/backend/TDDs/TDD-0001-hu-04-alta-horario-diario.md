@@ -12,7 +12,7 @@ trello: "https://trello.com/c/PfnE8VXU"
 
 # TDD-0001: Alta de horario diario recurrente
 
-> Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Implementación y límites: [HU-04 backend](../../../backend/HU-04.md). Las comprobaciones con reservas reales siguen pendientes.
+> Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Las comprobaciones con reservas reales siguen pendientes.
 
 
 ## Contexto de Negocio (PRD)

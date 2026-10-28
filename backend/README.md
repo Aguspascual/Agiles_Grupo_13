@@ -14,9 +14,6 @@ Los [acuerdos backend](../docs/backend/AGENTS_BACK.md) reúnen el detalle de est
 
 ## Configuración
 
-Para preparar PostgreSQL local de desarrollo y una instancia independiente de
-pruebas descartables, consultar [PostgreSQL local](LOCAL.md).
-
 Definir `DATABASE_URL`, `JWT_SECRET` (secreto de al menos 32 bytes) y, opcionalmente, `PORT` (por defecto `8000`). Al iniciar, el servidor comprueba PostgreSQL y aplica la migración incluida.
 
 ```powershell
@@ -63,7 +60,7 @@ La migración `003_courts.sql` crea canchas con FK restrictiva a `complexes`, ba
 ## HU-04 — Horarios recurrentes
 
 La configuración diaria se persiste mediante `004_weekly_schedules.sql`.
-Consultar [contratos, ejemplos y límites de HU-04](HU-04.md).
+Consultar los [TDD de backend](../docs/backend/TDDs/README.md) para los contratos de HU-04.
 El alta, la consulta y los cambios de habilitación/duración están implementados.
 La baja y el reemplazo de franjas responden `503` mientras no esté integrada la
 fuente real de reservas. HU-04 completa, generación y bloqueos puntuales siguen pendientes.
