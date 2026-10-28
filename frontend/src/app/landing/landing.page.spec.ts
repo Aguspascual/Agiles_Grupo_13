@@ -68,6 +68,32 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
+  it('simula bajarse de un partido completo y libera un lugar al confirmar', () => {
+    const fixture = TestBed.createComponent(MatchSearchPage);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('.membership-card__occupancy')?.textContent).toContain('4/4');
+    root.querySelector<HTMLButtonElement>('.membership-card footer button')?.click();
+    fixture.detectChanges();
+    expect(root.querySelector('[role="alertdialog"]')?.textContent).toContain(
+      '¿Querés bajarte del partido?',
+    );
+
+    root.querySelector<HTMLButtonElement>('.membership-dialog__cancel')?.click();
+    fixture.detectChanges();
+    expect(root.querySelector('.membership-card__occupancy')?.textContent).toContain('4/4');
+
+    root.querySelector<HTMLButtonElement>('.membership-card footer button')?.click();
+    fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('.membership-dialog__confirm')?.click();
+    fixture.detectChanges();
+    expect(root.querySelector('.membership-card__occupancy')?.textContent).toContain('3/4');
+    expect(root.querySelector('.membership-card__vacancy')?.textContent).toContain('Falta 1 jugador');
+    expect(root.querySelector('[role="status"]')?.textContent).toContain('Te bajaste del partido');
+    fixture.destroy();
+  });
+
   it('presenta un directorio público de clubes con búsqueda local', () => {
     const fixture = TestBed.createComponent(ClubDirectoryPage);
     fixture.detectChanges();

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LandingFooterComponent } from './landing-footer.component';
 import { LEVELS, MATCHES, MatchPreview, ZONES } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { PendingMatchMembershipCardComponent } from '../bookings/pending-match-membership-card.component';
 
 @Component({
   selector: 'app-match-search-page',
@@ -14,6 +15,7 @@ import { MatchCardComponent } from './match-card.component';
     LandingHeaderComponent,
     LandingFooterComponent,
     MatchCardComponent,
+    PendingMatchMembershipCardComponent,
   ],
   templateUrl: './match-search.page.html',
 })
@@ -33,7 +35,6 @@ export class MatchSearchPage implements OnInit {
     'Grava sintética',
     'Estacionamiento',
   ];
-  searchTerm = '';
   selectedZones: string[] = [];
   selectedLevels: string[] = [];
   selectedDay = 'Hoy';
@@ -42,10 +43,22 @@ export class MatchSearchPage implements OnInit {
   selectedFeatures: string[] = [];
   selectedClub = 'Todos los clubes de La Plata';
   onlyOpen = true;
-  sortBy = 'Más cercanos en horario';
-  viewMode: 'grid' | 'list' = 'grid';
+  filtersOpen = false;
 
   constructor(private readonly route: ActivatedRoute) {}
+
+  openFilters(): void {
+    this.filtersOpen = true;
+  }
+
+  closeFilters(): void {
+    this.filtersOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  closeFiltersOnEscape(): void {
+    this.closeFilters();
+  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
@@ -81,10 +94,9 @@ export class MatchSearchPage implements OnInit {
   }
 
   get filteredMatches(): MatchPreview[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    const filtered = this.matches.filter(
+    return this.matches.filter(
       (match) =>
-        (!term || `${match.club} ${match.zone} ${match.address}`.toLowerCase().includes(term)) &&
+        match.id !== 'gonnet-2030' &&
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
         (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&
         (!this.dayFilterEnabled ||
@@ -97,11 +109,6 @@ export class MatchSearchPage implements OnInit {
         this.matchesPreferredTime(match) &&
         this.selectedFeatures.every((feature) => this.matchesCourtFeature(match, feature)),
     );
-    return this.sortBy === 'Menor precio'
-      ? [...filtered].sort(
-          (a, b) => Number(a.price.replace(/\D/g, '')) - Number(b.price.replace(/\D/g, '')),
-        )
-      : filtered;
   }
 
   toggleSelection(collection: string[], value: string): string[] {
@@ -129,7 +136,6 @@ export class MatchSearchPage implements OnInit {
   }
 
   clearFilters(): void {
-    this.searchTerm = '';
     this.selectedZones = [];
     this.selectedLevels = [];
     this.selectedDay = 'Todos';

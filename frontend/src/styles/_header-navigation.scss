@@ -1,0 +1,24 @@
+.site-navigation { display: flex; align-items: center; justify-content: center; }
+.desktop-nav-links { display: flex; align-items: center; gap: 2px; }
+.desktop-nav-links .nav-link { padding: 7px 10px; border-radius: 7px; color: #596372; font-size: .59rem; font-weight: 700; white-space: nowrap; }
+.desktop-nav-links .nav-link:hover, .desktop-nav-links .nav-link.is-active, .nav-menu-panel a:hover, .nav-menu-panel a.is-active { background: #e8f7ef; color: #087c59; text-decoration: none; }
+.nav-dropdown { position: relative; display: none; }
+.nav-menu-trigger { min-height: 34px; padding: 0 11px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8e5; border-radius: 9px; background: #fff; color: #34413c; font: inherit; font-size: .62rem; font-weight: 750; cursor: pointer; }
+.nav-menu-trigger:hover, .nav-menu-trigger[aria-expanded="true"] { border-color: #9bd8bf; background: #f1faf5; }
+.nav-menu-trigger__icon { width: 15px; height: 15px; fill: none; stroke: #07865f; stroke-width: 1.8; stroke-linecap: round; }
+.nav-menu-trigger__chevron { width: 12px; height: 12px; fill: none; stroke: #748079; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.nav-menu-trigger[aria-expanded="true"] .nav-menu-trigger__chevron { transform: rotate(180deg); }
+.nav-menu-panel { position: absolute; z-index: 20; top: calc(100% + 9px); left: 50%; width: 220px; padding: 7px; display: grid; gap: 3px; border: 1px solid #e3e9e6; border-radius: 12px; background: #fff; box-shadow: 0 16px 38px #182b241f; transform: translateX(-50%); }
+.nav-menu-panel a { padding: 9px; display: block; border-radius: 7px; color: #4b5752; font-size: .6rem; font-weight: 650; }
+.nav-menu-panel .nav-menu-panel__create { margin-top: 4px; border-top: 1px solid #edf0ee; color: #07865f; font-weight: 800; }
+.nav-menu-panel button { width: 100%; padding: 9px; border: 0; border-radius: 7px; background: transparent; color: #a73b46; font: inherit; font-size: .6rem; font-weight: 700; text-align: left; cursor: pointer; }
+@media (max-width: 700px) {
+  .desktop-nav-links { display: none; }
+  .nav-dropdown { display: block; }
+  .site-navigation { margin-left: auto; }
+  .header-actions { margin-left: 0; }
+  .nav-menu-trigger__label { display: none; }
+  .nav-menu-trigger { min-height: 32px; padding: 0 9px; font-size: .57rem; }
+  .nav-menu-panel { left: auto; right: 0; transform: none; }
+}
+.nav-menu-trigger:focus-visible, .nav-menu-panel a:focus-visible, .nav-menu-panel button:focus-visible, .desktop-nav-links .nav-link:focus-visible { outline: 3px solid #39b986; outline-offset: 2px; }
