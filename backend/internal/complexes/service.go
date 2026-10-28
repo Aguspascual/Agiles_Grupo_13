@@ -3,7 +3,6 @@ package complexes
 import (
 	"errors"
 	"net/http"
-	"regexp"
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 )
@@ -149,9 +148,7 @@ func (s *Service) availableManagers(w http.ResponseWriter, r *http.Request) {
 	auth.WriteJSON(w, 200, map[string]any{"managers": managers})
 }
 
-var uuidPattern = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
-
-func validUUID(value string) bool { return uuidPattern.MatchString(value) }
+func validUUID(value string) bool { return auth.ValidUUID(value) }
 
 func writeRepositoryError(w http.ResponseWriter, err error) {
 	switch {

@@ -117,15 +117,26 @@ func (s *Service) issueToken(userID string) (string, error) {
 	return unsigned + "." + encode(mac.Sum(nil)), nil
 }
 
-func decodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+// ErrTrailingJSON distinguishes extra content from an invalid first document.
+var ErrTrailingJSON = errors.New("unexpected trailing JSON")
+
+// DecodeJSONWithLimit reads one strict JSON document without writing a response.
+// Each caller retains its own body limit, error mapping and response messages.
+func DecodeJSONWithLimit(w http.ResponseWriter, r *http.Request, destination any, limit int64) error {
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(destination); err != nil {
-		writeError(w, http.StatusBadRequest, "JSON inválido")
-		return false
+		return err
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return ErrTrailingJSON
+	}
+	return nil
+}
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
+	if err := DecodeJSONWithLimit(w, r, destination, 1<<20); err != nil {
 		writeError(w, http.StatusBadRequest, "JSON inválido")
 		return false
 	}

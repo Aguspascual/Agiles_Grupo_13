@@ -1,6 +1,6 @@
 ---
 id: "0003"
-estado: Borrador
+estado: Aprobado
 version: 1
 autor: "Pedro Moyano Amaya"
 fecha: "2026-10-22"
@@ -12,7 +12,8 @@ trello: "https://trello.com/c/PfnE8VXU"
 
 # TDD-0003: Modificación de horario diario recurrente
 
-> Borrador. Las reglas RN-09 a RN-15 están acordadas, incluida la nueva duración solo para nuevas reservas. El contrato y las demás validaciones requieren aprobación antes de implementar.
+> Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Las comprobaciones con reservas reales siguen pendientes.
+
 
 ## Contexto de Negocio (PRD)
 
@@ -23,7 +24,7 @@ Editar juntas las franjas y duración de un día existente, sin reemplazar la se
 - **Nombre / rol:** encargado de un complejo.
 - **Necesidad:** cambiar el lunes de una cancha sin tocar su martes ni perder cambios realizados por otra persona.
 
-### Criterios de Aceptación propuestos
+### Criterios de Aceptación
 - **CA-01:** modificar solo días existentes de una cancha y complejo activos; permitir al encargado asignado a ese complejo y al administrador general, denegar a otros roles o encargados ajenos (RN-12).
 - **CA-02:** sustituir todas las franjas del día indicado en una transacción; los otros días quedan intactos. No crear días mediante esta operación.
 - **CA-03:** aplicar las validaciones del [alta, CA-03/04](TDD-0001-hu-04-alta-horario-diario.md#criterios-de-aceptación-propuestos). No modificar `weekday`; cambiar de día requiere acordar otro flujo.
@@ -32,7 +33,7 @@ Editar juntas las franjas y duración de un día existente, sin reemplazar la se
 - **CA-06:** deshabilitar conserva franjas y duración e impide nuevas reservas; reactivar recupera esa configuración (RN-13). Se permite deshabilitar con reservas futuras: siguen vigentes y se juegan normalmente, sin cambiar horarios ni duración. Cambiar solo la habilitación no elimina ni recrea franjas. No rechazar esta operación únicamente porque existan reservas.
 - **CA-07:** permitir cambiar entre 60 y 90 minutos aunque existan reservas futuras. La nueva duración rige para nuevas reservas; las existentes conservan sus horarios y duración originales (RN-14). No permitir nuevos turnos que se superpongan con ellas.
 
-## Diseño Técnico (RFC) propuesto
+## Diseño Técnico (RFC)
 
 ### Modelo de Datos
 Usar el [modelo del alta](TDD-0001-hu-04-alta-horario-diario.md#modelo-de-datos). Conservar `(court_id, weekday)`; generar nueva revisión UUID en la misma transacción. Si se edita el conjunto de franjas, reemplazarlo con nuevos IDs; si solo cambia `enabled`, conservar las franjas y sus IDs, además de la duración. Estos IDs no referencian reservas ni turnos concretos.
@@ -55,7 +56,7 @@ Cambiar `duration_minutes` del día no actualiza reservas ni recalcula su final.
 ```
 
 - **Response:** `200 OK`; mismo cuerpo `{"day": ...}` del [alta](TDD-0001-hu-04-alta-horario-diario.md#contrato-de-api), con valores vigentes y nueva revisión. Solo cambia IDs de franjas si se reemplazó su conjunto. No devuelve el resto de la semana.
-- Omisión de una franja significa quitarla de ese día; cuerpo parcial es `400`. Formato de errores y revisión: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-propuesto).
+- Omisión de una franja significa quitarla de ese día; cuerpo parcial es `400`. Formato de errores y revisión: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-aprobado).
 - Para deshabilitar o reactivar, enviar el cuerpo completo con `enabled: false` o `true` y conservar `durationMinutes` e `intervals`. Usar DELETE únicamente si se desea eliminar la configuración.
 
 ### Componentes del Monolito Modular
@@ -81,4 +82,4 @@ Cambiar `duration_minutes` del día no actualiza reservas ni recalcula su final.
 1. Revisar criterios, modelo y contrato frontend; aprobar el TDD sin confundir aprobación de reglas con autorización para implementar.
 2. Red → Green unitario/HTTP de CA-01/03, incluida omisión de campos y día inexistente.
 3. Red → Green PostgreSQL real de CA-02/04/05/06/07: rollback, protección de reservas, dos ediciones, carrera con nuevas reservas, deshabilitación y cambio de duración sin alterar reservas existentes. Con los módulos reales, verificar que no se reserva estando deshabilitado ni se ofrecen/confirman turnos de 90 minutos que solapen una reserva previa de 60; sin esa integración no declarar CA-06/07 completos.
-4. Refactor con pruebas verdes y evidencia por criterio en PR. No hay ciclos ejecutados ni aprobación de implementación.
+4. Refactor con pruebas verdes y evidencia por criterio en PR. Los ciclos ejecutados y los límites de implementación están registrados en la documentación backend vinculada.
