@@ -9,7 +9,7 @@
         clubes más emblemáticos de la ciudad.
       </p>
       <div class="player-proof">
-        <span aria-hidden="true">✓</span><b>Lucas M. · Nivel 5ta verificado</b
+        <span aria-hidden="true">✓</span><b>{{ playerProfile().nickname }} · Nivel {{ playerProfile().level }} verificado</b
         ><a routerLink="/registro"
           >Ver sugerencias para tu categoría <span aria-hidden="true">→</span></a
         >
@@ -178,4 +178,5 @@
   </section>
 
   <app-landing-footer />
+  @if (toastMessage()) { <app-toast [message]="toastMessage()" (dismiss)="dismissToast()" /> }
 </main>
