@@ -32,6 +32,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | [0002: baja de un día](TDD-0002-hu-04-baja-horario-diario.md) | HU-04 | Aprobado v1 |
 | [0003: modificación de un día](TDD-0003-hu-04-modificacion-horario-diario.md) | HU-04 | Aprobado v1 |
 | [0004: búsqueda de horarios](TDD-0004-hu-04-busqueda-horarios.md) | HU-04 | Aprobado v1 |
+| [0011: baja de cancha](TDD-0011-hu-03-baja-cancha.md) | HU-03 | Aprobado v1 |
 
 ### HU-04: acuerdos y contrato común aprobado
 
