@@ -1,7 +1,7 @@
 ---
 id: "0009"
-estado: Borrador — pendiente de aprobación humana y coordinación del equipo
-version: 1
+estado: "Borrador; pendiente de aprobación humana y coordinación del equipo"
+version: 2
 autor: "Equipo backend"
 fecha: "2026-10-29"
 titulo: "Consulta pública de disponibilidad de turnos por complejo y fecha"
@@ -12,111 +12,127 @@ trello: "Pendiente de confirmar la tarjeta HU-05 backend"
 
 # TDD-0009: Consulta pública de disponibilidad de turnos
 
-> **Borrador para revisión.** No es un contrato aprobado ni autoriza implementar.
-> La asignación de responsable backend y la coordinación con el equipo siguen
-> pendientes.
+> **Borrador para revisión.** Los criterios aquí incorporan las decisiones acordadas con
+> Pedro Moyano, pero siguen pendientes de aceptación formal del equipo. Este TDD no
+> autoriza implementar ni modifica el contrato compartido del frontend.
 
-## Contexto de Negocio (PRD)
+## Contexto de negocio
 
 ### Objetivo
 
-Reemplazar los datos de demostración de la grilla pública HU-05 por disponibilidad
-calculada desde horarios recurrentes de HU-04 y reservas reales de HU-06. No se
-persisten filas para cada turno libre.
+Consultar en PostgreSQL la disponibilidad de turnos de un complejo para una fecha,
+calculando los candidatos a partir de horarios recurrentes y la ocupación a partir de
+reservas vigentes. La consulta no persiste turnos libres ni altera las reservas.
 
-### User persona
+### Persona
 
 - **Rol:** persona que consulta un complejo, con o sin sesión.
-- **Necesidad:** ver qué turnos de cada cancha están libres, ocupados o cerrados para
-  una fecha concreta antes de iniciar una reserva.
+- **Necesidad:** distinguir turnos disponibles, ocupados y bloqueados antes de iniciar
+  una reserva.
 
-### Fuentes y reglas relacionadas
+### Reglas relacionadas
 
-- Contrato propuesto frontend: `docs/contracts/hu-05-grilla-de-turnos.md`.
-- RN-07: las fechas y horas se interpretan con `America/Argentina/Buenos_Aires` y el
-  reloj del servidor.
-- RN-09 y RN-11: la configuración se guarda por día de semana; las franjas no cruzan
-  medianoche.
-- RN-13: deshabilitar el día impide nuevas reservas, conserva sus franjas y no cancela
-  las reservas existentes.
-- RN-14: cada día configurado tiene duración de 60 o 90 minutos; cambiarla afecta
-  nuevas reservas, no los intervalos reales ya reservados.
+- **RN-07:** interpretar fechas con `America/Argentina/Buenos_Aires` y el reloj del
+  servidor.
+- **RN-09 y RN-11:** las configuraciones son recurrentes por día y sus franjas terminan
+  dentro del mismo día.
+- **RN-13:** deshabilitar un día impide altas nuevas, conserva configuración y reservas.
+- **RN-14:** cambiar la duración solo afecta turnos nuevos; las reservas conservan sus
+  timestamps originales.
 
 ## Criterios de aceptación propuestos
 
-- **CA-01 — Consulta pública:** `GET` funciona sin JWT y devuelve un solo complejo y
-  una fecha. No depende de una sesión ni expone datos de autenticación.
-- **CA-02 — Recursos activos:** un complejo inexistente o con `deleted_at` devuelve
-  `404`. La respuesta solo incluye canchas activas; un complejo activo sin canchas
-  devuelve `courts: []`.
-- **CA-03 — Fecha y zona horaria:** `date` es obligatorio, único y de formato estricto
-  `AAAA-MM-DD`. El día, el weekday y sus límites se interpretan en
-  `America/Argentina/Buenos_Aires`.
-- **CA-04 — Generación recurrente:** para el weekday consultado, generar inicios desde
-  cada `opens_at`, avanzando por `duration_minutes` (60 o 90), e incluir solo turnos
-  cuyo fin no exceda `closes_at`. Mantener el orden de hora de inicio.
-- **CA-05 — Día deshabilitado:** si existe configuración con `enabled=false`, conservar las franjas configuradas y devolver sus intervalos como `BLOCKED`, incluso si una reserva vigente coincide; esto describe que no se admiten nuevas reservas. No borrar, cancelar ni alterar reservas existentes. Si no existe configuración para ese weekday, no generar candidatos libres.
-- **CA-06 — Reservas reales:** `status='reserved'` bloquea todo candidato habilitado con solapamiento estricto (`reservation.starts_at < slot.endsAt` y `reservation.ends_at > slot.startsAt`). Una reserva cancelada no bloquea. Usar el inicio y fin persistidos de cada reserva, no reconstruir su duración con la configuración semanal actual. Si una reserva vigente no coincide con ningún candidato recurrente actual, exponer un intervalo reservado derivado de sus horas persistidas; no crear candidatos disponibles alrededor de ella.
-- **CA-07 — Estados calculables:** v1 devuelve solo `AVAILABLE`, `RESERVED` y
-  `BLOCKED`. `AVAILABLE` significa que el intervalo no se solapa con una reserva
-  vigente y que el día está habilitado. El estado no garantiza que una reserva
-  concurrente posterior no ocupe el turno; HU-06 valida nuevamente y responde
-  conflicto si dejó de estar libre.
-- **CA-08 — Turnos pasados:** devolver también los candidatos del día actual que ya
-  comenzaron, con `isPast=true`. El instante de inicio menor o igual al reloj del
-  servidor se considera pasado. El estado de ocupación se conserva; un turno libre
-  pasado puede aparecer como `AVAILABLE` con `isPast=true`.
-- **CA-09 — Privacidad:** no incluir identificador de reserva, organizador, nombre,
-  teléfono, acompañantes ni avisos. El repositorio de esta consulta no selecciona
-  columnas de contacto ni de identidad del reservante.
-- **CA-10 — Estabilidad del resultado:** ordenar canchas por `name` y luego UUID, y slots por `startsAt`; construir el ID estable como `courtId:AAAA-MM-DD:HH:MM`.
-- **CA-11 — Contrato Angular:** mantener `complex`, `date`, `courts`, `id`, `name`, `covered`, `startsAt`, `endsAt` y `status` del contrato propuesto. Agregar `isPast` para que un adaptador del `SlotGridService` pueda llenar `GridSlot.isPast` sin que el navegador decida una zona horaria distinta. `courtId` se obtiene de la cancha y `date` de la respuesta, sin duplicarlos en cada slot. El adaptador traduce `AVAILABLE/RESERVED/BLOCKED` a `available/reserved/blocked`. Los estados demo `pending` y `class` no se fabrican en backend.
-- **CA-12 — Errores:** responder `400` por UUID de complejo inválido, falta/repetición
-  de `date`, fecha inexistente o fuera de la ventana acordada; `404` por complejo
-  inexistente/inactivo; `500` genérico por fallas internas. Todos los errores usan
-  `{"error":"mensaje"}`.
-- **CA-13 — Persistencia real:** los casos de reservas y migraciones se prueban contra
-  PostgreSQL descartable con `TEST_DATABASE_URL`; ningún test sustituye la persistencia
-  por respuestas simuladas.
-- **CA-14 — Configuración inconsistente:** validar las franjas leídas con las reglas
-  existentes antes de generar slots. Si una configuración persistida tiene intervalos
-  solapados u otro estado que no podría producir el servicio HU-04, responder `500`
-  genérico y no inventar disponibilidad.
+- **CA-01 — Consulta pública:** `GET` no requiere JWT y devuelve disponibilidad de un
+  complejo para una fecha. No depende de una sesión.
+- **CA-02 — Recursos activos:** complejo inexistente o inactivo devuelve `404`. Solo se
+  devuelven canchas activas; un complejo activo sin canchas devuelve `courts: []`.
+- **CA-03 — Fecha:** `date` es obligatorio, único y formato estricto `AAAA-MM-DD`. Se
+  interpreta en `America/Argentina/Buenos_Aires`. La ventana propuesta es hoy local
+  hasta hoy + 13 días inclusive.
+- **CA-04 — Turnos candidatos:** solo la configuración recurrente existente puede
+  generar `slots`. Para cada franja, generar inicios avanzando por `duration_minutes`
+  (60 o 90) desde `opens_at`; incluir el turno si su fin no supera `closes_at`. No
+  inventar candidatos cuando falte configuración. Los candidatos no cruzan medianoche.
+- **CA-05 — Estado de cada candidato:** en día habilitado, si el candidato se solapa con
+  cualquier reserva vigente, marcarlo `RESERVED`; de lo contrario `AVAILABLE`. En día
+  deshabilitado, marcar `RESERVED` donde exista solapamiento con una reserva vigente y
+  `BLOCKED` en los demás candidatos. Un día deshabilitado nunca admite reservas nuevas,
+  incluso sobre candidatos mostrados como `RESERVED`; HU-06 revalida `enabled` al crear.
+- **CA-06 — Solapamiento:** comparar intervalos semiabiertos `[inicio, fin)` con la
+  condición estricta `reservation.starts_at < slot.endsAt AND reservation.ends_at >
+  slot.startsAt`. Un límite que coincide (fin de reserva igual a inicio de turno, o
+  inicio de reserva igual al fin de turno) no se solapa. Ningún candidato que se
+  solape con una reserva vigente puede ser `AVAILABLE`.
+- **CA-07 — Duración histórica:** usar los `starts_at` y `ends_at` persistidos. Un cambio
+  posterior de duración o grilla no recalcula ni mueve la reserva. Todo candidato que
+  solape la reserva queda `RESERVED`, pero esos candidatos no son reservas adicionales.
+- **CA-08 — Intervalos ocupados:** devolver cada reserva vigente una sola vez en
+  `occupiedIntervals`, independientemente de cuántos candidatos solape. Esta estructura
+  representa reservas persistidas; `slots` representa candidatos de la grilla. Ambos
+  campos son arrays y quedan como `[]` cuando no tienen elementos. Una reserva fuera de
+  grilla aparece en `occupiedIntervals` aunque no haya candidato coincidente. No exponer
+  ID de reserva, identidad, contacto ni datos de acompañantes.
+- **CA-09 — Cruce de medianoche:** consultar reservas que se solapan con el día local y
+  devolver un fragmento visible limitado a `[inicioDelDía, inicioDelDíaSiguiente)`, sin
+  modificar la reserva. La respuesta incluye tanto los límites originales completos
+  como los límites del fragmento visible, en ISO 8601 con offset. Una misma reserva de
+  más de un día aparece una vez como fragmento en cada respuesta diaria afectada.
+- **CA-10 — Estados disponibles en v1:** solo `AVAILABLE`, `RESERVED` y `BLOCKED`.
+  No simular partidos pendientes, clases, pagos ni bloqueos excepcionales que no estén
+  persistidos.
+- **CA-11 — Turnos pasados:** incluir los candidatos del día actual y marcar `isPast`
+  cuando su inicio sea menor o igual al reloj del servidor. El estado de ocupación se
+  calcula de igual manera; el turno pasado no se vuelve reservable por aparecer
+  `AVAILABLE`.
+- **CA-12 — Privacidad:** no devolver identificador de reserva, organizador, nombre,
+  teléfono, acompañantes, pagos ni avisos. SQL no selecciona columnas personales.
+- **CA-13 — Orden y estabilidad:** ordenar canchas por `name` y UUID, candidatos por
+  inicio y los intervalos ocupados por inicio original y fin original. El ID derivado
+  del candidato es `courtId:AAAA-MM-DD:HH:MM`; no es ID de reserva ni credencial.
+- **CA-14 — Persistencia y consistencia:** leer complejo, canchas, horarios y reservas
+  desde un snapshot PostgreSQL de solo lectura. Validar una copia en memoria de los
+  horarios con las reglas existentes; una inconsistencia falla cerrada con `500` y no
+  modifica PostgreSQL.
+- **CA-15 — Carrera de reserva:** `AVAILABLE` es informativo; una reserva concurrente
+  puede cambiar el resultado. HU-06 vuelve a verificar horario activo y solapamiento
+  bajo el lock de cancha y responde conflicto si ya no está libre.
 
-## Diseño técnico propuesto (RFC)
+## Diseño técnico propuesto
 
 ### Modelo de datos
 
-No se requieren migraciones ni tablas nuevas. La consulta combina:
+No se proponen tablas nuevas. La consulta combina:
 
-- `complexes.deleted_at` para aceptar solo el complejo activo.
-- `courts.deleted_at` y `courts.complex_id` para listar canchas activas del complejo.
-- `court_schedule_days.weekday`, `enabled` y `duration_minutes`, junto con
-  `court_schedule_intervals.opens_at/closes_at`, para generar los candidatos.
-- `reservations.starts_at`, `ends_at` y `status` para calcular ocupación real. Solo
-  `reserved` ocupa; `cancelled` no.
+- `complexes.deleted_at` para resolver un complejo activo.
+- `courts.deleted_at` y `courts.complex_id` para las canchas activas.
+- `court_schedule_days.weekday`, `enabled`, `duration_minutes` y
+  `court_schedule_intervals.opens_at/closes_at` para generar candidatos.
+- `reservations.starts_at`, `ends_at` y `status`; solo `reserved` ocupa.
 
-Las migraciones 002–005 ya contienen todos los datos necesarios para los tres estados
-de v1. La migración 005 no guarda `class`, `pendingMatch`, bloqueos excepcionales por
-fecha ni pago pendiente. La migración 004 comprueba que cada intervalo tenga inicio
-anterior al fin y limita duraciones, pero no impone en SQL que dos intervalos del mismo
-día no se solapen; el validador del servicio HU-04 sí lo rechaza. Por eso la lectura
-debe validar cada copia con `schedules.Draft.Validate()` antes de producir estados;
-esa misma validación ordena franjas y rechaza datos anómalos sin escribir en PostgreSQL.
+La migración 005 limita estados a `reserved`/`cancelled`; no hay persistencia de clases,
+partidos pendientes, pagos ni bloqueos puntuales. La migración 004 valida cada franja,
+pero no impone en SQL que dos intervalos semanales no se solapen. La lectura valida una
+copia del borrador con `schedules.Draft.Validate()`; esa validación puede ordenar su
+copia, pero no escribe en PostgreSQL.
 
-### Contrato HTTP
+### Contrato HTTP propuesto
 
-**Endpoint:** `GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`
+- **Endpoint:** `GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`.
+- Público, sin `Authorization`; `complexId` debe ser UUID real.
+- `date` debe aparecer exactamente una vez y ser el único parámetro de consulta.
+- Ventana: hoy local a hoy + 13 días inclusive.
+- `Cache-Control: no-store`.
+- En `slots`, `startsAt` y `endsAt` son horas locales `HH:mm` de los turnos candidatos.
+- En `occupiedIntervals`, todos los límites son timestamps ISO 8601 completos con
+  offset. Los límites originales describen la fila persistida; los visibles son la
+  intersección de ese intervalo con el día consultado.
 
-- Público; no requiere `Authorization`.
-- `complexId` debe ser UUID. `date` es el único parámetro de query y debe aparecer
-  exactamente una vez.
-- Ventana: desde hoy local inclusive hasta hoy + 13 días inclusive,
-  igual a los 14 días que expone la grilla frontend.
-- `Cache-Control: no-store`, dado que las reservas pueden cambiar el resultado entre
-  consultas.
+#### Ejemplo obligatorio 1: una reserva abarca dos candidatos nuevos
 
-**Respuesta `200 OK`:** `date` y horas locales, sin incluir datos del reservante.
+Grilla actual: `18:00–19:00`, `19:00–20:00`, `20:00–21:00`. La única reserva persistida
+es `18:30–20:00`. El fin de la reserva coincide con el inicio del tercer candidato, por
+lo que ese candidato no se solapa y puede quedar `AVAILABLE`. Los dos candidatos
+`RESERVED` son visualizaciones de solapamiento, no dos reservas distintas.
 
 ```json
 {
@@ -134,18 +150,33 @@ esa misma validación ordena franjas y rechaza datos anómalos sin escribir en P
       "covered": true,
       "slots": [
         {
-          "id": "c41a0000-0000-4000-8000-000000000001:2026-10-30:18:30",
-          "startsAt": "18:30",
+          "id": "c41a0000-0000-4000-8000-000000000001:2026-10-30:18:00",
+          "startsAt": "18:00",
+          "endsAt": "19:00",
+          "status": "RESERVED",
+          "isPast": false
+        },
+        {
+          "id": "c41a0000-0000-4000-8000-000000000001:2026-10-30:19:00",
+          "startsAt": "19:00",
           "endsAt": "20:00",
-          "status": "AVAILABLE",
+          "status": "RESERVED",
           "isPast": false
         },
         {
           "id": "c41a0000-0000-4000-8000-000000000001:2026-10-30:20:00",
           "startsAt": "20:00",
-          "endsAt": "21:30",
-          "status": "RESERVED",
+          "endsAt": "21:00",
+          "status": "AVAILABLE",
           "isPast": false
+        }
+      ],
+      "occupiedIntervals": [
+        {
+          "originalStartsAt": "2026-10-30T18:30:00-03:00",
+          "originalEndsAt": "2026-10-30T20:00:00-03:00",
+          "visibleStartsAt": "2026-10-30T18:30:00-03:00",
+          "visibleEndsAt": "2026-10-30T20:00:00-03:00"
         }
       ]
     }
@@ -153,148 +184,210 @@ esa misma validación ordena franjas y rechaza datos anómalos sin escribir en P
 }
 ```
 
-El ID de slot es derivado y estable para la grilla; HU-06 no lo usa como credencial ni
-como ID de reserva. Su POST recibe `date` y `startsAt` y verifica nuevamente horario,
-complejo/cancha activos, fecha futura y solapamientos en una transacción.
+La reserva está una sola vez en `occupiedIntervals`. Se excluyen identificador de reserva,
+organizador y contacto. Cada candidato en `RESERVED` representa que ese tramo de grilla
+se cruza con esa ocupación, no una reserva adicional.
+
+#### Ejemplo obligatorio 2: reserva persistida que cruza medianoche
+
+Para estos dos ejemplos se supone que la cancha no tiene configuración recurrente en los
+días consultados; por eso `slots` queda vacío. Solo se muestran las ocupaciones
+persistidas. Cada día devuelve el fragmento visible dentro de sus límites locales
+semiabiertos; los límites originales se repiten para distinguirlos del fragmento.
+
+Consulta del 30/10/2026:
+
+```json
+{
+  "complex": {
+    "id": "8b1f0000-0000-4000-8000-000000000001",
+    "name": "La Cumbre Pádel",
+    "address": "Calle 131 y 32",
+    "zone": "San Carlos"
+  },
+  "date": "2026-10-30",
+  "courts": [
+    {
+      "id": "c41a0000-0000-4000-8000-000000000001",
+      "name": "Cancha 1",
+      "covered": true,
+      "slots": [],
+      "occupiedIntervals": [
+        {
+          "originalStartsAt": "2026-10-30T23:30:00-03:00",
+          "originalEndsAt": "2026-10-31T01:00:00-03:00",
+          "visibleStartsAt": "2026-10-30T23:30:00-03:00",
+          "visibleEndsAt": "2026-10-31T00:00:00-03:00"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Consulta del 31/10/2026:
+
+```json
+{
+  "complex": {
+    "id": "8b1f0000-0000-4000-8000-000000000001",
+    "name": "La Cumbre Pádel",
+    "address": "Calle 131 y 32",
+    "zone": "San Carlos"
+  },
+  "date": "2026-10-31",
+  "courts": [
+    {
+      "id": "c41a0000-0000-4000-8000-000000000001",
+      "name": "Cancha 1",
+      "covered": true,
+      "slots": [],
+      "occupiedIntervals": [
+        {
+          "originalStartsAt": "2026-10-30T23:30:00-03:00",
+          "originalEndsAt": "2026-10-31T01:00:00-03:00",
+          "visibleStartsAt": "2026-10-31T00:00:00-03:00",
+          "visibleEndsAt": "2026-10-31T01:00:00-03:00"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Los fragmentos son `[2026-10-30T23:30:00-03:00, 2026-10-31T00:00:00-03:00)` y
+`[2026-10-31T00:00:00-03:00, 2026-10-31T01:00:00-03:00)`. Son proyecciones de una
+misma reserva original; no se parte ni modifica la fila en PostgreSQL, no se fabrica
+ningún `slot` y no se ofrece un turno reservable a partir de estos fragmentos. En una
+consulta por fecha, cada reserva aparece como máximo una vez en `occupiedIntervals`.
 
 ### Consulta SQL y consistencia
 
-1. Validar UUID y fecha en el servicio, usando el reloj del servidor y la ubicación
-   `America/Argentina/Buenos_Aires`.
-2. Abrir una transacción de solo lectura `REPEATABLE READ` para que complejo, canchas,
-   horarios y reservas pertenezcan al mismo snapshot.
-3. Leer el complejo por ID con `deleted_at IS NULL`; sin fila, mapear a `404`.
-4. Leer las canchas activas con un `LEFT JOIN` al día semanal y sus intervalos,
-   filtrando por `complex_id`, weekday y `deleted_at IS NULL`; ordenar por cancha e
-   intervalo.
-5. Leer, para esas canchas y el intervalo local `[inicioDelDía, inicioDelDíaSiguiente)`,
-   las reservas con `status='reserved'` cuyo intervalo se cruza con el día:
-   `starts_at < finDelDía AND ends_at > inicioDelDía`. No seleccionar columnas de
-   contacto. Los límites se pasan como `time.Time` con la ubicación local.
-6. Generar candidatos solo cuando hay configuración recurrente. En día habilitado,
-   cualquier solapamiento estricto con una reserva vigente produce `RESERVED`; en día
-   deshabilitado, `BLOCKED` tiene prioridad porque expresa admisión de nuevas reservas.
-   Usar siempre los timestamps reales y nunca recalcular la duración histórica.
-7. Si una reserva vigente no solapa candidato alguno (p. ej., quedó desalineada tras
-   cambiar la duración), añadir un intervalo derivado exactamente de sus horas
-   persistidas. No es un turno libre inventado. Sin horario, devolver únicamente esas
-   reservas vigentes, si las hay; de otro modo `slots: []`. En día deshabilitado, tanto
-   las franjas configuradas como reservas fuera de grilla se informan `BLOCKED`, sin
-   modificar las filas de reservas.
-8. Commit/rollback de la transacción de solo lectura y responder. Una disponibilidad
-   `AVAILABLE` es informativa; la reserva posterior vuelve a validar bajo el lock de
-   cancha existente en HU-06.
+1. Validar UUID/fecha y ventana en el servicio usando `America/Argentina/Buenos_Aires`.
+2. Abrir transacción de solo lectura `REPEATABLE READ`; complejo, canchas, horarios y
+   reservas deben corresponder al mismo snapshot.
+3. Leer complejo activo; si no existe, `404`.
+4. Leer canchas activas y su configuración/intervalos del weekday, con orden estable por
+   `court.name, court.id`.
+5. Calcular límites locales `[inicioDelDía, inicioDelDíaSiguiente)` con `AddDate(0,0,1)`;
+   no asumir que un día local se modela universalmente como 24 horas.
+6. Consultar filas con `status='reserved'` y solapamiento de ese día:
+   `starts_at < finDelDía AND ends_at > inicioDelDía`. Leer el ID internamente para
+   deduplicar cada fila una sola vez; no devolverlo ni seleccionar nombre/teléfono de
+   contacto u otros datos personales. Incluir reservas iniciadas el día anterior que
+   aún ocupen parte del día consultado.
+7. Generar candidatos únicamente desde configuración real. Marcar `RESERVED` si hay
+   solapamiento real, incluso cuando `enabled=false`; si no hay reserva, `BLOCKED` para
+   día deshabilitado y `AVAILABLE` para día habilitado. Una reserva cancelada no ocupa.
+8. Agregar una única entrada a `occupiedIntervals` por reserva vigente y cancha. Conservar
+   timestamps originales y calcular `visibleStartsAt=max(originalStartsAt,inicioDelDía)`
+   y `visibleEndsAt=min(originalEndsAt,finDelDía)`. Emitir en ISO 8601 local con offset.
+   Estos límites forman un intervalo semiabierto no vacío por el filtro SQL de solape.
+9. Validar la copia de horarios sin persistir cambios; errores de configuración fallan
+   cerrados con `500`. Commit/rollback de la lectura de solo lectura y responder.
 
-El solapamiento estricto permite que una reserva termine exactamente cuando inicia el
-slot siguiente. Si la duración semanal cambia, las reservas existentes mantienen su
-intervalo real: una reserva de 90 minutos puede bloquear más de un slot nuevo de 60,
-por ejemplo.
+Los límites semiabiertos permiten adyacencia sin colisión. Una reserva que ocupa más de
+un candidato puede hacer que varios `slots` estén `RESERVED`, pero se representa una vez
+en `occupiedIntervals`. Cambiar `duration_minutes` nunca reconstruye ni desplaza sus
+timestamps originales.
 
 ### Componentes del monolito modular
 
-- **Servicio HTTP de disponibilidad** (propuesta: paquete nuevo `internal/slots`):
-  valida UUID/fecha/ventana, aplica timezone, responde JSON y no instala middleware
-  JWT.
-- **Repositorio PostgreSQL**: consulta complejo, canchas, horarios y reservas en el
-  snapshot de solo lectura; nunca lee datos personales.
-- **Rutas**: registrar el GET específico antes de los handlers generales de
-  `/api/v1/complexes/`; confirmar que el patrón público no queda detrás del middleware
-  de autenticación.
-- **Frontend**: fuera de esta HU backend; en una integración posterior, el servicio
-  transforma la respuesta a `DayGrid` y mapea `AVAILABLE/RESERVED/BLOCKED` a
-  `available/reserved/blocked`.
+- **Servicio HTTP:** validar UUID/fecha/ventana, zona horaria, JSON de salida y errores;
+  la ruta pública debe registrarse antes de los patrones generales autenticados de
+  `/api/v1/complexes/`.
+- **Repositorio PostgreSQL:** snapshot de solo lectura; consultas parametrizadas; sin
+  acceso a datos personales.
+- **Generador:** construir `slots` desde configuración; proyectar ocupaciones reales en
+  `occupiedIntervals`, sin convertir candidatos solapados en entidades de reserva.
+- **Angular pendiente:** adaptar UUID reales del catálogo, traducir estados API en
+  mayúsculas a estados del modelo visual y decidir la visualización/overlay de
+  `occupiedIntervals` respecto de `slots`. No cambiar modelos ni contratos frontend sin
+  aprobación. Los IDs demo como `complex-cumbre` no se mapean en backend.
 
 ## Casos de borde y errores
 
-| Escenario | Respuesta |
+| Escenario | Resultado |
 | --- | --- |
-| Falta `date`, se repite o viene una query adicional | `400`, `{"error":"solicitud inválida"}` |
-| Formato de fecha inválido, fecha calendario inexistente o fuera de ventana | `400` |
-| UUID de complejo inválido, incluido ID demo sintético | `400` |
-| Complejo inexistente o dado de baja | `404`, mensaje genérico de no encontrado |
-| Cancha dada de baja | Se excluye de `courts` |
+| Falta/repite `date`, query adicional o fecha inválida/fuera de ventana | `400` |
+| UUID sintético o malformado | `400` |
+| Complejo inexistente/inactivo | `404` |
+| Cancha inactiva | Se excluye |
 | Complejo activo sin canchas activas | `200`, `courts: []` |
-| Sin configuración y sin reservas | Cancha con `slots: []`; no se inventan turnos |
-| Día deshabilitado con franjas conservadas | Los intervalos configurados se devuelven como `BLOCKED`; reservas intactas en PostgreSQL |
-| Reserva `cancelled` | No ocupa el turno |
-| Reserva `reserved` que cruza el inicio o fin del slot | `RESERVED` por solapamiento real; si queda fuera de grilla se expone el intervalo persistido |
-| Reserva vigente en día deshabilitado | `BLOCKED` en la respuesta; reserva conservada intacta en PostgreSQL |
-| Error de PostgreSQL | `500`, sin detalles internos |
+| Sin horario recurrente | `slots: []`; solo reservas vigentes en `occupiedIntervals` |
+| Día habilitado con reserva que solapa varios slots | Cada candidato solapado `RESERVED`; una entrada ocupada real |
+| Día deshabilitado con reserva solapada | `RESERVED` en candidato solapado, `BLOCKED` en los demás; ninguna nueva reserva admitida |
+| Día deshabilitado sin reserva | Todos los candidatos configurados `BLOCKED` |
+| Reserva cancelada | No aparece en `occupiedIntervals` ni ocupa slots |
+| Reserva que cruza medianoche | Un fragmento por consulta diaria, original íntegro conservado |
+| Falla PostgreSQL/configuración inconsistente | `500` sin detalles internos ni escrituras |
 
 ## Pruebas propuestas
 
 ### Unitarias
 
-- Parseo estricto de fechas, fechas de calendario inválidas y límites de 14 días en la
-  zona horaria de Argentina.
-- Generación para duraciones de 60 y 90 minutos, una o varias franjas, último slot que
-  cabe exactamente y tiempo sobrante menor a una duración.
-- Día inexistente, día deshabilitado y fecha/hora de inicio exactamente igual al reloj.
-- Solapamientos parciales y límites adyacentes; reservas históricas tras cambios 60↔90 y 90↔60; comprobar que ningún candidato solapado queda `AVAILABLE`, que una reserva fuera de grilla se representa con sus timestamps persistidos y que una cancelada no ocupa.
-  un cambio de configuración; reserva cancelada.
-- Prioridad `BLOCKED` en día deshabilitado; en día habilitado, `RESERVED > AVAILABLE` por solapamiento.
-- Sin configuración recurrente: cero slots generados; solo intervalos reales de reservas vigentes, si existen.
+- Parseo estricto de fecha, ventana 14 días y zona `America/Argentina/Buenos_Aires`.
+- Grillas de 60/90 minutos, varias franjas, bordes exactos y tiempo sobrante.
+- Intervalos semiabiertos: adyacencia libre y solapamiento parcial ocupado.
+- Escenario 18:30–20:00 frente a slots 18–19, 19–20 y 20–21: dos `RESERVED`, el
+  siguiente `AVAILABLE`, y exactamente un `occupiedInterval` con los límites originales.
+- Día deshabilitado: reserva coincidente `RESERVED`, resto `BLOCKED`; todas las altas
+  siguen prohibidas por HU-06.
+- Cambio de grilla 60↔90: no alterar la ocupación histórica ni mostrar disponible ningún
+  candidato solapado; reserva fuera de grilla representada una vez.
+- Reserva cruzando medianoche: límites originales idénticos y fragmentos diarios
+  exactos; no crear slots desde los fragmentos.
+- Reserva cancelada, día sin configuración y día de inicio igual al reloj (`isPast`).
+- Configuración solapada/inconsistente rechazada sin mutar la copia fuente ni PostgreSQL.
 
 ### HTTP
 
-- GET sin JWT; formato compatible, arrays vacíos, orden por nombre y UUID, y rechazo del ID demo sintético.
-- 400 para parámetros/fechas/UUID inválidos; 404 para complejo inexistente o inactivo;
-  500 para fallo de repositorio.
-- Comprobar que la respuesta no contiene contacto, organizador, acompañantes ni IDs de
-  reserva.
-- Verificar `isPast` para un slot iniciado sin usar el reloj real del test.
+- GET anónimo; contrato, listas vacías, estados, orden estable y `Cache-Control: no-store`.
+- `400` para UUID/fecha/parámetros inválidos; `404` para complejo ausente/inactivo;
+  `500` para fallo de repositorio.
+- Verificar ejemplos de salida con JSON decodificado, en particular los dos fragmentos
+  de medianoche y la unicidad de `occupiedIntervals` por reserva y día.
+- Asegurar ausencia de IDs de reserva y de datos de contacto/organizador.
 
 ### PostgreSQL real
 
-- Usar `TEST_DATABASE_URL` solo contra una base descartable `padelmatch_test`; ejecutar
-  las migraciones existentes 002–005 en un esquema aislado y eliminarlo al finalizar.
-- Crear complejo/canchas activos e inactivos y configuraciones de weekday para
-  duraciones de 60/90, múltiples intervalos y `enabled=false`.
-- Crear reservas vigentes reales con HU-06 y casos controlados cancelados/históricos. Verificar solapamiento, cambios 60↔90, reservas fuera de grilla y día deshabilitado; confirmar que `BLOCKED` no cancela reservas y que no hay `AVAILABLE` solapado. Comprobar GET público, recursos dados de baja, UUID real, orden y privacidad.
-- Insertar por SQL dos franjas solapadas que HU-04 no produciría, guardar snapshot de configuración y reservas, consultar y exigir fallo cerrado `500`; comparar antes/después para demostrar que la validación no escribe en PostgreSQL.
-  engañosos ni escrituras.
-- Comprobar que el GET no cambia horarios/reservas y que un `AVAILABLE` deja de ser
-  reservable si HU-06 detecta una reserva concurrente; no asumir que una lectura
-  pública reserva o bloquea el turno.
-- Ejecutar desde `backend/`: `go test -count=1 ./...` y `go vet ./...`; declarar toda
-  prueba PostgreSQL omitida y el motivo.
+- Usar `TEST_DATABASE_URL` solo contra base descartable; aplicar migraciones existentes
+  001–005 en esquema aislado.
+- Crear complejos/canchas activos e inactivos, configuraciones 60/90 y deshabilitadas;
+  crear reservas vigentes/canceladas con HU-06 y filas controladas de duración histórica.
+- Verificar ocupación exacta del ejemplo 1, reserva única pese a varios slots, estados de
+  día deshabilitado y ausencia de `AVAILABLE` solapado.
+- Verificar fragmentos de la reserva 2026-10-30 23:30 a 2026-10-31 01:00; consultar cada
+  fecha y confirmar que la fila PostgreSQL no se dividió ni alteró.
+- Insertar intervalos recurrentes solapados por SQL; comprobar fallo cerrado y snapshot
+  de configuración/reservas idéntico antes y después.
+- Probar carrera con alta HU-06: la lectura no bloquea ni reserva y el alta revalida
+  bajo lock.
+- Desde `backend/`, ejecutar `go test -count=1 ./...` y `go vet ./...`; informar
+  explícitamente pruebas omitidas y motivos.
 
-## Decisiones propuestas para v1 y pendientes de aprobación
+## Integración, alcance y decisiones pendientes
 
-Se incorporan como diseño propuesto las decisiones solicitadas para esta versión:
+Los cambios de este TDD proponen separar datos de **candidatos** (`slots`) de
+**ocupaciones persistidas** (`occupiedIntervals`). Es una extensión del contrato JSON
+propuesto: no se edita `docs/contracts/hu-05-grilla-de-turnos.md` ni frontend sin
+aprobación. Angular requiere:
 
-- Ventana local desde hoy hasta hoy + 13 días inclusive, en
-  `America/Argentina/Buenos_Aires`.
-- Solo `AVAILABLE`, `RESERVED` y `BLOCKED`; no simular partidos pendientes, clases ni
-  bloqueos excepcionales sin persistencia.
-- Día recurrente deshabilitado: informar `BLOCKED` en intervalos configurados aun si
-  coincide una reserva; conservar íntegra la reserva en PostgreSQL. El estado describe
-  si se admiten nuevas reservas, no si existe una reserva histórica.
-- Orden estable de canchas por nombre y luego UUID.
-- Sin horario recurrente no generar candidatos libres; exponer solo reservas vigentes
-  persistidas que haya en esa fecha.
-- No devolver datos personales ni de contacto del reservante.
+1. Obtener UUID reales de complejos/canchas, no IDs sintéticos de demo.
+2. Mapear `AVAILABLE/RESERVED/BLOCKED` al modelo visual; los estados demo `pending` y
+   `class` no existen en esta primera versión.
+3. Decidir cómo dibujar un intervalo real que ocupa varios candidatos o fragmentos
+   diarios, manteniendo una reserva diferenciada de las celdas `RESERVED` que la
+   representan.
 
-Puntos que requieren aprobación/coordinación antes de implementar:
+Esta entrega cubre **solo la consulta de disponibilidad backend**. No completa HU-05 de
+punta a punta: requiere integración Angular y aceptación de la extensión de contrato.
+No añade pagos, clases, partidos pendientes, bloqueos excepcionales ni tablas.
 
-1. **Aprobar formalmente este TDD y asignar responsable/reviewer**, incluida la tarjeta
-   HU-05 backend. Las decisiones anteriores siguen propuestas hasta esa aprobación.
-2. **Resolver la integración de IDs frontend:** `ComplexPreviewStore` usa IDs sintéticos
-   como `complex-cumbre`; backend requiere el UUID real del complejo persistido. No
-   mapear esos IDs en backend. El frontend deberá obtener el UUID real del catálogo o
-   coordinar el reemplazo de datos demo, sin alterar aquí su contrato.
-3. **Aprobar la representación de reservas fuera de grilla** definida en CA-06: si
-   ninguna franja actual se solapa con una reserva vigente, exponer una fila de sus horas
-   reales como `RESERVED` (o `BLOCKED` si el día está deshabilitado). Si el contrato
-   visual no admite duración arbitraria, acordar la adaptación antes de integrar; no
-   recortar ni mover la reserva para forzarla a una celda.
-4. **Confirmar tratamiento de filas que crucen medianoche**, si existen: HU-06 no las
-   crea, pero la tabla permite timestamps cuyo fin cae al día siguiente. Decidir si se
-   expone solo la porción del día o se falla cerrado ante esos datos.
+Antes de implementar se requiere aprobación humana de esta versión del TDD, coordinación
+de responsable/reviewer y confirmación de la tarjeta HU-05 backend. La ventana desde hoy
+hasta hoy + 13, el UUID real, la compatibilidad visual y la forma de `occupiedIntervals`
+deben aprobarse como contrato sin modificar unilateralmente interfaces compartidas.
 
-## Alcance y estado
-
-No agrega esquema, reservas, pagos, clases, partidos abiertos, bloqueos por fecha ni
-modificaciones de frontend. No modifica la rama ni el PR de HU-08. Estado: **borrador
-pendiente de aprobación humana y confirmación de asignación**. No implementar hasta
-cerrar los puntos pendientes y confirmar la asignación con el equipo.
+Estado: **borrador pendiente de aprobación humana y coordinación del equipo**. No
+implementar hasta cerrar esas aprobaciones.
