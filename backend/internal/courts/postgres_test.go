@@ -16,6 +16,7 @@ import (
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/database"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -95,7 +96,8 @@ func TestPostgresCourtsIntegration(t *testing.T) {
 	if _, err := pool.Exec(ctx, `INSERT INTO complex_managers(complex_id,user_id) VALUES($1::uuid,$2::uuid)`, complexID, managerID); err != nil {
 		t.Fatal(err)
 	}
-	repo := NewPostgresRepository(pool)
+	// Exercise the explicit unavailable dependency separately from the real default.
+	repo := NewPostgresRepositoryWithReservationChecker(pool, nil)
 	png := tinyPNGDataURL()
 	draft := Draft{Name: "Cancha persistida", Covered: true, Features: []string{"lighting", "wifi", "acrylicSurface"}, ImageDataURL: &png}
 	created, err := repo.Create(ctx, complexID, adminID, true, draft)
@@ -132,6 +134,80 @@ func TestPostgresCourtsIntegration(t *testing.T) {
 	if _, err := pool.Exec(ctx, `DELETE FROM complexes WHERE id=$1::uuid`, complexID); !hasCourtPGError(err, "23503") {
 		t.Fatalf("complex with courts should be protected by restrictive FK, got %v", err)
 	}
+	t.Run("reservation end boundary", func(t *testing.T) {
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback(ctx)
+		end := time.Date(2030, 5, 6, 11, 0, 0, 0, time.UTC)
+		if _, err := tx.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
+			VALUES($1,$2,$3,$4,$5,'reserved',3,'Test','123')`, complexID, created.ID, adminID, end.Add(-time.Hour), end); err != nil {
+			t.Fatal(err)
+		}
+		checker := postgresReservationChecker{}
+		clock := frozenCourtClockTx{Tx: tx}
+		for _, tc := range []struct {
+			name, extension string
+			want            bool
+		}{
+			{"ends exactly at check", "0 microseconds", false},
+			{"ends one microsecond later", "1 microsecond", true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				if _, err := tx.Exec(ctx, `UPDATE reservations SET ends_at=$1::timestamptz + $2::interval WHERE court_id=$3`, end, tc.extension, created.ID); err != nil {
+					t.Fatal(err)
+				}
+				got, err := checker.HasFutureReservations(ctx, clock, created.ID)
+				if err != nil || got != tc.want {
+					t.Fatalf("protected=%v err=%v", got, err)
+				}
+			})
+		}
+	})
+	t.Run("real reservation protection", func(t *testing.T) {
+		for _, tc := range []struct {
+			name, status string
+			start, end   time.Duration
+			want         error
+		}{
+			{"future", "reserved", time.Hour, 2 * time.Hour, ErrFutureReservations},
+			{"in progress", "reserved", -time.Hour, time.Hour, ErrFutureReservations},
+			{"finished", "reserved", -2 * time.Hour, -time.Hour, nil},
+			{"cancelled", "cancelled", time.Hour, 2 * time.Hour, nil},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				var courtID string
+				if err := pool.QueryRow(ctx, `INSERT INTO courts(complex_id,name,covered) VALUES($1,$2,true) RETURNING id::text`, complexID, "Protection "+tc.name).Scan(&courtID); err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() {
+					_, _ = pool.Exec(context.Background(), `DELETE FROM reservations WHERE court_id=$1`, courtID)
+					_, _ = pool.Exec(context.Background(), `DELETE FROM courts WHERE id=$1`, courtID)
+				})
+				now := time.Now()
+				if _, err := pool.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
+					VALUES($1,$2,$3,$4,$5,$6,3,'Test','123')`, complexID, courtID, adminID, now.Add(tc.start), now.Add(tc.end), tc.status); err != nil {
+					t.Fatal(err)
+				}
+				err := NewPostgresRepository(pool).Delete(ctx, complexID, courtID, adminID, true)
+				if !errors.Is(err, tc.want) {
+					t.Fatalf("delete=%v want=%v", err, tc.want)
+				}
+				var active bool
+				var count int
+				if err := pool.QueryRow(ctx, `SELECT deleted_at IS NULL FROM courts WHERE id=$1`, courtID).Scan(&active); err != nil {
+					t.Fatal(err)
+				}
+				if err := pool.QueryRow(ctx, `SELECT count(*) FROM reservations WHERE court_id=$1`, courtID).Scan(&count); err != nil {
+					t.Fatal(err)
+				}
+				if active != (tc.want != nil) || count != 1 {
+					t.Fatalf("active=%v reservations=%d", active, count)
+				}
+			})
+		}
+	})
 	if err := repo.Delete(ctx, complexID, created.ID, adminID, true); !errors.Is(err, ErrReservationSourceUnavailable) {
 		t.Fatalf("delete without reservation source err=%v", err)
 	}
@@ -265,6 +341,12 @@ func TestPostgresCourtsIntegration(t *testing.T) {
 	if _, err := repo.List(ctx, secondComplexID, adminID, true); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("deleted complex should be inaccessible, err=%v", err)
 	}
+}
+
+type frozenCourtClockTx struct{ pgx.Tx }
+
+func (tx frozenCourtClockTx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	return tx.Tx.QueryRow(ctx, strings.ReplaceAll(sql, "statement_timestamp()", "TIMESTAMPTZ '2030-05-06 11:00:00+00'"), args...)
 }
 
 func hasCourtPGError(err error, code string) bool {
