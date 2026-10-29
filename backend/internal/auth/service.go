@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -27,6 +28,54 @@ func NewService(repository Repository, jwtSecret []byte) *Service {
 func (s *Service) RegisterHandler() http.Handler { return http.HandlerFunc(s.register) }
 func (s *Service) LoginHandler() http.Handler    { return http.HandlerFunc(s.login) }
 func (s *Service) MeHandler() http.Handler       { return http.HandlerFunc(s.me) }
+func (s *Service) ProfileUpdateHandler() http.Handler {
+	return http.HandlerFunc(s.updateProfile)
+}
+
+type profileUpdater interface {
+	UpdateProfile(ctx context.Context, id, name, zone, level, position, hand string) (User, error)
+}
+
+func (s *Service) updateProfile(w http.ResponseWriter, r *http.Request) {
+	header := strings.TrimSpace(r.Header.Get("Authorization"))
+	if !strings.HasPrefix(header, "Bearer ") {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	id, err := UserIDFromToken(strings.TrimSpace(strings.TrimPrefix(header, "Bearer ")), s.jwtSecret)
+	if err != nil || !ValidUUID(id) {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if _, ok := s.repository.(profileUpdater); !ok {
+		writeError(w, http.StatusInternalServerError, "no se pudo actualizar el perfil")
+		return
+	}
+	var request UpdateProfileRequest
+	if err := DecodeJSONWithLimit(w, r, &request, 1<<20); err != nil {
+		writeError(w, http.StatusBadRequest, "JSON inválido")
+		return
+	}
+	if request.Name == nil || request.Zone == nil || request.Level == nil || request.Position == nil || request.Hand == nil {
+		writeError(w, http.StatusBadRequest, "todos los campos del perfil son obligatorios")
+		return
+	}
+	if err := normalizeAndValidateProfile(request.Name, request.Zone, request.Level, request.Position, request.Hand); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	updater := s.repository.(profileUpdater)
+	user, err := updater.UpdateProfile(r.Context(), id, *request.Name, *request.Zone, *request.Level, *request.Position, *request.Hand)
+	if errors.Is(err, ErrProfileNotFound) {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "no se pudo actualizar el perfil")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"user": user})
+}
 
 func (s *Service) me(w http.ResponseWriter, r *http.Request) {
 	header := strings.TrimSpace(r.Header.Get("Authorization"))

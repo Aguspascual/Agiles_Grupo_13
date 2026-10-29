@@ -69,6 +69,15 @@ func TestNormalizeAndValidateRequiresFairPlayAndKnownProfileValues(t *testing.T)
 	}
 }
 
+func TestRegisterValidationPreservesEmailErrorPrecedence(t *testing.T) {
+	request := validRegisterRequest()
+	request.Email = "invalid"
+	request.Zone = "unknown zone"
+	if err := normalizeAndValidate(&request); err == nil || err.Error() != "email inválido" {
+		t.Fatalf("validation error=%v, want email validation before profile catalog", err)
+	}
+}
+
 func validRegisterRequest() RegisterRequest {
 	return RegisterRequest{Name: "Jugador", Email: "jugador@example.com", Password: "password123", Zone: "Gonnet", Level: "7ma", FairPlay: true}
 }
