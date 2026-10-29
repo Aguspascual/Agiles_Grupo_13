@@ -65,3 +65,20 @@ func (r *PostgresRepository) FindUserByID(id string) (User, error) {
 		Scan(&user.ID, &user.Email, &user.Name, &user.Zone, &user.Level, &user.Position, &user.Hand)
 	return user, err
 }
+
+func (r *PostgresRepository) UpdateProfile(ctx context.Context, id, name, zone, level, position, hand string) (User, error) {
+	var user User
+	err := r.db.QueryRow(ctx, `WITH updated_profile AS (
+		UPDATE player_profiles
+		SET name=$2, zone=$3, level=$4, position=NULLIF($5, ''), hand=NULLIF($6, '')
+		WHERE user_id=$1::uuid
+		RETURNING user_id, name, zone, level, position, hand
+	)
+	SELECT u.id::text, p.name, u.email, p.zone, p.level, COALESCE(p.position, ''), COALESCE(p.hand, '')
+	FROM updated_profile p JOIN users u ON u.id=p.user_id`, id, name, zone, level, position, hand).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Zone, &user.Level, &user.Position, &user.Hand)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrProfileNotFound
+	}
+	return user, err
+}

@@ -19,6 +19,7 @@ func newHandler(db *pgxpool.Pool, secret []byte) http.Handler {
 	mux.Handle("POST /api/v1/auth/register", service.RegisterHandler())
 	mux.Handle("POST /api/v1/auth/login", service.LoginHandler())
 	mux.Handle("GET /api/v1/auth/me", service.MeHandler())
+	mux.Handle("PUT /api/v1/auth/me", service.ProfileUpdateHandler())
 	complexService := complexes.NewService(complexes.NewPostgresRepository(db))
 	protectedComplexes := auth.RequireUser(secret, auth.NewPostgresRepository(db), complexService.Handler())
 	mux.Handle("/api/v1/complexes", protectedComplexes)

@@ -196,3 +196,113 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 		t.Fatalf("persisted=%s err=%v", data, err)
 	}
 }
+
+// TDD-0005 CA-01..CA-04; verifies HU-08 profile edits and persistence over real HTTP/PostgreSQL.
+func TestHTTPPostgresHU08OwnProfileUpdate(t *testing.T) {
+	db, _ := httpTestPool(t)
+	secret := []byte("only-for-http-integration-tests-at-least-32-bytes")
+	server := httptest.NewServer(newHandler(db, secret))
+	defer server.Close()
+	client := server.Client()
+	request := func(method, path, token, body string, status int) []byte {
+		t.Helper()
+		req, err := http.NewRequest(method, server.URL+path, strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != status {
+			t.Fatalf("%s %s status=%d expected=%d body=%s", method, path, resp.StatusCode, status, data)
+		}
+		return data
+	}
+	type session struct {
+		User  auth.User `json:"user"`
+		Token string    `json:"token"`
+	}
+	register := func(email string) session {
+		body := fmt.Sprintf(`{"name":"Initial","email":%q,"password":"TestPassword-123!","zone":"Gonnet","level":"7ma","position":"Drive","hand":"Diestro","fairPlay":true}`, email)
+		data := request("POST", "/api/v1/auth/register", "", body, http.StatusCreated)
+		var out session
+		if err := json.Unmarshal(data, &out); err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	first, second := register("hu08-first@example.com"), register("hu08-second@example.com")
+	// Existing login path still issues the same JWT used by both session endpoints.
+	loginData := request("POST", "/api/v1/auth/login", "", `{"email":"hu08-first@example.com","password":"TestPassword-123!"}`, http.StatusOK)
+	var logged session
+	if err := json.Unmarshal(loginData, &logged); err != nil || logged.Token == "" {
+		t.Fatalf("login=%v", err)
+	}
+	var originalEmail, originalPasswordHash, originalRole, originalFairPlay string
+	if err := db.QueryRow(context.Background(), `SELECT u.email,u.password_hash,u.role,p.fair_play_accepted_at::text FROM users u JOIN player_profiles p ON p.user_id=u.id WHERE u.id=$1::uuid`, first.User.ID).Scan(&originalEmail, &originalPasswordHash, &originalRole, &originalFairPlay); err != nil {
+		t.Fatal(err)
+	}
+	const path = "/api/v1/auth/me"
+	request("PUT", path, "", `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro"}`, http.StatusUnauthorized)
+	request("PUT", path, "invalid", `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro"}`, http.StatusUnauthorized)
+	valid := `{"name":"  Ana Pérez  ","zone":"City Bell","level":"6ta","position":"Revés","hand":"Zurdo"}`
+	updatedData := request("PUT", path, logged.Token, valid, http.StatusOK)
+	var updated struct {
+		User auth.User `json:"user"`
+	}
+	if err := json.Unmarshal(updatedData, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.User.ID != first.User.ID || updated.User.Name != "Ana Pérez" || updated.User.Zone != "City Bell" || updated.User.Level != "6ta" || updated.User.Position != "Revés" || updated.User.Hand != "Zurdo" || strings.Contains(string(updatedData), `"token"`) {
+		t.Fatalf("updated response=%s", updatedData)
+	}
+	readData := request("GET", path, logged.Token, "", http.StatusOK)
+	if !strings.Contains(string(readData), `"name":"Ana Pérez"`) || !strings.Contains(string(readData), `"zone":"City Bell"`) {
+		t.Fatalf("GET did not reflect update: %s", readData)
+	}
+	for _, body := range []string{
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro","email":"x@y.z"}`,
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro","id":"` + second.User.ID + `"}`,
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive"}`,
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":null,"hand":"Diestro"}`,
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro","role":"ADMIN"}`,
+		`{"name":"Ana","zone":"Gonnet","level":"Pro","position":"Drive","hand":"Diestro"}`,
+		`{`,
+		`{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro"} {}`,
+	} {
+		request("PUT", path, logged.Token, body, http.StatusBadRequest)
+	}
+	// Rejected requests leave the persisted profile unchanged.
+	afterInvalid := request("GET", path, logged.Token, "", http.StatusOK)
+	if !strings.Contains(string(afterInvalid), `"name":"Ana Pérez"`) {
+		t.Fatalf("invalid update changed profile: %s", afterInvalid)
+	}
+	// Optional profile fields can be cleared with empty strings.
+	request("PUT", path, logged.Token, `{"name":"Ana Pérez","zone":"City Bell","level":"6ta","position":"","hand":""}`, http.StatusOK)
+	cleared := request("GET", path, logged.Token, "", http.StatusOK)
+	if strings.Contains(string(cleared), `"position"`) || strings.Contains(string(cleared), `"hand"`) {
+		t.Fatalf("optional values not cleared: %s", cleared)
+	}
+	other := request("GET", path, second.Token, "", http.StatusOK)
+	if !strings.Contains(string(other), `"name":"Initial"`) || !strings.Contains(string(other), `"zone":"Gonnet"`) {
+		t.Fatalf("another user profile changed: %s", other)
+	}
+	// Check protected columns were preserved in PostgreSQL itself.
+	var email, passwordHash, role, fairPlay string
+	if err := db.QueryRow(context.Background(), `SELECT u.email,u.password_hash,u.role,p.fair_play_accepted_at::text FROM users u JOIN player_profiles p ON p.user_id=u.id WHERE u.id=$1::uuid`, first.User.ID).Scan(&email, &passwordHash, &role, &fairPlay); err != nil {
+		t.Fatal(err)
+	}
+	if email != originalEmail || passwordHash != originalPasswordHash || role != originalRole || fairPlay != originalFairPlay {
+		t.Fatalf("protected data changed email=%s role=%s fairplay=%s", email, role, fairPlay)
+	}
+}

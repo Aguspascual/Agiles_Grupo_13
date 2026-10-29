@@ -26,6 +26,7 @@ go run ./cmd/api
 - `POST /api/v1/auth/register`: recibe `name`, `email`, `password`, `zone`, `level`, `position`, `hand` y `fairPlay`; devuelve usuario y JWT.
 - `POST /api/v1/auth/login`: recibe `email` y `password`; devuelve usuario y JWT.
 - `GET /api/v1/auth/me`: requiere `Authorization: Bearer <token>` y devuelve el usuario de la sesión.
+- `PUT /api/v1/auth/me`: requiere JWT y los cinco campos `name`, `zone`, `level`, `position` y `hand`; devuelve el usuario actualizado. Posición y mano aceptan cadena vacía para limpiar el valor. No modifica credenciales ni roles.
 - `GET /health`: responde `204` cuando el proceso está activo.
 
 `zone` acepta únicamente Casco Urbano, Gonnet, City Bell, San Carlos, Tolosa, Villa Elisa o Berisso / Ensenada. Se recortan espacios al inicio y final. El registro crea `users` y `player_profiles` en una misma transacción. La migración no crea tablas `zones` ni `user_zones`.
@@ -64,3 +65,11 @@ Consultar los [TDD de backend](../docs/backend/TDDs/README.md) para los contrato
 El alta, la consulta y los cambios de habilitación/duración están implementados.
 La baja y el reemplazo de franjas responden `503` mientras no esté integrada la
 fuente real de reservas. HU-04 completa, generación y bloqueos puntuales siguen pendientes.
+
+## HU-08 — Modificación del perfil propio
+
+`PUT /api/v1/auth/me` actualiza únicamente el perfil del titular del JWT. Acepta los
+valores de perfil ya admitidos por el registro, exige los cinco campos y rechaza
+campos extra, ausentes, nulos o JSON adicional. La integración con Angular y la
+presentación del perfil en partidos quedan pendientes; no se incluyen múltiples
+zonas ni privacidad.
