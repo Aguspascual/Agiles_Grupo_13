@@ -245,5 +245,12 @@ La HU-02 permanece en **En proceso** en Trello hasta completar backend e integra
 - La ruta `/perfil` de la PR #10 quedó disponible después del merge y una prueba Angular confirma que carga. El componente sigue guardando un perfil de demostración con múltiples zonas (incluida `Los Hornos`), mientras el backend admite una zona y no reconoce `Los Hornos`. No se mapearon ni descartaron valores. La política de autenticación de `/perfil` y la convergencia del modelo quedan por coordinar con HU-08.
 - Proxy de desarrollo `/api` y proxy Nginx al servicio Compose `backend:8000` configurados. JWT del backend vence en 24 horas; no hay renovación y el almacenamiento web no protege frente a XSS.
 - Evidencia real en Docker Compose aislado con PostgreSQL 17: registro 201, login, lectura autenticada de `/me`, rechazo de `/me` sin token (401) y frontend Nginx 200. No se usó ninguna base o volumen previo.
-- Verificaciones actuales: `go test -count=1 ./...` con `TEST_DATABASE_URL` en PostgreSQL 17 y `go vet ./...` pasaron; `npm run build` pasó; `npm test -- --watch=false` tuvo 112 aprobadas y las mismas 3 fallas HU-04 observadas en worktree limpio de `origin/Desarrollo`; `git diff --check` pasó.
+- Verificaciones actuales: `go test -count=1 ./...` con `TEST_DATABASE_URL` en PostgreSQL 17 y `go vet ./...` pasaron; `npm run build` pasó; `npm test -- --watch=false` tuvo 115 aprobadas y las mismas 3 fallas HU-04 observadas en worktree limpio de `origin/Desarrollo`; `git diff --check` pasó.
 - La prueba visual en navegador sigue pendiente porque la automatización no pudo determinar con seguridad la URL activa de Chrome. La integración HTTP real de registro y login sí se validó mediante Nginx, Go y PostgreSQL 17 descartable; HTTP 201/409/401, `/me` autenticado y no autenticado, y persistencia SQL fueron comprobados.
+
+## Integración de sesión en encabezado HU-01/HU-08 — 29/10/2026
+
+- `LandingHeaderComponent` ahora lee `AuthSessionService.currentUser`: muestra nombre, nivel e iniciales reales; sin sesión ofrece Ingresar/Registrarse y no usa `PlayerProfileStore` para la identidad del header.
+- Confirmar logout ejecuta `AuthSessionService.logout()`, borra JWT de `localStorage` y `sessionStorage`, limpia el usuario en memoria y navega a `/ingresar`. No se implementó invalidación de JWT en servidor.
+- No se modificaron el formulario ni el store de perfil HU-08. Su persistencia real en PostgreSQL permanece pendiente. La ruta administrativa sigue protegida; la política de autenticación para `/perfil` queda para coordinación del equipo.
+- Pruebas del encabezado: 3 aprobadas. Suite completa: 115 aprobadas; las tres fallas HU-04 también existen en `origin/Desarrollo`. `npm run build` pasó.
