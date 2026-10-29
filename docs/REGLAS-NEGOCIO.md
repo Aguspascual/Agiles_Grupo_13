@@ -6,7 +6,7 @@ Reglas definidas por el equipo mediante WhatsApp, reuniones presenciales y Trell
 
 | ID | Regla | Historias relacionadas |
 | --- | --- | --- |
-| RN-01 | Un grupo completo no puede reemplazar un partido incompleto que ocupa el turno. | [HU-12](https://trello.com/c/xfaPiCES). |
+| RN-01 | Un grupo completo puede reemplazar un partido pendiente que ocupa el turno solo cuando faltan menos de 4 horas para su inicio; a las 4 horas exactas todavía no se permite. | [HU-12](https://trello.com/c/xfaPiCES). |
 | RN-02 | La reserva puede cancelarse si faltan al menos 4 horas para el inicio, incluyendo el instante exacto del límite. | [HU-14](https://trello.com/c/kWBU1esU). |
 | RN-03 | Un jugador puede bajarse si faltan al menos 2 horas para el inicio, incluyendo el instante exacto del límite. | [HU-13](https://trello.com/c/C1HTIYGW). |
 | RN-04 | Los acompañantes del organizador ocupan cupos sin cuenta ni identificación individual. | [HU-09](https://trello.com/c/Mq4bFH1B), [HU-11](https://trello.com/c/WMX61wS4). |
@@ -32,7 +32,6 @@ La prioridad indica cuándo resolver la decisión respecto de la HU afectada; no
 
 | Prioridad | Decisión pendiente | Vinculación e impacto en Sprint 2 |
 | --- | --- | --- |
-| **Crítica** | HU-12 permite reemplazar un partido, pero RN-01 lo impide. Alinear o retirar ese comportamiento. | [HU-12](https://trello.com/c/xfaPiCES), Sprint 2. No implementar la sustitución con los criterios actuales. |
 | **Crítica** | Si un partido completo pierde un jugador entre 4 y 2 horas antes, ¿se reabre o se cancela? ¿Puede crearse uno incompleto cuando faltan menos de 4 horas? | [HU-09](https://trello.com/c/Mq4bFH1B), [HU-11](https://trello.com/c/WMX61wS4), [HU-13](https://trello.com/c/C1HTIYGW). La tarjeta de [vencimiento](https://trello.com/c/I7MvkEz6) está en Backlog: acordar cómo incorporar RN-05 a estas HUs antes de implementar sus transiciones. |
 | **Alta** | ¿Cómo se agregan/liberan los cupos de acompañantes y quién recibe los avisos por ellos? | HU-09 y HU-11, Sprint 2. Resolver ocupación y notificaciones antes de confirmar cuatro jugadores. |
 | **Alta** | ¿Quién debe aceptar una reprogramación, en qué plazo y qué ocurre ante rechazo o falta de respuesta? | HU-04 y HU-07. En HU-04 se aplica RN-10: rechazar cambios que afecten reservas, sin habilitar reprogramaciones. El flujo completo de [reprogramación](https://trello.com/c/rJEWN9lR) está en Backlog; cerrar estos detalles antes de habilitarlo, sin incorporarlo automáticamente al sprint. |

@@ -131,6 +131,40 @@ describe('HU-05: página de turnos del complejo', () => {
     fixture.destroy();
   });
 
+  it('cierra la confirmación al cancelar la selección y no la vuelve a abrir', async () => {
+    const { fixture, root } = await render();
+    const page = fixture.componentInstance;
+    const slots = page.grid()!.courts.flatMap((court) => court.slots);
+    const [first, second] = slots.filter((slot) => slot.state === 'available');
+
+    page.selectSlot(first);
+    page.replaceDialogOpen.set(true);
+    fixture.detectChanges();
+    expect(root.querySelector('[role="alertdialog"]')).not.toBeNull();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(page.replaceDialogOpen()).toBe(false);
+
+    page.selectSlot(second);
+    fixture.detectChanges();
+    expect(root.querySelector('[role="alertdialog"]')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('cierra el aviso de reemplazo al cambiar el día', async () => {
+    const { fixture } = await render();
+    const page = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    page.replacementNotice.set('Turno reservado para el grupo.');
+
+    page.changeDate('2026-10-22');
+
+    expect(page.replacementNotice()).toBe('');
+    expect(page.replaceDialogOpen()).toBe(false);
+    fixture.destroy();
+  });
+
   it('resume el turno elegido e invita a ingresar para reservar', async () => {
     const { fixture, root } = await render('complex-gonnet', '2026-10-22');
 
