@@ -19,7 +19,12 @@ import (
 func TestHTTPPostgresHU05AvailabilityAndMidnightProjection(t *testing.T) {
 	db, ctx := httpTestPool(t)
 	secret := []byte("only-for-http-integration-tests-at-least-32-bytes")
-	server := httptest.NewServer(newHandler(db, secret))
+	location, err := time.LoadLocation(slots.TimeZone)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testClock := func() time.Time { return time.Date(2026, 10, 29, 12, 0, 0, 0, location) }
+	server := httptest.NewServer(newHandlerWithClock(db, secret, testClock))
 	defer server.Close()
 	client := server.Client()
 	client.Timeout = 10 * time.Second

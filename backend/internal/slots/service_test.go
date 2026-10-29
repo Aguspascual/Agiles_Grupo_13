@@ -45,6 +45,34 @@ func TestGetValidatesStrictDateAndFourteenDayWindow(t *testing.T) {
 	}
 }
 
+func TestDateWindowMovesAtBuenosAiresMidnight(t *testing.T) {
+	location, err := time.LoadLocation(TimeZone)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 10, 29, 23, 59, 59, 0, location)
+	repository := &repositoryStub{snapshot: Snapshot{Complex: Complex{ID: "8b1f0000-0000-4000-8000-000000000001"}, Courts: []CourtData{}}}
+	service := NewServiceWithClock(repository, func() time.Time { return now })
+	complexID := "8b1f0000-0000-4000-8000-000000000001"
+	if _, err := service.Get(context.Background(), complexID, "2026-11-11"); err != nil {
+		t.Fatalf("last date in window before midnight should be accepted: %v", err)
+	}
+
+	now = time.Date(2026, 10, 30, 0, 0, 0, 0, location)
+	if _, err := service.Get(context.Background(), complexID, "2026-10-29"); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("previous local date should become invalid after midnight, got %v", err)
+	}
+	if _, err := service.Get(context.Background(), complexID, "2026-11-12"); err != nil {
+		t.Fatalf("new last date in window should be accepted: %v", err)
+	}
+	if _, err := service.Get(context.Background(), complexID, "2026-11-13"); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("date after new window should be invalid, got %v", err)
+	}
+	if repository.calls != 2 {
+		t.Fatalf("repository called %d times, want only the two accepted dates", repository.calls)
+	}
+}
+
 func TestHandlerRejectsExtraAndRepeatedQueryParameters(t *testing.T) {
 	service := NewServiceWithClock(&repositoryStub{}, func() time.Time { return time.Date(2026, 10, 29, 12, 0, 0, 0, time.FixedZone("-03", -3*60*60)) })
 	handler := service.Handler()
