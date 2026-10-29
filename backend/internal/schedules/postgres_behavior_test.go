@@ -81,7 +81,8 @@ func scheduleDraft(weekday int) Draft {
 func TestPostgresSchedulePersistencePermissionsAndSafeChanges(t *testing.T) {
 	db, ctx := newScheduleTestDB(t)
 	seedScheduleCourt(t, db, ctx)
-	repo := NewPostgresRepository(db)
+	// Preserve explicit coverage for an unavailable reservation dependency.
+	repo := NewPostgresRepositoryWithReservationChecker(db, nil)
 	days, err := repo.List(ctx, testComplex, testCourt, testActor, false)
 	if err != nil || len(days) != 0 {
 		t.Fatalf("empty week=%+v err=%v", days, err)
