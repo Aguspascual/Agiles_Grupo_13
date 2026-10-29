@@ -1,7 +1,7 @@
 ---
 id: "0010"
-estado: "Borrador; decisiones propuestas pendientes de aceptación del equipo"
-version: 1
+estado: "Borrador v2; RN-02 confirmada y restantes decisiones pendientes de aprobación"
+version: 2
 autor: "Equipo backend"
 fecha: "2026-10-29"
 titulo: "Cancelación de una reserva"
@@ -12,10 +12,12 @@ trello: "https://trello.com/c/kWBU1esU"
 
 # TDD-0010: Cancelación de una reserva
 
-> **Borrador para revisión humana.** Las decisiones de esta versión fueron propuestas
-> por el usuario para cerrar el diseño; no son acuerdos históricos ni autorizan a
-> implementar. La tarjeta de Trello de HU-14 no pudo consultarse desde esta sesión. El
-> alcance conocido se basa en RN-02, RN-07, RN-08 y el esquema de `origin/Desarrollo`.
+> **Borrador v2 para revisión humana.** Pedro Moyano confirmó en su comentario de la
+> [PR #19](https://github.com/Aguspascual/Agiles_Grupo_13/pull/19#issuecomment-6500389121)
+> que el límite inclusivo de cuatro horas es correcto según RN-02. Solicitó aclarar el
+> alcance de grupo completo, la agenda y los avisos a participantes. Esas precisiones se
+> documentan aquí para su revisión; no implican que el TDD esté aprobado ni que haya
+> implementación funcional.
 
 ## Contexto de negocio
 
@@ -24,6 +26,19 @@ trello: "https://trello.com/c/kWBU1esU"
 Permitir que el organizador cancele su reserva vigente dentro del plazo acordado,
 liberando el turno y dejando un aviso interno, con una única transición atómica e
 idempotente. La fila se conserva como `cancelled`; no se borra ni se modifica el horario.
+
+### Alcance de esta entrega
+
+Esta versión cubre exclusivamente la cancelación de reservas de grupo completo creadas
+por HU-06, donde la reserva ocupa tres acompañantes además del organizador. El actor
+propuesto como único autorizado para cancelar es el organizador autenticado. La agenda de
+reservas queda pendiente. También quedan pendientes los avisos individuales a
+participantes de partidos abiertos.
+
+Los tres acompañantes de una reserva de grupo completo no tienen cuenta ni identidad
+individual persistida según RN-04; por eso, el aviso interno propuesto en esta versión se
+dirige únicamente al organizador. La cancelación de partidos abiertos, la baja de
+participantes y los avisos correspondientes quedan fuera del alcance de HU-14 v1.
 
 ### Persona
 
@@ -42,7 +57,8 @@ idempotente. La fila se conserva como `cancelled`; no se borra ni se modifica el
 
 ## Criterios de aceptación propuestos
 
-Las siguientes diez decisiones son propuestas pendientes de aprobación del equipo:
+CA-02, el límite inclusivo de cuatro horas, fue confirmado por Pedro Moyano según RN-02.
+Las demás decisiones propuestas siguen pendientes de aprobación del equipo:
 
 - **CA-01 — Actor:** solo el organizador autenticado puede cancelar su reserva. No hay
   excepciones para encargados ni administradores en v1. El actor se toma del JWT; no se
@@ -97,8 +113,10 @@ ALTER TABLE reservation_notices
 
 Conservar el unique actual `(reservation_id, kind)`, que aporta una segunda barrera
 contra avisos duplicados. La migración no cambia ni elimina avisos `reservation_confirmed`.
-La inserción usa `user_id = organizer_id`; el payload no incluye contacto. La lista de
-avisos existente podrá incluir el nuevo `type`, conservando la forma del JSON.
+La inserción usa `user_id = organizer_id`; el payload no incluye contacto y sigue la
+forma de `reservation` documentada en TDD-0008 v2, con `status: "cancelled"`. La lista de
+avisos existente podrá incluir el nuevo `type`, conservando la forma del JSON, una vez
+aprobada e implementada su extensión.
 
 ### Contrato HTTP
 
@@ -232,30 +250,33 @@ activas superpuestas. Dos cancelaciones también se serializan; la segunda ve el
 
 ## Decisiones propuestas pendientes de aceptación humana
 
-Las diez decisiones de CA-01 a CA-10 son propuestas explícitas para v1 y requieren
-aceptación del equipo. No se presentan como decisiones históricas. Antes de implementar
-se debe además:
+CA-02 está confirmada por Pedro Moyano: RN-02 permite cancelar hasta cuatro horas antes
+del inicio, incluyendo el instante exacto. CA-01 y CA-03 a CA-10 siguen siendo decisiones
+propuestas para v1, no acuerdos históricos, y requieren aprobación del equipo. El alcance
+de grupo completo, agenda y avisos a participantes se explicitó a partir de su comentario
+en la PR #19 y queda sujeto a su revisión final del TDD. Antes de implementar se debe
+además:
 
 1. Confirmar que el TDD refleja los criterios vigentes de la tarjeta HU-14. Su contenido
    no estuvo accesible desde esta sesión.
 2. Confirmar responsable/reviewer y coordinación de la tarjeta, como requieren los
    acuerdos backend.
-3. Confirmar que `GET /api/v1/reservation-notices` puede incluir un nuevo valor
-   `reservation_cancelled`. Es una extensión del conjunto de valores de HU-06/TDD-0008,
-   aunque conserva la estructura JSON; coordinar el consumidor frontend para valores
-   desconocidos. Si no se acepta, definir cómo se consulta el aviso interno sin ampliar
-   ese contrato.
+3. Aprobar la extensión documental de TDD-0008 para que
+   `GET /api/v1/reservation-notices` admita `reservation_cancelled`, su futura migración
+   aditiva 006 y la adaptación frontend. No se implementa aquí.
 
 ## Compatibilidad y contradicciones con reglas/documentos actuales
 
-- El umbral exacto de cuatro horas y el reloj del servidor coinciden con RN-02 y RN-07;
-  no se propone modificar reglas compartidas.
+- Pedro confirmó que el umbral exacto e inclusivo de cuatro horas coincide con RN-02. El
+  uso del reloj del servidor y la zona de La Plata siguen RN-07; no se propone modificar
+  reglas compartidas.
 - La transición `reserved` → `cancelled`, su atomicidad y la idempotencia son coherentes
   con RN-08 y con los estados ya admitidos por la migración 005.
 - RN-08 menciona avisos a “los afectados”. Esta propuesta puede avisar solo al
   organizador porque RN-04 y el esquema no asignan identidad a los tres acompañantes. Si
   RN-08 exige avisar individualmente a todos, la persistencia actual no basta; el equipo
-  debe aceptar el alcance organizador-only o diseñar otra funcionalidad de identidades.
+  debe aprobar que el aviso de esta entrega se limite al organizador. Los avisos a
+  participantes de partidos abiertos corresponden a otras funcionalidades pendientes.
 - La consulta de avisos de HU-06 hoy expone `type` como string y payload JSON; al agregar
   el nuevo tipo cambia el conjunto de valores observable. El cambio requiere coordinación
   y aprobación de compatibilidad, aunque no altera la forma de respuesta ni edita el
@@ -275,5 +296,6 @@ y pruebas concurrentes PostgreSQL. Estimación: **1–2 jornadas backend desde l
 aprobación**, más revisión e integración. Puede entrar antes de la entrega si los puntos
 pendientes se cierran pronto. La integración visual queda aparte.
 
-Estado: **borrador pendiente de aprobación humana y confirmación de asignación**. No
-implementar antes de cerrar las decisiones.
+Estado: **borrador v2 pendiente de aprobación humana**. RN-02 está confirmada por Pedro;
+CA-01 y CA-03 a CA-10 y la aprobación final del alcance documentado siguen pendientes.
+No implementar antes de cerrar las decisiones.
