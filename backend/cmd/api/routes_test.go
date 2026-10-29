@@ -181,9 +181,29 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 	}
 	revision := `"` + updated.Day.Revision + `"`
 	request("PUT", base+"/1", manager.Token, `{"enabled":true,"durationMinutes":90,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`, oldRevision, 412)
-	request("PUT", base+"/1", manager.Token, `{"enabled":false,"durationMinutes":90,"intervals":[{"opensAt":"10:00","closesAt":"13:00"}]}`, revision, 503)
-	request("DELETE", base+"/1", manager.Token, "", revision, 503)
-	request("DELETE", courtsPath+"/"+courtResponse.Court.ID, admin.Token, "", "", 503)
+	request("DELETE", base+"/1", manager.Token, "", oldRevision, 412)
+	request("DELETE", base+"/1", other.Token, "", revision, 403)
+	request("DELETE", courtsPath+"/"+courtResponse.Court.ID, other.Token, "", "", 403)
+	_, otherHeaders := request("POST", base, manager.Token, `{"weekday":2,"enabled":true,"durationMinutes":60,"intervals":[{"opensAt":"09:00","closesAt":"13:00"}]}`, "", 201)
+	_, otherHeaders = request("PUT", base+"/2", manager.Token, `{"enabled":true,"durationMinutes":60,"intervals":[{"opensAt":"10:00","closesAt":"13:00"}]}`, otherHeaders.Get("ETag"), 200)
+	request("DELETE", base+"/2", manager.Token, "", otherHeaders.Get("ETag"), 204)
+	emptyCourt, _ := request("POST", courtsPath, manager.Token, `{"name":"Empty court","covered":true,"features":[]}`, "", 201)
+	var emptyCourtResponse struct {
+		Court courts.Court `json:"court"`
+	}
+	if err := json.Unmarshal(emptyCourt, &emptyCourtResponse); err != nil {
+		t.Fatal(err)
+	}
+	request("DELETE", courtsPath+"/"+emptyCourtResponse.Court.ID, manager.Token, "", "", 204)
+	_, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		SELECT $1,$2,$3, start_at, start_at + interval '1 hour','reserved',3,'Test','123'
+		FROM (SELECT (date_trunc('week', now() AT TIME ZONE 'America/Argentina/Buenos_Aires') + interval '7 days 10 hours') AT TIME ZONE 'America/Argentina/Buenos_Aires' AS start_at) s`, complexResponse.Complex.ID, courtResponse.Court.ID, manager.User.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request("PUT", base+"/1", manager.Token, `{"enabled":false,"durationMinutes":90,"intervals":[{"opensAt":"11:00","closesAt":"13:00"}]}`, revision, 409)
+	request("DELETE", base+"/1", manager.Token, "", revision, 409)
+	request("DELETE", courtsPath+"/"+courtResponse.Court.ID, admin.Token, "", "", 409)
 	// Restart the HTTP application, keeping only PostgreSQL as shared state.
 	server.Close()
 	server = httptest.NewServer(newHandler(db, secret))

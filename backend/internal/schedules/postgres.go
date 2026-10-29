@@ -14,7 +14,7 @@ type PostgresRepository struct {
 }
 
 func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
-	return NewPostgresRepositoryWithReservationChecker(db, nil)
+	return NewPostgresRepositoryWithReservationChecker(db, postgresReservationChecker{})
 }
 
 func NewPostgresRepositoryWithReservationChecker(db *pgxpool.Pool, checker FutureReservationChecker) *PostgresRepository {
