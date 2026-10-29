@@ -14,6 +14,8 @@ trello: "https://trello.com/c/PfnE8VXU"
 
 > Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Las comprobaciones con reservas reales siguen pendientes.
 
+> **Adenda aprobada por el usuario el 29/10/2026:** se extiende la protección de las reservas futuras a las reservas `reserved` en curso (ya comenzaron y aún no terminaron). Las finalizadas y canceladas no bloquean; esta decisión es adicional a los acuerdos históricos.
+
 
 ## Contexto de Negocio (PRD)
 
@@ -39,6 +41,8 @@ Editar juntas las franjas y duración de un día existente, sin reemplazar la se
 Usar el [modelo del alta](TDD-0001-hu-04-alta-horario-diario.md#modelo-de-datos). Conservar `(court_id, weekday)`; generar nueva revisión UUID en la misma transacción. Si se edita el conjunto de franjas, reemplazarlo con nuevos IDs; si solo cambia `enabled`, conservar las franjas y sus IDs, además de la duración. Estos IDs no referencian reservas ni turnos concretos.
 
 Comparar revisión y comprobar reservas afectadas dentro de una protección coordinada con nuevas reservas concurrentes. Un fake no demuestra CA-04 ni permite dar por disponible esa dependencia.
+
+La conexión acordada consulta `reservations` con `status = 'reserved'` y `ends_at` posterior al instante de comprobación, para la cancha y día local `America/Argentina/Buenos_Aires`, dentro de la misma transacción y bloqueo `FOR UPDATE` de cancha usados por HU-06. Cada intervalo real reservado debe quedar íntegramente cubierto por las franjas propuestas; no recalcular su fin a partir de la nueva duración. Un error de consulta no equivale a ausencia de reservas. Esta protección sigue pendiente de implementación y verificación real.
 
 Cambiar `duration_minutes` del día no actualiza reservas ni recalcula su final. El modelo del módulo de reservas debe conservar sus propios inicio, fin y duración de confirmación; su diseño pertenece a su TDD. Disponibilidad y confirmación de reservas deben respetar el intervalo real ocupado, aunque difiera de la nueva duración diaria.
 
@@ -81,5 +85,5 @@ Cambiar `duration_minutes` del día no actualiza reservas ni recalcula su final.
 ## Plan de Implementación
 1. Revisar criterios, modelo y contrato frontend; aprobar el TDD sin confundir aprobación de reglas con autorización para implementar.
 2. Red → Green unitario/HTTP de CA-01/03, incluida omisión de campos y día inexistente.
-3. Red → Green PostgreSQL real de CA-02/04/05/06/07: rollback, protección de reservas, dos ediciones, carrera con nuevas reservas, deshabilitación y cambio de duración sin alterar reservas existentes. Con los módulos reales, verificar que no se reserva estando deshabilitado ni se ofrecen/confirman turnos de 90 minutos que solapen una reserva previa de 60; sin esa integración no declarar CA-06/07 completos.
+3. Red → Green PostgreSQL real de CA-02/04/05/06/07: rollback, protección de reservas, dos ediciones, carrera con nuevas reservas, deshabilitación y cambio de duración sin alterar reservas existentes. Verificar que no se reserva estando deshabilitado ni se ofrecen/confirman turnos de 90 minutos que solapen una reserva previa de 60 cuando exista la integración de disponibilidad; sin esa integración no declarar CA-06/07 completos.
 4. Refactor con pruebas verdes y evidencia por criterio en PR. Los ciclos ejecutados y los límites de implementación están registrados en la documentación backend vinculada.
