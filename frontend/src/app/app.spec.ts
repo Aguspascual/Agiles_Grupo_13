@@ -60,6 +60,14 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.querySelector('.login-page')).not.toBeNull();
   });
 
+  it('mantiene disponible la ruta /perfil integrada por HU-08', async () => {
+    const { root, fixture } = await open('/perfil');
+
+    expect(TestBed.inject(Router).url).toBe('/perfil');
+    expect(root.textContent).toContain('Foto de perfil e identidad');
+    fixture.destroy();
+  });
+
   it('valida el token persistido al recargar mediante GET /me', async () => {
     sessionStorage.setItem(AuthTokenStore.storageKey, 'saved-jwt');
     const fixture = TestBed.createComponent(App);
