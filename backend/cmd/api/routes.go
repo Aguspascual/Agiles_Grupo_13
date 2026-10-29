@@ -6,6 +6,7 @@ import (
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/courts"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/reservations"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/schedules"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -36,6 +37,23 @@ func newHandler(db *pgxpool.Pool, secret []byte) http.Handler {
 		"GET " + schedules.BasePath + "/{weekday}", "PUT " + schedules.BasePath + "/{weekday}",
 		"DELETE " + schedules.BasePath + "/{weekday}"} {
 		mux.Handle(pattern, protectedSchedules)
+	}
+	reservationService, err := reservations.NewService(reservations.NewRepository(db))
+	if err != nil {
+		mux.HandleFunc("POST "+reservations.BasePath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
+		})
+		mux.HandleFunc("GET "+reservations.OwnPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar las reservas")
+		})
+		mux.HandleFunc("GET "+reservations.NoticesPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar los avisos")
+		})
+	} else {
+		protectedReservations := auth.RequireUser(secret, auth.NewPostgresRepository(db), reservationService.Handler())
+		mux.Handle("POST "+reservations.BasePath, protectedReservations)
+		mux.Handle("GET "+reservations.OwnPath, protectedReservations)
+		mux.Handle("GET "+reservations.NoticesPath, protectedReservations)
 	}
 	return mux
 }
