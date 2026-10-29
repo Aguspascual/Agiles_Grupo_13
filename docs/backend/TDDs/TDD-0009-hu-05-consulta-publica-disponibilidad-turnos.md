@@ -1,6 +1,6 @@
 ---
 id: "0009"
-estado: "Borrador; pendiente de aprobación humana y coordinación del equipo"
+estado: "Aprobado e integrado en Desarrollo mediante PR #18"
 version: 2
 autor: "Equipo backend"
 fecha: "2026-10-29"
@@ -12,9 +12,9 @@ trello: "Pendiente de confirmar la tarjeta HU-05 backend"
 
 # TDD-0009: Consulta pública de disponibilidad de turnos
 
-> **Borrador para revisión.** Los criterios aquí incorporan las decisiones acordadas con
-> Pedro Moyano, pero siguen pendientes de aceptación formal del equipo. Este TDD no
-> autoriza implementar ni modifica el contrato compartido del frontend.
+> **Versión 2 aprobada.** Pedro Moyano aprobó este TDD y fue integrado en Desarrollo
+> mediante la [PR #18](https://github.com/Aguspascual/Agiles_Grupo_13/pull/18). Esta
+> versión define el alcance autorizado para HU-05 backend.
 
 ## Contexto de negocio
 
@@ -384,10 +384,10 @@ Esta entrega cubre **solo la consulta de disponibilidad backend**. No completa H
 punta a punta: requiere integración Angular y aceptación de la extensión de contrato.
 No añade pagos, clases, partidos pendientes, bloqueos excepcionales ni tablas.
 
-Antes de implementar se requiere aprobación humana de esta versión del TDD, coordinación
-de responsable/reviewer y confirmación de la tarjeta HU-05 backend. La ventana desde hoy
-hasta hoy + 13, el UUID real, la compatibilidad visual y la forma de `occupiedIntervals`
-deben aprobarse como contrato sin modificar unilateralmente interfaces compartidas.
+La aprobación humana de esta versión quedó registrada con su integración en Desarrollo
+mediante la PR #18. La integración visual de UUID reales, estados y `occupiedIntervals`
+con Angular requiere coordinación frontend; este TDD no modifica unilateralmente ese
+contrato compartido.
 
-Estado: **borrador pendiente de aprobación humana y coordinación del equipo**. No
-implementar hasta cerrar esas aprobaciones.
+Estado: **versión 2 aprobada e integrada mediante PR #18**. La implementación backend
+puede avanzar conforme a estos criterios; la integración Angular sigue fuera de alcance.
