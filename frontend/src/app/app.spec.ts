@@ -1,14 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
+import { authInterceptor } from './auth/auth.interceptor';
+import { AuthSessionService } from './auth/auth-session.service';
+import { AuthTokenStore } from './auth/auth-token.store';
 
 describe('HU-01: registro e inicio de sesión', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    localStorage.clear();
+    sessionStorage.clear();
   });
 
   async function open(path: string): Promise<{ root: HTMLElement; fixture: ComponentFixture<App> }> {
@@ -37,6 +54,32 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.querySelector('a[href="/registro"]')).not.toBeNull();
   });
 
+  it('redirige las rutas de administración a ingreso si no hay sesión válida', async () => {
+    const { root } = await open('/admin/complejos');
+    expect(TestBed.inject(Router).url).toBe('/ingresar');
+    expect(root.querySelector('.login-page')).not.toBeNull();
+  });
+
+  it('valida el token persistido al recargar mediante GET /me', async () => {
+    sessionStorage.setItem(AuthTokenStore.storageKey, 'saved-jwt');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/me');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer saved-jwt');
+    request.flush({
+      user: { id: 'u1', name: 'Ana', email: 'ana@example.com', zone: 'Gonnet', level: '7ma' },
+    });
+    await fixture.whenStable();
+    expect(TestBed.inject(AuthSessionService).currentUser()).toEqual({
+      id: 'u1',
+      name: 'Ana',
+      email: 'ana@example.com',
+      zone: 'Gonnet',
+      level: '7ma',
+    });
+    fixture.destroy();
+  });
+
   it('marca los campos vacíos y no simula una sesión', async () => {
     const { root, fixture } = await open('/ingresar');
     const form = root.querySelector('form');
@@ -50,22 +93,24 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.textContent).not.toContain('Formulario listo para conectar');
   });
 
-  it('permite continuar a HU-02 con un formulario válido, sin solicitar backend', async () => {
+  it('inicia sesión mediante la API y vuelve al inicio, sin abrir administración', async () => {
     const { root, fixture } = await open('/ingresar');
     fill(root, 'email', 'jugadora@example.com');
     fill(root, 'password', 'claveSegura123');
     root.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     fixture.detectChanges();
-    expect(root.querySelector('.login-page')?.classList.contains('is-exiting')).toBe(true);
-
-    const finishAnimation = new Event('animationend', { bubbles: true });
-    Object.defineProperty(finishAnimation, 'animationName', { value: 'login-exit' });
-    root.querySelector('.login-page')?.dispatchEvent(finishAnimation);
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login');
+    expect(request.request.body).toEqual({ email: 'jugadora@example.com', password: 'claveSegura123' });
+    request.flush({
+      user: { id: 'u1', name: 'Jugadora', email: 'jugadora@example.com', zone: 'Gonnet', level: '7ma' },
+      token: 'jwt-test',
+    });
     await fixture.whenStable();
     fixture.detectChanges();
+    expect(localStorage.getItem(AuthTokenStore.storageKey)).toBe('jwt-test');
 
-    expect(TestBed.inject(Router).url).toBe('/admin/complejos');
-    expect(root.textContent).toContain('Complejos');
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(root.querySelector('.login-page')).toBeNull();
   });
 
   it('rechaza contraseñas distintas en el registro', async () => {

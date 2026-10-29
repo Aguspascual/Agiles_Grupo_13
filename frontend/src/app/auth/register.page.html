@@ -55,13 +55,13 @@
           </section>
 
           <section class="form-section" aria-labelledby="zone-title">
-            <h2 id="zone-title" class="section-title"><span>2</span> Zonas habituales</h2>
-            <div class="choice-list" role="group" aria-label="Zonas habituales">
+            <h2 id="zone-title" class="section-title"><span>2</span> Zona habitual</h2>
+            <div class="choice-list" role="radiogroup" aria-label="Elegí una zona habitual">
               @for (zone of zones; track zone) {
-                <label class="choice-chip zone-choice"><input type="checkbox" name="zones" [checked]="form.controls.zones.value.includes(zone)" (change)="toggleZone(zone, $any($event.target).checked)" /><span>{{ zone }}</span></label>
+                <label class="choice-chip zone-choice"><input type="radio" name="zone" formControlName="zone" [value]="zone" /><span>{{ zone }}</span></label>
               }
             </div>
-            @if (submitted && form.controls.zones.invalid) { <p class="field-error">Elegí una o más zonas habituales.</p> }
+            @if (submitted && form.controls.zone.invalid) { <p class="field-error">Elegí una zona habitual.</p> }
           </section>
 
           <section class="form-section level-picker" aria-label="Nivel inicial">
@@ -94,10 +94,12 @@
             @if (submitted && form.controls.fairPlay.invalid) { <p class="field-error">Aceptá el compromiso de juego para continuar.</p> }
           </div>
 
-          <button class="primary-button" type="submit">Crear mi cuenta y buscar partidos <span aria-hidden="true">→</span></button>
-          @if (ready) {
-            <app-preview-notice message="Todavía no se creó una cuenta: falta integrar el servicio de autenticación." />
+          @if (errorMessage) {
+            <p class="field-error" role="alert">{{ errorMessage }}</p>
           }
+          <button class="primary-button" type="submit" [disabled]="requestInProgress" [attr.aria-busy]="requestInProgress">
+            {{ requestInProgress ? 'Creando cuenta…' : 'Crear mi cuenta y buscar partidos' }} <span aria-hidden="true">→</span>
+          </button>
         </form>
       </section>
 

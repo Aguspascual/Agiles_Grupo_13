@@ -11,7 +11,7 @@ HU-01. HU-02 y la integración de autenticación/perfil no forman parte de esta 
 ## Funcionalidades
 
 - Backend: endpoints de registro, inicio de sesión y consulta del usuario autenticado; contraseñas protegidas con bcrypt y sesión mediante JWT.
-- Frontend: pantallas de ingreso y registro, validaciones locales y navegación de demostración. Las pantallas aún no están conectadas a la API.
+- Frontend: registro y login Angular consumen la API Go real; el servicio HTTP, la sesión JWT y la restauración con `/me` están implementados y probados.
 
 ## Backend
 
@@ -27,7 +27,7 @@ La migración es `backend/migrations/001_auth.sql`. No se crean tablas `zones` n
 
 ## Frontend
 
-Las pantallas Angular están en `frontend/src/app/auth/`; los estilos compartidos están en `frontend/src/styles/`. Incluyen validaciones, preferencias de perfil inicial, estados informativos de vista previa, diseño responsive y animaciones que respetan `prefers-reduced-motion`. El envío no transmite ni persiste credenciales y no crea una sesión real. La integración con los endpoints, el servicio, interceptor y guard quedan pendientes.
+Las pantallas Angular están en `frontend/src/app/auth/`; registro y login envían los DTOs definidos por la API Go, muestran errores HTTP y estado de carga, guardan la sesión y navegan al inicio. El guard valida autenticación para rutas protegidas. Los proveedores sociales y la recuperación de contraseña no están disponibles.
 
 ## Base de datos
 
@@ -47,17 +47,29 @@ Sin cambios.
 
 - Backend: validar registro e inicio de sesión, hash bcrypt, JWT y persistencia en PostgreSQL.
 - Frontend: validar formularios y presentación con la suite Angular y el build de producción.
-- La prueba integrada de registro e inicio de sesión desde Angular queda pendiente hasta conectar el frontend con la API; esta entrega no se describe como funcionalidad de extremo a extremo.
+- La API y la integración Angular de registro/login se validaron mediante HTTP real y PostgreSQL 17. La automatización visual del navegador queda pendiente; la suite Angular registra aparte tres fallas preexistentes de HU-04.
 
 ## Estado
 
-**PARCIAL.** El backend de autenticación HU-01 y las pantallas frontend están implementados. Angular todavía opera en modo local de demostración y no consume los endpoints del backend. La integración y la verificación de extremo a extremo quedan pendientes.
+**PARCIAL.** Registro, login, sesión y restauración Angular están conectados con Go y PostgreSQL y validados por HTTP real. No se declara HU-01 Done hasta que el equipo documente formalmente la decisión de una sola zona y se complete la revisión visual en navegador.
 
 ## Ajustes visuales y de registro HU-01 — 12/10/2026
 
 - Login y registro comparten el fondo gris verdoso de administración y conservan tarjetas blancas.
-- El registro se compactó, se eliminaron los textos promocionales pedidos y las zonas habituales permiten seleccionar una o varias. El selector de nivel inicial permanece visible aunque todavía no se hayan elegido zonas.
+- En la versión visual de 12/10 el registro permitía seleccionar varias zonas; el 29/10 se adaptó a una sola zona para coincidir con el DTO vigente del backend. La aprobación formal de esa regla debe quedar asentada por el equipo antes de cerrar el criterio.
 - El formulario de login redujo sus espacios, controles y altura general.
-- La prueba manual no transmite ni persiste estos datos; la creación de cuenta y la autenticación reales quedan pendientes de integración.
+- En la revisión visual del 12/10 el formulario no transmitía ni persistía datos; esa limitación fue resuelta en la integración HTTP de 29/10.
 - Archivos principales: `frontend/src/app/auth/register.page.*`, `frontend/src/app/auth/login.page.ts`, `frontend/src/styles/_auth.scss`, `_register.scss` y `_motion.scss`.
 - La documentación del frontend registra build, suite y verificación visual; los antecedentes y limitaciones de cada ejecución se conservan en `docs/CHANGELOG-DEVELOPMENT.md`.
+
+## Integración HTTP HU-01 — 29/10/2026
+
+- Angular incorpora DTOs de autenticación, cliente HTTP para `/api/v1/auth`, almacenamiento de sesión, interceptor Bearer y guard de autenticación. Login usa únicamente `email` y `password`; tras el éxito guarda el JWT y vuelve a `/`.
+- Al iniciar la aplicación, `GET /api/v1/auth/me` valida el JWT almacenado. Un 401 limpia la sesión; los errores temporales conservan el token para permitir reintentar. Rutas administrativas exigen sesión validada; la autorización por rol sigue correspondiendo al backend.
+- `Recordarme` guarda el JWT en `localStorage`; desactivado lo guarda en `sessionStorage`. El JWT emitido por el backend vence a las 24 horas. No hay renovación automática; al revalidar un token vencido se cierra la sesión. El almacenamiento accesible desde JavaScript puede exponerse ante XSS.
+- Angular usa `/api` con `frontend/proxy.conf.json`; Nginx reenvía `/api/` al servicio Compose `backend:8000`.
+- Se verificó HTTP real a través del frontend Nginx en Docker Compose aislado: registro HTTP 201, login, `/me` autenticado, `/me` sin JWT HTTP 401 y frontend HTTP 200; el usuario persistió en la PostgreSQL 17 propia de ese proyecto temporal. También pasaron `go test -count=1 ./...` con `TEST_DATABASE_URL` sobre PostgreSQL 17 y `go vet ./...`.
+- `npm run build` pasó. `npm test -- --watch=false`: 108 pruebas pasaron y 3 fallaron en HU-04; las mismas 3 fallas se reprodujeron en un worktree limpio de `origin/Desarrollo`.
+- La pantalla `/perfil` integrada por HU-08 en Desarrollo permanece disponible y mantiene su estado local de demostración con varias zonas; registro guarda una sola zona conforme al DTO backend. No se transforma ni se descarta esa lista: HU-08 no está conectado con la API y su contrato necesita coordinación antes de integrar ambas estructuras.
+- El registro Angular ya usa selección única de zona y `POST /api/v1/auth/register`; confirma la contraseña solo localmente y envía el DTO exacto. En el alta, el JWT se guarda en `sessionStorage` y se navega al inicio. La decisión de zona única está autorizada para implementar, pero falta que el equipo la documente formalmente antes de cerrar el criterio.
+- No se modificaron Go, migraciones ni esquema PostgreSQL. La integración no está publicada: sin commit, push ni PR.
