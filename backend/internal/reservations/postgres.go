@@ -1,0 +1,149 @@
+package reservations
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type NamedResource struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Reservation struct {
+	ID       string        `json:"id"`
+	Status   string        `json:"status"`
+	Complex  NamedResource `json:"complex"`
+	Court    NamedResource `json:"court"`
+	Date     string        `json:"date"`
+	StartsAt string        `json:"startsAt"`
+	EndsAt   string        `json:"endsAt"`
+	TimeZone string        `json:"timeZone"`
+}
+
+type Repository struct{ db *pgxpool.Pool }
+
+func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
+
+func (r *Repository) ListOwn(ctx context.Context, actorID string, start, end time.Time, location *time.Location) ([]Reservation, error) {
+	rows, err := r.db.Query(ctx, `SELECT r.id::text, r.status, c.id::text, c.name, court.id::text, court.name, r.starts_at, r.ends_at
+		FROM reservations r JOIN complexes c ON c.id=r.complex_id JOIN courts court ON court.id=r.court_id
+		WHERE r.organizer_id=$1::uuid AND r.status='reserved' AND r.starts_at >= $2 AND r.starts_at < $3
+		ORDER BY r.starts_at, r.id`, actorID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := make([]Reservation, 0)
+	for rows.Next() {
+		var item Reservation
+		var startsAt, endsAt time.Time
+		if err := rows.Scan(&item.ID, &item.Status, &item.Complex.ID, &item.Complex.Name, &item.Court.ID, &item.Court.Name, &startsAt, &endsAt); err != nil {
+			return nil, err
+		}
+		item.Date = startsAt.In(location).Format("2006-01-02")
+		item.StartsAt = startsAt.In(location).Format("15:04")
+		item.EndsAt = endsAt.In(location).Format("15:04")
+		item.TimeZone = "America/Argentina/Buenos_Aires"
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID string, input Request, start time.Time) (Reservation, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return Reservation{}, err
+	}
+	defer tx.Rollback(ctx)
+	result := Reservation{Status: "reserved", Complex: NamedResource{ID: complexID}, Court: NamedResource{ID: courtID}, Date: input.Date, StartsAt: input.StartsAt, TimeZone: "America/Argentina/Buenos_Aires"}
+	err = tx.QueryRow(ctx, `SELECT name FROM complexes WHERE id=$1::uuid AND deleted_at IS NULL FOR SHARE`, complexID).Scan(&result.Complex.Name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Reservation{}, ErrNotFound
+	}
+	if err != nil {
+		return Reservation{}, err
+	}
+	err = tx.QueryRow(ctx, `SELECT name FROM courts WHERE id=$1::uuid AND complex_id=$2::uuid AND deleted_at IS NULL FOR UPDATE`, courtID, complexID).Scan(&result.Court.Name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Reservation{}, ErrNotFound
+	}
+	if err != nil {
+		return Reservation{}, err
+	}
+	if !start.After(time.Now()) {
+		return Reservation{}, ErrConflict
+	}
+	weekday := int(start.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	var dayID string
+	var duration int
+	var enabled bool
+	err = tx.QueryRow(ctx, `SELECT id::text, enabled, duration_minutes FROM court_schedule_days WHERE court_id=$1::uuid AND weekday=$2`, courtID, weekday).Scan(&dayID, &enabled, &duration)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Reservation{}, ErrConflict
+	}
+	if err != nil {
+		return Reservation{}, err
+	}
+	if !enabled {
+		return Reservation{}, ErrConflict
+	}
+	rows, err := tx.Query(ctx, `SELECT substring(opens_at::text from 1 for 5), substring(closes_at::text from 1 for 5) FROM court_schedule_intervals WHERE schedule_day_id=$1::uuid`, dayID)
+	if err != nil {
+		return Reservation{}, err
+	}
+	var intervals []Interval
+	for rows.Next() {
+		var i Interval
+		if err = rows.Scan(&i.Open, &i.Close); err != nil {
+			rows.Close()
+			return Reservation{}, err
+		}
+		intervals = append(intervals, i)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return Reservation{}, err
+	}
+	if !slotWithinSchedule(input.StartsAt, duration, intervals) {
+		return Reservation{}, ErrConflict
+	}
+	end := start.Add(time.Duration(duration) * time.Minute)
+	var occupied bool
+	err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM reservations WHERE court_id=$1::uuid AND status='reserved' AND starts_at < $3 AND ends_at > $2)`, courtID, start, end).Scan(&occupied)
+	if err != nil {
+		return Reservation{}, err
+	}
+	if occupied {
+		return Reservation{}, ErrConflict
+	}
+	err = tx.QueryRow(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone) VALUES($1::uuid,$2::uuid,$3::uuid,$4,$5,'reserved',3,$6,$7) RETURNING id::text`, complexID, courtID, actorID, start, end, input.Contact.Name, input.Contact.Phone).Scan(&result.ID)
+	if err != nil {
+		return Reservation{}, err
+	}
+	result.EndsAt = end.Format("15:04")
+	payload, err := json.Marshal(result)
+	if err != nil {
+		return Reservation{}, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO reservation_notices(user_id,reservation_id,kind,payload) VALUES($1::uuid,$2::uuid,'reservation_confirmed',$3::jsonb)`, actorID, result.ID, string(payload))
+	if err != nil {
+		return Reservation{}, err
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return Reservation{}, err
+	}
+	return result, nil
+}
