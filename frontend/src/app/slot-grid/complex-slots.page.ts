@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -42,7 +42,7 @@ type PageState = DayGridResult | { status: 'loading' };
   styleUrl: './complex-slots.page.scss',
   host: { '(document:keydown.escape)': 'clearSelection()' },
 })
-export class ComplexSlotsPage {
+export class ComplexSlotsPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(SlotGridService);
@@ -114,6 +114,7 @@ export class ComplexSlotsPage {
   readonly replacedSlotIds = signal<string[]>([]);
   readonly replaceDialogOpen = signal(false);
   readonly replacementNotice = signal('');
+  private replacementNoticeTimer?: ReturnType<typeof setTimeout>;
   readonly selection = computed(() => {
     const id = this.selectedSlotId();
     for (const court of this.grid()?.courts ?? []) {
@@ -140,15 +141,21 @@ export class ComplexSlotsPage {
       this.complexId();
       this.dateKey();
       this.selectedSlotId.set(null);
+      this.replaceDialogOpen.set(false);
+      this.clearReplacementNotice();
     });
   }
 
   selectSlot(slot: GridSlot): void {
+    this.replaceDialogOpen.set(false);
+    this.clearReplacementNotice();
     this.selectedSlotId.set(this.selectedSlotId() === slot.id ? null : slot.id);
   }
 
   clearSelection(): void {
     this.selectedSlotId.set(null);
+    this.replaceDialogOpen.set(false);
+    this.clearReplacementNotice();
   }
 
   requestPendingReplacement(): void {
@@ -161,15 +168,30 @@ export class ComplexSlotsPage {
     this.replacedSlotIds.update((ids) => [...ids, slot.id]);
     this.replaceDialogOpen.set(false);
     this.replacementNotice.set('Turno reservado para el grupo. El partido pendiente fue cancelado.');
+    clearTimeout(this.replacementNoticeTimer);
+    this.replacementNoticeTimer = setTimeout(() => this.clearReplacementNotice(), 4000);
   }
 
   changeDate(key: string): void {
+    this.selectedSlotId.set(null);
+    this.replaceDialogOpen.set(false);
+    this.clearReplacementNotice();
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { fecha: key === this.todayKey ? null : key },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.replacementNoticeTimer);
+  }
+
+  private clearReplacementNotice(): void {
+    clearTimeout(this.replacementNoticeTimer);
+    this.replacementNoticeTimer = undefined;
+    this.replacementNotice.set('');
   }
 
   /** Acepta solo días entre hoy y el final de la ventana de reserva. */

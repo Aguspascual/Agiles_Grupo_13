@@ -3,9 +3,10 @@
 ## Fases realizadas
 
 1. Se precisó la regla: el reemplazo está permitido solo si el partido sigue incompleto y faltan menos de 4 horas para comenzar. A las 4 horas exactas continúa protegido.
-2. Se añadió una acción en el resumen del turno pendiente, condicionada a esa ventana.
-3. Se solicita confirmación antes del reemplazo y se muestra un aviso de éxito.
-4. En la demo, el estado local cambia de partido pendiente a reservado.
+2. Se alineó RN-01 en `docs/REGLAS-NEGOCIO.md` con el criterio de HU-12.
+3. Se añadió una acción en el resumen del turno pendiente, condicionada a esa ventana.
+4. Se solicita confirmación antes del reemplazo y se muestra un aviso temporal de éxito.
+5. En la demo, el estado local cambia de partido pendiente a reservado.
 
 ## Archivos principales
 
@@ -16,7 +17,7 @@
 
 ## Validaciones
 
-- Build Angular y prueba unitaria de los límites temporales.
+- Build Angular y pruebas de la grilla, el cierre de confirmación y los avisos.
 - Reinicio de los contenedores para probar la versión actualizada.
 
 ## Límites
