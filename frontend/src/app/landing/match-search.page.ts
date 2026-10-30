@@ -129,6 +129,18 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadMatches();
     this.route.queryParams.subscribe((params) => {
+      const zone = typeof params['zona'] === 'string' ? params['zona'].trim() : '';
+      const level = typeof params['nivel'] === 'string' ? params['nivel'].trim() : '';
+      const date = typeof params['fecha'] === 'string' ? params['fecha'].trim().toLowerCase() : '';
+      if (zone) this.selectedZones = [zone];
+      if (level) {
+        const knownLevel = this.levels.find((item) => item.toLowerCase() === level.toLowerCase());
+        if (knownLevel) this.selectedLevels = [knownLevel];
+      }
+      if (date === 'hoy' || date === 'mañana') {
+        this.selectedDay = date === 'hoy' ? 'Hoy' : 'Mañana';
+        this.dayFilterEnabled = true;
+      }
       if (params['crear']) {
         this.session.restore().subscribe({
           next: (user) => {

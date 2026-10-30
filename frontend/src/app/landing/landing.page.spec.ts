@@ -12,7 +12,7 @@ import { MatchSearchPage } from './match-search.page';
 import { ClubDirectoryPage } from './club-directory.page';
 import { routes } from '../app.routes';
 
-/** Fija la hora de la demo (el partido de ejemplo es hoy a las 20:30). */
+/** Fija la hora del sistema para las pruebas del estado local de membresía. */
 function setDemoClock(hours: number, minutes: number): void {
   TestBed.inject(PendingMatchMembershipStore).now = () => new Date(new Date().setHours(hours, minutes, 0, 0));
 }
@@ -50,7 +50,7 @@ describe('HU-00: landing pública', () => {
     sessionStorage.clear();
   });
 
-  it('presenta el hero y las secciones principales de Home', () => {
+  it('presenta el hero y el buscador sin insertar datos de demostración', () => {
     const fixture: ComponentFixture<LandingPage> = TestBed.createComponent(LandingPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -59,27 +59,14 @@ describe('HU-00: landing pública', () => {
     expect(heroTitle).toContain('Encontrá tu próximo');
     expect(heroTitle).toContain('partido de pádel en La Plata');
     expect(root.querySelector('[data-home-search]')).not.toBeNull();
-    expect(root.querySelector('[data-home-stats]')?.children.length).toBe(4);
-    expect(root.querySelector('[data-home-stats]')?.textContent).toContain('CLUBES ASOCIADOS');
-    expect(root.querySelector('[data-home-stats]')?.textContent).toContain(
-      'CATEGORÍAS DISPONIBLES',
-    );
-    expect(root.querySelector('[data-home-stats]')?.textContent).toContain('2da a 8va');
-    expect(root.textContent).not.toContain('Filtrado automático: 5ta División');
-    expect(root.querySelector('[data-recommended-matches]')?.children.length).toBe(3);
-    expect(root.textContent).not.toContain('COMUNIDAD OFICIAL PLATENSE');
-    expect(
-      [
-        ...root.querySelectorAll(
-          '[data-recommended-matches] [data-match-card], .available-grid [data-match-card]',
-        ),
-      ].every((card) => !!card.querySelector('img.match-card__image')?.getAttribute('src')),
-    ).toBe(true);
-    expect(root.querySelector('#recommended-title')?.className).toBe(
-      root.querySelector('#available-title')?.className,
-    );
-    expect(root.querySelector('[data-featured-clubs]')?.children.length).toBe(3);
+    expect(root.textContent).toContain('Cargando complejos y partidos');
+    expect(root.querySelector('[data-home-stats]')).toBeNull();
+    expect(root.querySelectorAll('[data-match-card]').length).toBe(0);
+    expect(root.querySelectorAll('.club-card').length).toBe(0);
+    expect(root.textContent).not.toContain('1.250+');
+    expect(root.textContent).not.toContain('La Cumbre Pádel');
     expect(root.querySelector('a[href^="/partidos"]')?.textContent).toContain('Buscar partidos');
+    expect(root.querySelector('.home-search__advanced')).toBeNull();
     expect(root.querySelector('a[href="/ingresar"]')).not.toBeNull();
     fixture.destroy();
   });
