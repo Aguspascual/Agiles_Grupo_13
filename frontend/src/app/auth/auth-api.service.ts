@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from './auth.model';
+import { AuthResponse, AuthUser, LoginRequest, RegisterRequest, UpdateProfileRequest } from './auth.model';
 
 const AUTH_API = '/api/v1/auth';
 
@@ -24,6 +24,12 @@ export class AuthApiService {
   me(): Observable<AuthUser> {
     return this.http
       .get<unknown>(`${AUTH_API}/me`)
+      .pipe(map((response) => parseUserEnvelope(response)));
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<AuthUser> {
+    return this.http
+      .put<unknown>(`${AUTH_API}/me`, request)
       .pipe(map((response) => parseUserEnvelope(response)));
   }
 }

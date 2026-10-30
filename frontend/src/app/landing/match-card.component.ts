@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { MatchPreview } from './landing.data';
-import { PlayerProfileStore } from '../profile/player-profile.store';
+import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-match-card',
@@ -41,7 +41,7 @@ import { PlayerProfileStore } from '../profile/player-profile.store';
               ><i [class]="'player-chip__avatar tone-' + player.tone">{{ player.initials }}</i
               ><span
                 ><b>{{ player.name }}</b
-                  ><small>Nivel {{ player.name === profile.profile().nickname ? profile.profile().level : player.level }}</small></span
+                  ><small>Nivel {{ playerLevel(player.name, player.level) }}</small></span
               ></span
             >
           }
@@ -70,7 +70,7 @@ import { PlayerProfileStore } from '../profile/player-profile.store';
   styleUrl: './match-card.component.scss',
 })
 export class MatchCardComponent {
-  readonly profile = inject(PlayerProfileStore);
+  private readonly session = inject(AuthSessionService);
   @Input({ required: true }) match!: MatchPreview;
   @Input() searchMode = false;
   @Input() detailsMode = false;
@@ -88,6 +88,17 @@ export class MatchCardComponent {
 
   openDetails(event: Event): void {
     this.viewDetails.emit({ match: this.match, trigger: event.currentTarget as HTMLElement });
+  }
+
+  playerLevel(playerName: string, fixtureLevel: string): string {
+    const user = this.session.currentUser();
+    if (!user || this.displayName(user.name) !== playerName) return fixtureLevel;
+    return user.level;
+  }
+
+  private displayName(name: string): string {
+    const [firstName, ...surnames] = name.trim().split(/\s+/);
+    return surnames.length ? `${firstName} ${surnames[0][0]}.` : firstName;
   }
 
   get emptySlots(): number[] {

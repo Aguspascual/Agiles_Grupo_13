@@ -40,7 +40,7 @@ export class LoginPage {
     const { email, password, remember } = this.form.getRawValue();
     this.session.login({ email, password }, remember).subscribe({
       next: () => {
-        this.complexes.list().subscribe({
+        this.complexes.availableManagers().subscribe({
           next: () => this.navigateAfterLogin('/admin/complejos'),
           error: () => this.navigateAfterLogin('/'),
         });

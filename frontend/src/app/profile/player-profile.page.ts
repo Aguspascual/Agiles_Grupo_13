@@ -1,51 +1,71 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
-import { ToastComponent } from '../shared/toast.component';
 import { StyledSelectComponent } from '../shared/styled-select.component';
-import { PlayerProfileStore } from './player-profile.store';
+import { AuthSessionService } from '../auth/auth-session.service';
+import { UpdateProfileRequest } from '../auth/auth.model';
+import { ProfileFeedbackStore } from './profile-feedback.store';
 
 @Component({
   selector: 'app-player-profile-page',
-  imports: [FormsModule, LandingHeaderComponent, LandingFooterComponent, ToastComponent, StyledSelectComponent],
+  imports: [FormsModule, LandingHeaderComponent, LandingFooterComponent, StyledSelectComponent],
   templateUrl: './player-profile.page.html',
 })
 export class PlayerProfilePage {
-  readonly store = inject(PlayerProfileStore);
+  private readonly session = inject(AuthSessionService);
+  private readonly feedback = inject(ProfileFeedbackStore);
   private readonly router = inject(Router);
-  readonly profile = this.store.profile();
-  readonly zones = ['Casco Urbano', 'Gonnet', 'City Bell', 'San Carlos', 'Tolosa', 'Villa Elisa', 'Berisso / Ensenada', 'Los Hornos'];
-  readonly levels = ['8va', '7ma', '6ta', '5ta', '4ta', '3ra', '2da', '1ra'];
-  readonly styles = ['Control y salida de pared', 'Juego agresivo', 'Defensa y consistencia', 'Versátil'];
-  readonly photoUrl = signal('');
-  readonly toastMessage = signal('');
+  readonly email = this.session.currentUser()?.email ?? '';
+  readonly profile: UpdateProfileRequest = this.createDraft();
+  readonly zones = ['Casco Urbano', 'Gonnet', 'City Bell', 'San Carlos', 'Tolosa', 'Villa Elisa', 'Berisso / Ensenada'];
+  readonly levels = ['Principiante', '8va', '7ma', '6ta', '5ta', '4ta', '3ra', '2da', '1ra'];
+  readonly positions = [
+    { value: '', label: 'Sin especificar', detail: 'Elegí un lado' },
+    { value: 'Drive', label: 'Drive', detail: 'Lado derecho' },
+    { value: 'Revés', label: 'Revés', detail: 'Lado izquierdo' },
+    { value: 'Indistinto', label: 'Indistinto', detail: 'Ambos lados' },
+  ];
+  readonly hands = [{ value: '', label: 'Sin especificar' }, { value: 'Diestro', label: 'Diestro' }, { value: 'Zurdo', label: 'Zurdo' }];
+  readonly isSaving = signal(false);
+  readonly errorMessage = signal('');
 
-  toggleZone(zone: string): void {
-    const selected = this.profile.zones.includes(zone);
-    this.profile.zones = selected
-      ? this.profile.zones.filter((item) => item !== zone)
-      : [...this.profile.zones, zone];
+  constructor() {
+    if (!this.session.currentUser()) void this.router.navigateByUrl('/ingresar');
   }
 
   save(): void {
-    this.store.save(this.profile);
-    void this.router.navigateByUrl('/');
+    if (!this.isValid() || this.isSaving()) return;
+    this.errorMessage.set('');
+    this.isSaving.set(true);
+    this.session.updateProfile({ ...this.profile, name: this.profile.name.trim() }).pipe(
+      finalize(() => this.isSaving.set(false)),
+    ).subscribe({
+      next: () => {
+        this.feedback.notifySaved();
+        void this.router.navigateByUrl('/');
+      },
+      error: (error: unknown) => this.errorMessage.set(this.errorText(error)),
+    });
   }
 
-  selectPhoto(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      this.toastMessage.set('Elegí una imagen JPG o PNG de hasta 5 MB');
-      return;
-    }
-    if (this.photoUrl()) URL.revokeObjectURL(this.photoUrl());
-    this.photoUrl.set(URL.createObjectURL(file));
+  isValid(): boolean {
+    return Boolean(this.profile.name.trim() && this.zones.includes(this.profile.zone) && this.levels.includes(this.profile.level));
   }
 
-  get initials(): string {
-    return this.profile.nickname.split(/\s+/).map((part) => part[0] ?? '').join('').slice(0, 2).toUpperCase();
+  private createDraft(): UpdateProfileRequest {
+    const user = this.session.currentUser();
+    return {
+      name: user?.name ?? '', zone: user?.zone ?? '', level: user?.level ?? 'Principiante',
+      position: user?.position ?? '', hand: user?.hand ?? '',
+    };
+  }
+
+  private errorText(error: unknown): string {
+    if (error instanceof HttpErrorResponse && typeof error.error?.error === 'string') return error.error.error;
+    return 'No se pudo guardar el perfil. Revisá tu conexión e intentá de nuevo.';
   }
 }

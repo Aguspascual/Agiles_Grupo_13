@@ -33,7 +33,7 @@ describe('login page con autenticación HTTP', () => {
     sessionStorage.clear();
   });
 
-  it('inicia sesión con acceso a complejos, persiste el JWT y navega a administración', async () => {
+  it('inicia sesión como administrador, persiste el JWT y navega a administración', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
     fixture.componentInstance.form.setValue({
@@ -49,7 +49,7 @@ describe('login page con autenticación HTTP', () => {
       user: { id: 'u1', name: 'Ana', email: 'ana@example.com', zone: 'Gonnet', level: '7ma' },
       token: 'jwt-token',
     });
-    http.expectOne('/api/v1/complexes').flush({ complexes: [] });
+    http.expectOne('/api/v1/complexes/available-managers').flush({ managers: [] });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -58,7 +58,7 @@ describe('login page con autenticación HTTP', () => {
     expect(navigate).toHaveBeenCalledWith('/admin/complejos');
   });
 
-  it('envía al inicio de jugador cuando la API indica que no tiene acceso administrativo', async () => {
+  it('envía al inicio de jugador cuando la API niega el permiso de administrador', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
     fixture.componentInstance.form.setValue({ email: 'jugador@example.com', password: 'password-123', remember: true });
@@ -68,7 +68,7 @@ describe('login page con autenticación HTTP', () => {
       user: { id: 'u2', name: 'Jugador', email: 'jugador@example.com', zone: 'Gonnet', level: '7ma' },
       token: 'player-token',
     });
-    http.expectOne('/api/v1/complexes').flush(
+    http.expectOne('/api/v1/complexes/available-managers').flush(
       { error: 'sin permisos para gestionar complejos' },
       { status: 403, statusText: 'Forbidden' },
     );

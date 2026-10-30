@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 import { LandingPage } from './landing.page';
 import { PendingMatchMembershipStore } from '../bookings/pending-match-membership.store';
 import { MatchSearchPage } from './match-search.page';
@@ -15,7 +16,7 @@ describe('HU-00: landing pública', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LandingPage, MatchSearchPage, ClubDirectoryPage],
-      providers: [provideRouter(routes)],
+      providers: [provideRouter(routes), provideHttpClient()],
     }).compileComponents();
   });
 

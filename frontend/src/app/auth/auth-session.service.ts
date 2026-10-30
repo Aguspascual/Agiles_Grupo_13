@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { AuthApiService } from './auth-api.service';
-import { AuthUser, LoginRequest, RegisterRequest } from './auth.model';
+import { AuthUser, LoginRequest, RegisterRequest, UpdateProfileRequest } from './auth.model';
 import { AuthTokenStore } from './auth-token.store';
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +29,19 @@ export class AuthSessionService {
     return this.api.login(request).pipe(
       tap((response) => this.accept(response, remember)),
       map((response) => response.user),
+    );
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<AuthUser> {
+    const token = this.tokens.token();
+    if (!token) return throwError(() => new Error('Iniciá sesión para editar tu perfil'));
+
+    return this.api.updateProfile(request).pipe(
+      tap((user) => {
+        if (this.tokens.token() === token && this.currentUser()?.id === user.id) {
+          this.currentUser.set(user);
+        }
+      }),
     );
   }
 
