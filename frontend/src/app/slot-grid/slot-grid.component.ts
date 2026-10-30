@@ -38,8 +38,8 @@ interface PlacedCourt {
   slots: PlacedSlot[];
 }
 
-/** Píxeles por minuto: un turno de 60 min mide 69 px y uno de 90 min, 103 px. */
-const PX_PER_MINUTE = 1.15;
+/** Píxeles por minuto: un turno de 60 min mide 90 px y uno de 90 min, 135 px. */
+const PX_PER_MINUTE = 1.5;
 const HEADER_HEIGHT = 52;
 
 /**

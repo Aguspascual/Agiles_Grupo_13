@@ -24,7 +24,7 @@
 
       <div class="slot-grid__gutter" aria-hidden="true"></div>
       @for (mark of grid.hourMarks; track mark.label) {
-        <span class="slot-grid__hour" [style.grid-row]="mark.row + 1" aria-hidden="true">{{
+        <span class="slot-grid__hour" [style.grid-row]="(mark.row + 1) + ' / span ' + (60 / grid.step)" aria-hidden="true">{{
           mark.label
         }}</span>
       }
