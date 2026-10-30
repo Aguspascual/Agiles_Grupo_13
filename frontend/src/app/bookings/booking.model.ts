@@ -22,3 +22,9 @@ export interface PendingMatchInfo {
   missingPlayers: 1 | 2 | 3;
   level: string;
 }
+
+/** Reemplazo solo habilitado durante las últimas cuatro horas previas al inicio. */
+export function isPendingReplacementWindowOpen(startsAt: Date, now: Date): boolean {
+  const remainingMs = startsAt.getTime() - now.getTime();
+  return remainingMs > 0 && remainingMs < 4 * 60 * 60 * 1000;
+}

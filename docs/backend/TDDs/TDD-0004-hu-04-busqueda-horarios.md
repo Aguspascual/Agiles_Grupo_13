@@ -1,6 +1,6 @@
 ---
 id: "0004"
-estado: Borrador
+estado: Aprobado
 version: 1
 autor: "Pedro Moyano Amaya"
 fecha: "2026-10-22"
@@ -12,7 +12,8 @@ trello: "https://trello.com/c/PfnE8VXU"
 
 # TDD-0004: Búsqueda administrativa de horarios recurrentes
 
-> Borrador. Permisos acordados en RN-12; el contrato requiere aprobación. No es la consulta pública de disponibilidad ni una grilla de turnos.
+> Contrato v1 aprobado explícitamente en la conversación del 27/10/2026. Las comprobaciones con reservas reales siguen pendientes.
+
 
 ## Contexto de Negocio (PRD)
 
@@ -23,14 +24,14 @@ Consultar la configuración persistida de una cancha, por día o para la semana,
 - **Nombre / rol:** encargado de un complejo.
 - **Necesidad:** ver sus horarios actuales y editar un día a partir de la revisión vigente.
 
-### Criterios de Aceptación propuestos
+### Criterios de Aceptación
 - **CA-01:** devolver configuración de una cancha y complejo activos al encargado asignado a ese complejo o al administrador general. Denegar a otros roles o encargados ajenos (RN-12).
 - **CA-02:** la búsqueda semanal devuelve los días configurados ordenados de lunes a domingo; la búsqueda individual devuelve solo el día indicado. Dentro del día, ordenar franjas por apertura.
 - **CA-03:** una cancha válida sin días configurados responde `200` con `days: []` en la búsqueda semanal; un día individual no configurado responde `404`. No crear días ni devolver valores inventados.
 - **CA-04:** incluir revisión y configuración completa de cada día, incluso deshabilitados con sus franjas y duración conservadas (RN-13). Un día dado de baja no aparece. Lectura consistente de cabecera y franjas durante una modificación concurrente.
 - **CA-05:** no mezclar reservas, bloqueos por fecha ni turnos generados con esta respuesta; interpretar horas locales con [RN-07](../../REGLAS-NEGOCIO.md).
 
-## Diseño Técnico (RFC) propuesto
+## Diseño Técnico (RFC)
 
 ### Modelo de Datos
 Sin tablas nuevas respecto del [alta](TDD-0001-hu-04-alta-horario-diario.md#modelo-de-datos). Consultar por cancha y opcionalmente por día con una lectura SQL consistente; no combinar cabecera vieja y franjas nuevas entre consultas separadas sin aislamiento.
@@ -56,7 +57,7 @@ Sin tablas nuevas respecto del [alta](TDD-0001-hu-04-alta-horario-diario.md#mode
 ```
 
 - **Response individual:** `200 OK`, mismos headers y cuerpo `{"day": ...}` del [alta](TDD-0001-hu-04-alta-horario-diario.md#contrato-de-api); `404` si no está configurado. Es la representación del recurso indicado en `Location` al darlo de alta.
-- Autenticación y errores JSON: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-propuesto). Después de un `412` al modificar/eliminar, buscar de nuevo y mostrar el conflicto; no sobrescribir automáticamente.
+- Autenticación y errores JSON: [contrato común](README.md#hu-04-acuerdos-y-contrato-común-aprobado). Después de un `412` al modificar/eliminar, buscar de nuevo y mostrar el conflicto; no sobrescribir automáticamente.
 - El frontend puede consultar `/days/1` para editar lunes. Adaptación y conexión requieren tarea autorizada aparte; su almacenamiento local actual no equivale a persistencia backend.
 
 ### Componentes del Monolito Modular
@@ -77,4 +78,4 @@ Sin tablas nuevas respecto del [alta](TDD-0001-hu-04-alta-horario-diario.md#mode
 1. Aprobar el contrato frontend y el TDD, con los permisos y la diferencia entre días ausentes/deshabilitados ya acordados.
 2. Red → Green HTTP de CA-01/02/03: semana, día, orden, ausencia y permisos.
 3. Red → Green PostgreSQL real de CA-04: otra conexión ve lo persistido, incluidos días deshabilitados y ausencia de los eliminados; sin mezcla de revisiones bajo edición concurrente. Verificar CA-05 en el DTO.
-4. Refactor y evidencia de pruebas por criterio en PR. No hay ciclos ejecutados ni aprobación de implementación.
+4. Refactor y evidencia de pruebas por criterio en PR. Los ciclos ejecutados y los límites de implementación están registrados en la documentación backend vinculada.

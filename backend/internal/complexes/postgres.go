@@ -23,6 +23,30 @@ type PostgresRepository struct{ db *pgxpool.Pool }
 
 func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository { return &PostgresRepository{db: db} }
 
+// AuthorizeInTransaction checks active complex membership while retaining its shared lock.
+// Callers supply their existing transaction so dependent writes remain indivisible.
+func AuthorizeInTransaction(ctx context.Context, tx pgx.Tx, complexID, actorID string, admin bool) error {
+	var exists bool
+	err := tx.QueryRow(ctx, "SELECT true FROM complexes WHERE id=$1::uuid AND deleted_at IS NULL FOR SHARE", complexID).Scan(&exists)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if admin {
+		return nil
+	}
+	err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM complex_managers WHERE complex_id=$1::uuid AND user_id=$2::uuid)", complexID, actorID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrForbidden
+	}
+	return nil
+}
+
 func (r *PostgresRepository) IsAdmin(ctx context.Context, userID string) (bool, error) {
 	var admin bool
 	err := r.db.QueryRow(ctx, `SELECT role = 'ADMIN' FROM users WHERE id = $1::uuid`, userID).Scan(&admin)

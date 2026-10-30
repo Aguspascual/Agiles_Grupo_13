@@ -1,0 +1,13 @@
+:host { position: relative; display: block; }
+.styled-select { position: relative; }
+summary { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 10px; border: 1px solid #e5e6ef; border-radius: 8px; background: #f8f8fd; color: #3c4654; font-size: .76rem; font-weight: 600; cursor: pointer; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary:focus-visible { outline: 3px solid #40c496; outline-offset: 2px; }
+summary svg, .styled-select__options svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.styled-select[open] summary { border-color: #0a9b71; box-shadow: 0 0 0 3px #0a9b7118; }
+.styled-select__options { position: absolute; z-index: 20; top: calc(100% + 5px); right: 0; left: 0; display: grid; gap: 3px; max-height: 220px; overflow-y: auto; padding: 5px; border: 1px solid #e3e7e6; border-radius: 10px; background: #fff; box-shadow: 0 12px 26px #172b201c; animation: options-in .14s ease-out both; }
+.styled-select__options button { min-height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: #46515f; font: inherit; font-size: .73rem; text-align: left; cursor: pointer; }
+.styled-select__options button:hover, .styled-select__options button.selected { background: #eaf7f0; color: #087a59; }
+.styled-select__options button:focus-visible { outline: 2px solid #40c496; outline-offset: -2px; }
+@keyframes options-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .styled-select__options { animation: none; } }

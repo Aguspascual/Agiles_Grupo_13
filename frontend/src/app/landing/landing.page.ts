@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ClubCardComponent } from './club-card.component';
@@ -13,6 +13,8 @@ import {
 } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { PlayerProfileStore } from '../profile/player-profile.store';
+import { ToastComponent } from '../shared/toast.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -23,10 +25,14 @@ import { MatchCardComponent } from './match-card.component';
     LandingFooterComponent,
     MatchCardComponent,
     ClubCardComponent,
+    ToastComponent,
   ],
   templateUrl: './landing.page.html',
 })
 export class LandingPage {
+  private readonly profileStore = inject(PlayerProfileStore);
+  readonly playerProfile = this.profileStore.profile;
+  readonly toastMessage = signal(this.profileStore.saveNotice());
   readonly zones = ZONES;
   readonly levels = LEVELS;
   readonly recommendedMatches = RECOMMENDED_MATCHES;
@@ -42,6 +48,20 @@ export class LandingPage {
   level = '5ta';
   date = 'Hoy (Tarde/Noche)';
   activeFilter = 'Todos (42)';
+
+  constructor() {
+    if (this.toastMessage()) {
+      setTimeout(() => {
+        this.toastMessage.set('');
+        this.profileStore.clearSaveNotice();
+      }, 3500);
+    }
+  }
+
+  dismissToast(): void {
+    this.toastMessage.set('');
+    this.profileStore.clearSaveNotice();
+  }
 
   get availableMatches(): MatchPreview[] {
     if (this.activeFilter === 'Urgentes: falta 1')

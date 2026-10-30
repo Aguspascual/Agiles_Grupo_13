@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+// Shared UUID validation keeps the same accepted IDs across complex/court/schedule routes.
+func TestValidUUIDShared(t *testing.T) {
+	for _, tt := range []struct {
+		value string
+		valid bool
+	}{
+		{"11111111-1111-4111-8111-111111111111", true},
+		{"ABCDEFAB-1111-7111-8111-111111111111", true},
+		{"11111111-1111-0111-8111-111111111111", false},
+		{"11111111-1111-4111-0111-111111111111", false},
+		{"11111111111141118111111111111111", false},
+		{"", false},
+	} {
+		if got := ValidUUID(tt.value); got != tt.valid {
+			t.Errorf("ValidUUID(%q)=%v", tt.value, got)
+		}
+	}
+}
+
 func TestNormalizeAndValidateAcceptsOnlyConfiguredZones(t *testing.T) {
 	tests := []struct {
 		zone string
@@ -47,6 +66,15 @@ func TestNormalizeAndValidateRequiresFairPlayAndKnownProfileValues(t *testing.T)
 				t.Fatal("expected validation error")
 			}
 		})
+	}
+}
+
+func TestRegisterValidationPreservesEmailErrorPrecedence(t *testing.T) {
+	request := validRegisterRequest()
+	request.Email = "invalid"
+	request.Zone = "unknown zone"
+	if err := normalizeAndValidate(&request); err == nil || err.Error() != "email inválido" {
+		t.Fatalf("validation error=%v, want email validation before profile catalog", err)
 	}
 }
 

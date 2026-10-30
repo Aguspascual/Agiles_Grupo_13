@@ -2,11 +2,8 @@ package courts
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
-	"regexp"
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 )
@@ -135,23 +132,18 @@ func (s *Service) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func decodeDraft(w http.ResponseWriter, r *http.Request, draft *Draft) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, 7<<20)
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(draft); err != nil {
-		auth.WriteError(w, 400, "JSON inválido o demasiado grande")
-		return false
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		auth.WriteError(w, 400, "JSON inválido")
+	if err := auth.DecodeJSONWithLimit(w, r, draft, 7<<20); err != nil {
+		message := "JSON inválido o demasiado grande"
+		if errors.Is(err, auth.ErrTrailingJSON) {
+			message = "JSON inválido"
+		}
+		auth.WriteError(w, 400, message)
 		return false
 	}
 	return true
 }
 
-var courtUUIDPattern = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
-
-func validUUID(value string) bool { return courtUUIDPattern.MatchString(value) }
+func validUUID(value string) bool { return auth.ValidUUID(value) }
 
 func writeError(w http.ResponseWriter, err error) {
 	switch {

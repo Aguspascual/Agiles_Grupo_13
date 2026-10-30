@@ -1,4 +1,4 @@
-# Backend HU-01 y HU-02
+# Backend HU-01 a HU-04
 
 API Go para registro e inicio de sesión, con PostgreSQL como almacenamiento.
 
@@ -26,6 +26,7 @@ go run ./cmd/api
 - `POST /api/v1/auth/register`: recibe `name`, `email`, `password`, `zone`, `level`, `position`, `hand` y `fairPlay`; devuelve usuario y JWT.
 - `POST /api/v1/auth/login`: recibe `email` y `password`; devuelve usuario y JWT.
 - `GET /api/v1/auth/me`: requiere `Authorization: Bearer <token>` y devuelve el usuario de la sesión.
+- `PUT /api/v1/auth/me`: requiere JWT y los cinco campos `name`, `zone`, `level`, `position` y `hand`; devuelve el usuario actualizado. Posición y mano aceptan cadena vacía para limpiar el valor. No modifica credenciales ni roles.
 - `GET /health`: responde `204` cuando el proceso está activo.
 
 `zone` acepta únicamente Casco Urbano, Gonnet, City Bell, San Carlos, Tolosa, Villa Elisa o Berisso / Ensenada. Se recortan espacios al inicio y final. El registro crea `users` y `player_profiles` en una misma transacción. La migración no crea tablas `zones` ni `user_zones`.
@@ -56,3 +57,44 @@ Los complejos se eliminan de forma lógica (`deleted_at`), se excluyen de listad
 Las características admitidas son `lighting`, `electronicScoreboard`, `wifi` y `acrylicSurface`. PostgreSQL las guarda en cuatro columnas booleanas. La imagen opcional llega como Data URL JSON, se valida como PNG, JPEG o WebP real y hasta 5 MiB; la base guarda los bytes en `BYTEA` y su tipo MIME.
 
 La migración `003_courts.sql` crea canchas con FK restrictiva a `complexes`, baja lógica e índice de canchas activas por complejo. No agrega datos ficticios de reservas ni una columna `hasFutureReservations`. Mientras no exista una fuente de reservas PostgreSQL, no se puede determinar si una cancha tiene turnos futuros y la API falla de forma segura al intentar darla de baja. La baja efectiva y el tercer criterio de Trello quedan pendientes de integrar la consulta de reservas y coordinarla transaccionalmente con la operación que las cree.
+
+## HU-04 — Horarios recurrentes
+
+La configuración diaria se persiste mediante `004_weekly_schedules.sql`.
+Consultar los [TDD de backend](../docs/backend/TDDs/README.md) para los contratos de HU-04.
+El alta, la consulta y los cambios de habilitación/duración están implementados.
+La baja y el reemplazo de franjas responden `503` mientras no esté integrada la
+fuente real de reservas. HU-04 completa, generación y bloqueos puntuales siguen pendientes.
+
+## HU-08 — Modificación del perfil propio
+
+`PUT /api/v1/auth/me` actualiza únicamente el perfil del titular del JWT. Acepta los
+valores de perfil ya admitidos por el registro, exige los cinco campos y rechaza
+campos extra, ausentes, nulos o JSON adicional. La integración con Angular y la
+presentación del perfil en partidos quedan pendientes; no se incluyen múltiples
+zonas ni privacidad.
+
+## HU-15 — Alta de reservas manuales
+
+`POST /api/v1/complexes/{complexId}/courts/{courtId}/manual-reservations` requiere
+JWT y permiso de administrador general o encargado asignado al complejo. Recibe
+`date`, `startsAt` y `contact: { name, phone }`; devuelve `201` con la misma forma de
+reserva de HU-06. El servidor define duración, estado y registrante. Se rechazan con
+`400` los datos inválidos, con `401/403` la falta de autenticación/permiso, con `404`
+los recursos inexistentes y con `409` los turnos pasados, fuera de configuración u ocupados.
+
+La migración `007_manual_reservations.sql` conserva los registros web y agrega origen
+y registrante. Las reservas manuales no tienen organizador ni acompañantes ficticios,
+no aparecen como reservas personales del empleado y no generan avisos. Comparten
+ocupación, bloqueos, disponibilidad HU-05 y protecciones HU-03/04 con las reservas web.
+El número `006` queda para HU-14; no es necesario que exista para aplicar `007`.
+
+**Despliegue coordinado:** detener los escritores antiguos, aplicar la migración y
+arrancar el backend actualizado. La escritura web anterior no completa la nueva
+columna obligatoria `registered_by`. No ejecutar una reversión destructiva con reservas
+manuales guardadas. No se cambia ni habilita la cancelación HU-14 para reservas manuales.
+
+Diseño: [TDD-0012](../docs/backend/TDDs/TDD-0012-hu-15-alta-reserva-manual.md).
+Fases y validaciones: [implementación HU-15](../docs/backend/HU-15-implementacion.md).
+Frontend, agenda, edición, cancelación, participantes, pagos y notificaciones externas
+siguen fuera del alcance de esta entrega.

@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { MatchPreview } from './landing.data';
+import { PlayerProfileStore } from '../profile/player-profile.store';
 
 @Component({
   selector: 'app-match-card',
@@ -40,7 +41,7 @@ import { MatchPreview } from './landing.data';
               ><i [class]="'player-chip__avatar tone-' + player.tone">{{ player.initials }}</i
               ><span
                 ><b>{{ player.name }}</b
-                ><small>Nivel {{ player.level }}</small></span
+                  ><small>Nivel {{ player.name === profile.profile().nickname ? profile.profile().level : player.level }}</small></span
               ></span
             >
           }
@@ -69,6 +70,7 @@ import { MatchPreview } from './landing.data';
   styleUrl: './match-card.component.scss',
 })
 export class MatchCardComponent {
+  readonly profile = inject(PlayerProfileStore);
   @Input({ required: true }) match!: MatchPreview;
   @Input() searchMode = false;
   @Input() detailsMode = false;

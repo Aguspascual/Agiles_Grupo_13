@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { PreviewNoticeComponent } from './preview-notice.component';
+import { Router, RouterLink } from '@angular/router';
+import { AuthSessionService } from './auth-session.service';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   return control.get('password')?.value === control.get('confirmPassword')?.value
@@ -11,7 +12,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register-page',
-  imports: [ReactiveFormsModule, RouterLink, PreviewNoticeComponent],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.page.html',
 })
 export class RegisterPage {
@@ -30,11 +31,11 @@ export class RegisterPage {
 
   readonly form = new FormGroup(
     {
-      name: new FormControl('', { nonNullable: true, validators: Validators.required }),
-      email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-      password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
+      name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(120)] }),
+      email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email, Validators.maxLength(254)] }),
+      password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(72)] }),
       confirmPassword: new FormControl('', { nonNullable: true, validators: Validators.required }),
-      zones: new FormControl<string[]>([], { nonNullable: true, validators: Validators.required }),
+      zone: new FormControl('', { nonNullable: true, validators: Validators.required }),
       level: new FormControl('', { nonNullable: true, validators: Validators.required }),
       position: new FormControl('', { nonNullable: true }),
       hand: new FormControl('', { nonNullable: true }),
@@ -44,24 +45,40 @@ export class RegisterPage {
   );
 
   submitted = false;
-  ready = false;
+  requestInProgress = false;
+  errorMessage = '';
 
-  constructor() {
-    this.form.valueChanges.subscribe(() => (this.ready = false));
-  }
+  constructor(
+    private readonly router: Router,
+    private readonly session: AuthSessionService,
+  ) {}
 
   onSubmit(): void {
+    if (this.requestInProgress) return;
     this.submitted = true;
     this.form.markAllAsTouched();
-    this.ready = this.form.valid;
+    if (this.form.invalid) return;
+
+    this.errorMessage = '';
+    this.requestInProgress = true;
+    const { name, email, password, zone, level, position, hand, fairPlay } = this.form.getRawValue();
+    this.session.register({ name, email, password, zone, level, position, hand, fairPlay }, false).subscribe({
+      next: () => {
+        this.requestInProgress = false;
+        void this.router.navigateByUrl('/');
+      },
+      error: (error: unknown) => {
+        this.requestInProgress = false;
+        this.errorMessage = this.registrationError(error);
+      },
+    });
   }
 
-  toggleZone(zone: string, selected: boolean): void {
-    const currentZones = this.form.controls.zones.value;
-    const nextZones = selected
-      ? [...new Set([...currentZones, zone])]
-      : currentZones.filter((currentZone) => currentZone !== zone);
-    this.form.controls.zones.setValue(nextZones);
-    this.form.controls.zones.markAsTouched();
+  private registrationError(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) return 'No pudimos crear tu cuenta. Intentá nuevamente.';
+    if (error.status === 400) return 'Revisá los datos del formulario e intentá nuevamente.';
+    if (error.status === 409) return 'Ya existe una cuenta con ese correo electrónico.';
+    if (error.status === 0) return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
+    return 'No pudimos crear tu cuenta. Intentá nuevamente.';
   }
 }
