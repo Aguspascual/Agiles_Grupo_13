@@ -76,6 +76,65 @@ describe('HU-07: AgendaApiService', () => {
     expect(failed).toBe(true);
   });
 
+  describe('pendingMatch', () => {
+    const pendingMatch = {
+      id: 'm1',
+      status: 'open',
+      targetLevel: '5ta',
+      missingPlayers: 2,
+      players: [
+        { name: 'Ana Pérez', level: '5ta', position: 'Drive', organizer: true },
+        { name: 'Luis Gómez', level: '6ta', organizer: false },
+      ],
+    };
+
+    function load(reservations: unknown[]): { result?: Agenda; failed: boolean } {
+      const out: { result?: Agenda; failed: boolean } = { failed: false };
+      api.load(COMPLEX, '2026-11-02').subscribe({ next: (agenda) => (out.result = agenda), error: () => (out.failed = true) });
+      const body = structuredClone(agendaBody) as { courts: { reservations: unknown[] }[] };
+      body.courts[0].reservations = reservations;
+      http.expectOne((request) => request.url === `${BASE}/agenda`).flush(body);
+      return out;
+    }
+    const open = (extra: Record<string, unknown>) => ({ ...reservation, origin: 'open_match', contact: { name: 'Ana', phone: '' }, ...extra });
+
+    it('parsea el partido con y sin posición', () => {
+      const { result } = load([open({ pendingMatch })]);
+      expect(result!.courts[0].reservations[0].pendingMatch).toEqual({
+        id: 'm1',
+        status: 'open',
+        targetLevel: '5ta',
+        missingPlayers: 2,
+        players: [
+          { name: 'Ana Pérez', level: '5ta', position: 'Drive', organizer: true },
+          { name: 'Luis Gómez', level: '6ta', organizer: false },
+        ],
+      });
+      expect('position' in result!.courts[0].reservations[0].pendingMatch!.players[1]).toBe(false);
+    });
+
+    it('lo ignora cuando no viene', () => {
+      const { result, failed } = load([open({}), reservation]);
+      expect(failed).toBe(false);
+      for (const item of result!.courts[0].reservations) expect('pendingMatch' in item).toBe(false);
+    });
+
+    it.each([
+      ['estado desconocido', { ...pendingMatch, status: 'closed' }],
+      ['nivel que no es texto', { ...pendingMatch, targetLevel: 5 }],
+      ['faltantes decimales', { ...pendingMatch, missingPlayers: 1.5 }],
+      ['faltantes mayores a 3', { ...pendingMatch, missingPlayers: 4 }],
+      ['faltantes negativos', { ...pendingMatch, missingPlayers: -1 }],
+      ['jugadores que no son lista', { ...pendingMatch, players: 'Ana' }],
+      ['jugador sin nombre', { ...pendingMatch, players: [{ level: '5ta', organizer: true }] }],
+      ['organizador que no es booleano', { ...pendingMatch, players: [{ name: 'Ana', level: '5ta', organizer: 'si' }] }],
+      ['posición que no es texto', { ...pendingMatch, players: [{ name: 'Ana', level: '5ta', organizer: true, position: 3 }] }],
+      ['partido nulo', null],
+    ])('rechaza la forma inválida: %s', (_name, value) => {
+      expect(load([open({ pendingMatch: value })]).failed).toBe(true);
+    });
+  });
+
   it('rechaza respuestas con estructura inválida', () => {
     let failed = false;
     api.load(COMPLEX, '2026-11-02').subscribe({ error: () => (failed = true) });
