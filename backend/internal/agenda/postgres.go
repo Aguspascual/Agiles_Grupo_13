@@ -65,6 +65,9 @@ func (r *Repository) Read(ctx context.Context, complexID, actorID string, daySta
 		return Snapshot{}, err
 	}
 	rows.Close()
+	if err := readPendingMatches(ctx, tx, snapshot.Reservations); err != nil {
+		return Snapshot{}, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return Snapshot{}, err
 	}

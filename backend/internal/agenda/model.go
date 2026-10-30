@@ -28,15 +28,32 @@ type Slot struct {
 	ReservationID string `json:"reservationId,omitempty"`
 }
 
+// MatchPlayer is a player signed up to an open match; it carries no user id or contact data.
+type MatchPlayer struct {
+	Name      string `json:"name"`
+	Level     string `json:"level"`
+	Position  string `json:"position,omitempty"`
+	Organizer bool   `json:"organizer"`
+}
+
+type PendingMatch struct {
+	ID             string        `json:"id"`
+	Status         string        `json:"status"`
+	TargetLevel    string        `json:"targetLevel"`
+	MissingPlayers int           `json:"missingPlayers"`
+	Players        []MatchPlayer `json:"players"`
+}
+
 type Reservation struct {
-	ID               string  `json:"id"`
-	Origin           string  `json:"origin"`
-	StartsAt         string  `json:"startsAt"`
-	EndsAt           string  `json:"endsAt"`
-	OriginalStartsAt string  `json:"originalStartsAt"`
-	OriginalEndsAt   string  `json:"originalEndsAt"`
-	Contact          Contact `json:"contact"`
-	Cancellable      bool    `json:"cancellable"`
+	ID               string        `json:"id"`
+	Origin           string        `json:"origin"`
+	StartsAt         string        `json:"startsAt"`
+	EndsAt           string        `json:"endsAt"`
+	OriginalStartsAt string        `json:"originalStartsAt"`
+	OriginalEndsAt   string        `json:"originalEndsAt"`
+	Contact          Contact       `json:"contact"`
+	Cancellable      bool          `json:"cancellable"`
+	PendingMatch     *PendingMatch `json:"pendingMatch,omitempty"`
 }
 
 type Court struct {
@@ -61,6 +78,8 @@ type ReservationData struct {
 	Contact  Contact
 	StartsAt time.Time
 	EndsAt   time.Time
+	// PendingMatch is set only for origin 'open_match' reservations that have a match row.
+	PendingMatch *PendingMatch
 }
 
 type Snapshot struct {
@@ -101,12 +120,16 @@ func build(snapshot Snapshot, dayStart time.Time, location *time.Location, now t
 			court.Slots = append(court.Slots, item)
 		}
 		for _, r := range own {
-			court.Reservations = append(court.Reservations, Reservation{
+			item := Reservation{
 				ID: r.ID, Origin: r.Origin,
 				StartsAt: r.StartsAt.In(location).Format("15:04"), EndsAt: r.EndsAt.In(location).Format("15:04"),
 				OriginalStartsAt: r.StartsAt.In(location).Format(time.RFC3339), OriginalEndsAt: r.EndsAt.In(location).Format(time.RFC3339),
 				Contact: r.Contact, Cancellable: r.EndsAt.After(now),
-			})
+			}
+			if r.Origin == "open_match" {
+				item.PendingMatch = r.PendingMatch
+			}
+			court.Reservations = append(court.Reservations, item)
 		}
 		courts = append(courts, court)
 	}
