@@ -74,6 +74,21 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     return Math.max(0, 4 - this.match.players.length);
   }
 
+  isCurrentPlayer(playerName: string): boolean {
+    const accountName = this.session.currentUser()?.name;
+    if (!accountName || !playerName) return false;
+    const normalize = (name: string) => name.trim().toLocaleLowerCase('es-AR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ');
+    const account = normalize(accountName);
+    const player = normalize(playerName);
+    const [firstName, ...surnames] = account.split(' ');
+    const shortName = surnames.length ? `${firstName} ${surnames[0][0]}.` : firstName;
+    return player === account || player === normalize(shortName);
+  }
+
+  get alreadyJoined(): boolean {
+    return this.match.players.some((player) => this.isCurrentPlayer(player.name));
+  }
+
   get levelWarning(): string {
     const currentLevel = this.session.currentUser()?.level;
     if (!currentLevel) return '';
@@ -90,6 +105,7 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
       player: this.match.players[index],
       team: index < 2 ? 'Pareja A' : 'Pareja B',
       position: this.match.players[index]?.position ?? 'Lugar disponible',
+      isCurrentUser: this.match.players[index] ? this.isCurrentPlayer(this.match.players[index].name) : false,
     }));
   }
 }
