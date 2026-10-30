@@ -64,12 +64,12 @@ input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
 
 /* Login compacto: todo el contenido entra en una pantalla de escritorio sin scroll. */
 .login-page { display: grid; align-items: center; padding: clamp(16px, 3vh, 32px) clamp(20px, 4vw, 56px); }
-.login-page .auth-layout { max-width: 1320px; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(28px, 4vw, 56px); align-items: center; }
+.login-page .auth-layout { max-width: 1320px; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(16px, 2vw, 28px); align-items: center; }
 .login-page .brand-row { gap: 16px; margin-bottom: 20px; }
 .login-page .brand-mark { width: 68px; height: 68px; border-radius: 16px; }
 .login-page .login-brand-title { font-size: clamp(1.75rem, 2.6vw, 2.5rem); }
 .login-page .login-brand-title span { border-bottom-width: 4px; }
-.login-page .login-card { max-width: 520px; padding: clamp(18px, 2.4vh, 24px); }
+.login-page .login-card { max-width: none; padding: clamp(18px, 2.4vh, 24px); }
 .login-page .field { margin-bottom: 10px; }
 .login-page .field label { margin-bottom: 5px; font-size: .88rem; }
 .login-page .field input:not([type='radio']):not([type='checkbox']) { min-height: 44px; padding-top: 9px; padding-bottom: 9px; font-size: .95rem; }
