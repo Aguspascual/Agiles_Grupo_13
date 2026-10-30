@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LandingFooterComponent } from './landing-footer.component';
@@ -6,6 +6,7 @@ import { LEVELS, MATCHES, MatchPreview, ZONES } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
 import { MatchDetailDialogComponent } from './match-detail-dialog.component';
+import { PendingMatchMembershipCardComponent } from '../bookings/pending-match-membership-card.component';
 import { ToastComponent } from '../shared/toast.component';
 
 @Component({
@@ -17,6 +18,7 @@ import { ToastComponent } from '../shared/toast.component';
     LandingFooterComponent,
     MatchCardComponent,
     MatchDetailDialogComponent,
+    PendingMatchMembershipCardComponent,
     ToastComponent,
   ],
   templateUrl: './match-search.page.html',
@@ -52,8 +54,22 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   onlyOpen = true;
   sortBy = 'Más cercanos en horario';
   viewMode: 'grid' | 'list' = 'grid';
+  filtersOpen = false;
 
   constructor(private readonly route: ActivatedRoute) {}
+
+  openFilters(): void {
+    this.filtersOpen = true;
+  }
+
+  closeFilters(): void {
+    this.filtersOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  closeFiltersOnEscape(): void {
+    this.closeFilters();
+  }
 
   openDetails(detail: { match: MatchPreview; trigger: HTMLElement }): void {
     this.lastDetailTrigger = detail.trigger;

@@ -1,0 +1,33 @@
+:host { display: block; margin: 0 0 12px; }
+.membership-card { overflow: hidden; border: 1px solid #c9dcf2; border-radius: 12px; background: #f4f8fe; box-shadow: 0 6px 18px #183b6410; font-size: .62rem; }
+.membership-card__top, .membership-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; }
+.membership-card__top { background: #e3efff; color: #315b91; }
+.membership-card__eyebrow { font-size: .55rem; font-weight: 800; letter-spacing: .08em; }
+.membership-card__occupancy { padding: 3px 7px; border-radius: 999px; background: #fff; color: #315b91; font-weight: 800; }
+.membership-card__body { padding: 10px 12px; display: grid; grid-template-columns: minmax(150px, .75fr) minmax(0, 1.5fr); align-items: center; gap: 10px; }
+.membership-card h2 { margin: 0; color: #1a2a26; font-size: .82rem; }
+.membership-card p { margin: 3px 0 0; color: #697873; font-size: .62rem; }
+.membership-card__players { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.membership-card__player { min-width: 0; display: flex; align-items: center; gap: 5px; padding: 5px; border-radius: 8px; background: #e9f1fc; color: #34404d; font-size: .55rem; }
+.membership-card__player b { width: 22px; height: 22px; flex: 0 0 22px; display: grid; place-items: center; border-radius: 50%; background: #dcefe7; color: #087c59; }
+.membership-card__player span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.membership-card__player.is-current { outline: 1px solid #8ad2b4; }
+.membership-card__player.is-open { background: #f6fbf8; color: #087c59; }
+.membership-card__player.is-open b { background: #fff; border: 1px dashed #75c4a0; }
+.membership-card__vacancy { margin: 0 12px 8px !important; color: #087c59 !important; font-weight: 700; }
+.membership-card footer { border-top: 1px solid #edf0ee; color: #5e6d67; font-size: .62rem; font-weight: 700; }
+.membership-card footer button, .membership-dialog__confirm { min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: #a73b46; color: #fff; font-size: .62rem; font-weight: 800; cursor: pointer; }
+.membership-card footer button:hover, .membership-dialog__confirm:hover { background: #8b2e38; }
+.membership-card__left { color: #087c59; }
+.membership-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 16px; background: rgb(18 32 27 / 58%); }
+.membership-dialog { width: min(100%, 400px); padding: 20px; border: 1px solid #e3e9e6; border-radius: 14px; background: #fff; box-shadow: 0 18px 52px #07191040; font-size: .62rem; }
+.membership-dialog__icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #fff1ed; color: #a73b46; font-weight: 900; }
+.membership-dialog h2 { margin: 10px 0 6px; color: #1a2a26; font-size: .82rem; }
+.membership-dialog p { margin: 0; color: #62716c; line-height: 1.55; }
+.membership-dialog > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.membership-dialog__cancel { min-height: 32px; padding: 0 10px; border: 1px solid #dbe4df; border-radius: 8px; background: #fff; color: #344a41; font-size: .62rem; font-weight: 700; cursor: pointer; }
+.membership-toast { position: fixed; z-index: 1200; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; margin: 0; padding: 9px 12px; border: 1px solid #b6e2cd; border-radius: 10px; background: #eaf8f0; color: #087c59; box-shadow: 0 8px 22px #0d32181f; font-size: .62rem; font-weight: 700; }
+.membership-toast button { border: 0; background: transparent; color: inherit; font-size: .82rem; cursor: pointer; }
+button:focus-visible { outline: 3px solid #39b986; outline-offset: 3px; }
+@media (max-width: 620px) { .membership-card__body { grid-template-columns: 1fr; gap: 8px; } .membership-card__players { grid-template-columns: repeat(2, minmax(0, 1fr)); } .membership-toast { right: 12px; bottom: 12px; left: 12px; justify-content: space-between; } }
+.membership-card footer button:disabled { background: #c9d1ce; color: #5e6d67; cursor: not-allowed; }
