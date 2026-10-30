@@ -7,6 +7,7 @@ import (
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/courts"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/matches"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/reservations"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/schedules"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/slots"
@@ -30,6 +31,20 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	availabilityService := slots.NewServiceWithClock(slots.NewPostgresRepository(db), clock)
 	// Public availability is the most specific complex route and must bypass auth.
 	mux.Handle("GET /api/v1/complexes/{complexId}/slots", availabilityService.Handler())
+	matchService, matchErr := matches.NewService(matches.NewRepository(db))
+	if matchErr == nil {
+		mux.Handle("GET "+matches.ListPath, matchService.ListHandler())
+		mux.Handle("GET "+matches.OptionsPath, matchService.OptionsHandler())
+		protectedMatches := auth.RequireUser(secret, auth.NewPostgresRepository(db), matchService.Handler())
+		mux.Handle("POST "+matches.CreatePath, protectedMatches)
+		mux.Handle("POST "+matches.JoinPath, protectedMatches)
+		mux.Handle("GET "+matches.NoticesPath, protectedMatches)
+		mux.Handle("POST "+matches.NoticesPath+"/{noticeId}/read", protectedMatches)
+	} else {
+		mux.HandleFunc("GET "+matches.ListPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar los partidos")
+		})
+	}
 	// The player-facing club directory is public: it exposes only id, name, address and zone (TDD-0014).
 	mux.Handle("GET /api/v1/public/complexes", availabilityService.ListHandler())
 	complexService := complexes.NewService(complexes.NewPostgresRepository(db))

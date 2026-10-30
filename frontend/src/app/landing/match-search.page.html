@@ -64,14 +64,13 @@
         <legend>
           Zona / Localidad
         </legend>
-        @for (zone of zones; track zone; let index = $index) {
+        @for (zone of zones; track zone) {
           <label class="check-row"
             ><input
               type="checkbox"
               [checked]="selectedZones.includes(zone)"
               (change)="selectedZones = toggleSelection(selectedZones, zone)"
-            /><span>{{ zone }}</span
-            ><small>{{ [11, 6, 5, 4, 2][index] }}</small></label
+            /><span>{{ zone }}</span></label
           >
         }
       </fieldset>
@@ -145,61 +144,35 @@
     </aside>
 
     <div class="search-results">
-      <app-pending-match-membership-card />
-      <div class="results-toolbar">
-        <label class="match-search-input"
-          ><span aria-hidden="true">⌕</span
-          ><input
-            name="searchTerm"
-            [(ngModel)]="searchTerm"
-            placeholder="Buscar por club, organizador o zona (ej. La Cumbre, Juan, Gonnet)"
-        /></label>
-        <label class="sort-control"
-          ><span>Ordenar por:</span
-          ><select name="sortBy" [(ngModel)]="sortBy">
-            <option>Más cercanos en horario</option>
-            <option>Menor precio</option>
-          </select></label
-        >
-        <div class="view-switch" role="group" aria-label="Vista de resultados">
-          <button
-            type="button"
-            aria-label="Vista en cuadrícula"
-            [class.is-active]="viewMode === 'grid'"
-            (click)="viewMode = 'grid'"
-          >
-            ▦</button
-          ><button
-            type="button"
-            aria-label="Vista en lista"
-            [class.is-active]="viewMode === 'list'"
-            (click)="viewMode = 'list'"
-          >
-            ☰
-          </button>
+      @if (loadingMatches) {
+        <div class="search-empty" role="status"><h3>Cargando partidos…</h3></div>
+      } @else if (matchesError) {
+        <div class="search-empty" role="alert">
+          <h3>No pudimos cargar los partidos</h3>
+          <p>{{ matchesError }}</p>
+          <button type="button" (click)="loadMatches()">Reintentar</button>
         </div>
-      </div>
-      <div class="search-match-grid" [class.is-list]="viewMode === 'list'">
-        @for (match of filteredMatches; track match.id) {
-          <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
-        } @empty {
-          <div class="search-empty">
-            <span aria-hidden="true">⌕</span>
-            <h3>No encontramos partidos con esos filtros</h3>
-            <p>Probá con otra zona, nivel u horario para ver más opciones.</p>
-            <button type="button" (click)="clearFilters()">Limpiar filtros</button>
-          </div>
-        }
-      </div>
-      @if (filteredMatches.length > 0) {
-        <div class="results-pagination">
-          <span>Mostrando 1–{{ filteredMatches.length }} de 28 partidos encontrados</span>
-          <div>
-            <button type="button" aria-label="Página anterior">‹</button
-            ><button type="button" class="is-active">1</button><button type="button">2</button
-            ><button type="button">3</button><button type="button">4</button
-            ><button type="button" aria-label="Página siguiente">›</button>
-          </div>
+      } @else if (!matches.length) {
+        <div class="search-empty search-empty--no-matches" role="status">
+          <span aria-hidden="true">⌕</span>
+          <h3>Todavía no hay partidos abiertos</h3>
+          <p>Cuando alguien publique un partido, va a aparecer en esta sección.</p>
+          <a class="search-empty__create" routerLink="/partidos" [queryParams]="{ crear: 1 }">
+            Crear partido
+          </a>
+        </div>
+      } @else {
+        <div class="search-match-grid">
+          @for (match of filteredMatches; track match.id) {
+            <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
+          } @empty {
+            <div class="search-empty">
+              <span aria-hidden="true">⌕</span>
+              <h3>No encontramos partidos con esos filtros</h3>
+              <p>Probá con otra zona, nivel u horario para ver más opciones.</p>
+              <button type="button" (click)="clearFilters()">Limpiar filtros</button>
+            </div>
+          }
         </div>
       }
       <a class="map-promo" data-map-promo routerLink="/partidos"
@@ -223,5 +196,8 @@
 </main>
   @if (selectedMatch; as match) {
     <app-match-detail-dialog [match]="match" (close)="closeDetails()" (join)="joinMatch($event)" />
+  }
+  @if (createDialogOpen) {
+    <app-create-match-dialog (close)="closeCreateDialog()" (created)="onMatchCreated()" />
   }
   <app-toast [message]="toastMessage" (dismiss)="toastMessage = ''" />

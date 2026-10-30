@@ -31,7 +31,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
           <h3>{{ match.club }}</h3>
           <p>{{ match.address }} · {{ match.zone }}</p>
         </div>
-        <strong>{{ match.price }}<small> / jugador</small></strong>
+        @if (match.price) { <strong>{{ match.price }}<small> / jugador</small></strong> }
       </div>
       <div class="match-card__players">
         <span class="match-card__label">Jugadores confirmados ({{ match.players.length }}/4)</span>
