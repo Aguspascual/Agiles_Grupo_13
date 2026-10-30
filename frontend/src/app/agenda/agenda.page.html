@@ -77,9 +77,9 @@
                   <p>{{ dateLabel() }} · {{ chosen.slot.startsAt }} a {{ chosen.slot.endsAt }}</p>
                   @if (chosen.reservation; as reservation) {
                     <p class="agenda-panel__contact">
-                      <strong>{{ reservation.contact.name }}</strong> · {{ reservation.contact.phone }}
+                      <strong>{{ reservation.contact.name }}</strong> · {{ phoneLabel(reservation.contact.phone) }}
                       <span [class]="'origin-chip is-' + reservation.origin">{{
-                        reservation.origin === 'web' ? 'Web' : 'Manual'
+                        originLabel(reservation.origin)
                       }}</span>
                     </p>
                   }
@@ -116,10 +116,10 @@
                       <span class="agenda-offgrid__time">{{ item.reservation.startsAt }} a {{ item.reservation.endsAt }}</span>
                       <span>{{ item.court.name }}</span>
                       <span
-                        ><strong>{{ item.reservation.contact.name }}</strong> · {{ item.reservation.contact.phone }}</span
+                        ><strong>{{ item.reservation.contact.name }}</strong> · {{ phoneLabel(item.reservation.contact.phone) }}</span
                       >
                       <span [class]="'origin-chip is-' + item.reservation.origin">{{
-                        item.reservation.origin === 'web' ? 'Web' : 'Manual'
+                        originLabel(item.reservation.origin)
                       }}</span>
                       @if (item.reservation.cancellable) {
                         <button
@@ -152,9 +152,9 @@
     @case ('reserved') {
       @if (reservationFor(slot); as reservation) {
         <span class="cell-title">{{ reservation.contact.name }}</span>
-        <span class="cell-phone">{{ reservation.contact.phone }}</span>
+        <span class="cell-phone">{{ phoneLabel(reservation.contact.phone) }}</span>
         <span [class]="'origin-chip is-' + reservation.origin">{{
-          reservation.origin === 'web' ? 'Web' : 'Manual'
+          originLabel(reservation.origin)
         }}</span>
       } @else {
         <span class="cell-title">Reservado</span>

@@ -66,3 +66,10 @@ las áreas tocadas pasan completas.
 - Validaciones observadas: instalación limpia con Node 22/npm 10; suite backend sobre PostgreSQL 17 descartable (308 pruebas/subpruebas correctas) y `go vet` correctos. Compilación frontend correcta (cuatro advertencias de presupuesto). Suite frontend final: 183 pruebas correctas en 33 archivos. Se actualizaron las expectativas de `returnUrl`, la petición de permisos a `/available-managers` y las pruebas de búsqueda/inscripción para usar respuestas HTTP simuladas explícitas; se conservaron las comprobaciones de baja en su componente real. Verificación independiente: sin fallas nuevas ni pruebas debilitadas.
 - No se amplía el alcance funcional: se conservan los límites de partidos pendientes, avisos internos y pantalla de cancelación del jugador indicados arriba.
 - Antes de publicar se incorporó el avance concurrente de Desarrollo (PR #42, HU-11) sin conflictos y se repitieron la suite frontend completa y el build, ambos correctos.
+
+## Corrección: reservas de partido abierto en la agenda (2026-10-30)
+
+- El backend de la agenda devuelve también las reservas `origin='open_match'` (teléfono vacío). El parser solo aceptaba `web` y `manual`, por lo que la pantalla completa caía al estado de error cuando existía un partido abierto ese día.
+- `ReservationOrigin` incorpora `open_match`; el parser lo acepta (teléfono vacío permitido) y sigue rechazando orígenes desconocidos.
+- La agenda muestra el chip "Partido abierto", el teléfono vacío como "—" y, al cancelar, "El partido abierto se cancelará." sin prometer avisos.
+- Sin cambios de backend. Siguen fuera de alcance los anotados y faltantes en la agenda y la cancelación de partidos con aviso a los anotados.

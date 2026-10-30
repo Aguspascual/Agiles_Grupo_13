@@ -60,6 +60,22 @@ describe('HU-07: AgendaApiService', () => {
     expect(court.slots[0]).toMatchObject({ status: 'RESERVED', reservationId: 'r1' });
   });
 
+  it('acepta reservas de partido abierto con teléfono vacío y rechaza orígenes desconocidos', () => {
+    let result: Agenda | undefined;
+    api.load(COMPLEX, '2026-11-02').subscribe((agenda) => (result = agenda));
+    const open = structuredClone(agendaBody);
+    open.courts[0].reservations = [{ ...reservation, origin: 'open_match', contact: { name: 'Ana', phone: '' } }];
+    http.expectOne((request) => request.url === `${BASE}/agenda`).flush(open);
+    expect(result!.courts[0].reservations[0]).toMatchObject({ origin: 'open_match', contact: { name: 'Ana', phone: '' } });
+
+    let failed = false;
+    api.load(COMPLEX, '2026-11-02').subscribe({ error: () => (failed = true) });
+    const unknown = structuredClone(agendaBody);
+    unknown.courts[0].reservations = [{ ...reservation, origin: 'bot' }];
+    http.expectOne((request) => request.url === `${BASE}/agenda`).flush(unknown);
+    expect(failed).toBe(true);
+  });
+
   it('rechaza respuestas con estructura inválida', () => {
     let failed = false;
     api.load(COMPLEX, '2026-11-02').subscribe({ error: () => (failed = true) });

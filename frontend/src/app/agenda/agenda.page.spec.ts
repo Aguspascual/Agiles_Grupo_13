@@ -11,14 +11,14 @@ const NOW = new Date(2026, 9, 21, 20, 18);
 const BASE = '/api/v1/complexes/complex-1';
 const AGENDA_URL = `${BASE}/agenda`;
 
-const reservation = (id: string, origin: 'web' | 'manual', name: string, startsAt: string, endsAt: string, cancellable: boolean) => ({
+const reservation = (id: string, origin: 'web' | 'manual' | 'open_match', name: string, startsAt: string, endsAt: string, cancellable: boolean) => ({
   id,
   origin,
   startsAt,
   endsAt,
   originalStartsAt: `2026-10-21T${startsAt}:00-03:00`,
   originalEndsAt: `2026-10-21T${endsAt}:00-03:00`,
-  contact: { name, phone: `221-${id}` },
+  contact: { name, phone: origin === 'open_match' ? '' : `221-${id}` },
   cancellable,
 });
 
@@ -128,6 +128,27 @@ describe('HU-07: agenda del complejo', () => {
     expect(manual.textContent).toContain('Manual');
     expect(cell('19:30 a 21:00')!.textContent).toContain('Libre');
     expect(cell('22:30 a 24:00')!.textContent).toContain('No disponible');
+  });
+
+  it('muestra el partido abierto con su chip y "—" cuando no hay teléfono', async () => {
+    const body = agendaBody();
+    body.courts[0].reservations[0] = reservation('r-web', 'open_match', 'Ana Pérez', '18:00', '19:30', true);
+    await render(body);
+    const open = cell('18:00 a 19:30')!;
+    expect(open.textContent).toContain('Partido abierto');
+    expect(open.querySelector('.origin-chip')?.classList.contains('is-open_match')).toBe(true);
+    expect(open.querySelector('.cell-phone')?.textContent?.trim()).toBe('—');
+    expect(text()).not.toContain('Cargando agenda');
+  });
+
+  it('no promete aviso al cancelar un partido abierto', async () => {
+    const body = agendaBody();
+    body.courts[0].reservations[0] = reservation('r-web', 'open_match', 'Ana Pérez', '18:00', '19:30', true);
+    await render(body);
+    await click(cell('18:00 a 19:30'));
+    await click(button('Cancelar reserva'));
+    expect(text()).toContain('El partido abierto se cancelará.');
+    expect(text()).not.toContain('Se avisará al jugador.');
   });
 
   it('atenúa los turnos pasados y no deja elegirlos', async () => {

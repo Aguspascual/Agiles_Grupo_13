@@ -12,7 +12,7 @@ import { DayStripComponent } from '../slot-grid/day-strip.component';
 import { SlotGridComponent } from '../slot-grid/slot-grid.component';
 import { GridCourt, GridSlot, SlotState } from '../slot-grid/slot-grid.model';
 import { CLOCK } from '../slot-grid/slot-grid.service';
-import { Agenda, AgendaApiService, AgendaCourt, AgendaReservation, AgendaSlotStatus } from './agenda-api.service';
+import { Agenda, AgendaApiService, AgendaCourt, AgendaReservation, AgendaSlotStatus, ReservationOrigin } from './agenda-api.service';
 import { ManualContact, ManualReservationDialogComponent } from './manual-reservation-dialog.component';
 
 /** Misma ventana que la API: hoy y los 13 días siguientes. */
@@ -246,7 +246,17 @@ export class AgendaPage implements OnDestroy {
 
   cancelMessage(reservation: AgendaReservation): string {
     const base = `${reservation.contact.name} · ${reservation.startsAt} a ${reservation.endsAt}.`;
+    if (reservation.origin === 'open_match') return `${base} El partido abierto se cancelará.`;
     return reservation.origin === 'web' ? `${base} Se avisará al jugador.` : base;
+  }
+
+  originLabel(origin: ReservationOrigin): string {
+    if (origin === 'web') return 'Web';
+    return origin === 'open_match' ? 'Partido abierto' : 'Manual';
+  }
+
+  phoneLabel(phone: string): string {
+    return phone.trim() || '—';
   }
 
   registerManual(contact: ManualContact): void {
