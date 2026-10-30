@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthSessionService } from './auth-session.service';
+import { ComplexApiService } from '../complexes/complex-api.service';
 
 @Component({
   selector: 'app-login-page',
@@ -25,6 +26,7 @@ export class LoginPage {
   constructor(
     private readonly router: Router,
     private readonly session: AuthSessionService,
+    private readonly complexes: ComplexApiService,
   ) {}
 
   onSubmit(): void {
@@ -38,14 +40,21 @@ export class LoginPage {
     const { email, password, remember } = this.form.getRawValue();
     this.session.login({ email, password }, remember).subscribe({
       next: () => {
-        this.requestInProgress = false;
-        void this.router.navigateByUrl('/');
+        this.complexes.list().subscribe({
+          next: () => this.navigateAfterLogin('/admin/complejos'),
+          error: () => this.navigateAfterLogin('/'),
+        });
       },
       error: (error: unknown) => {
         this.requestInProgress = false;
         this.errorMessage = this.loginError(error);
       },
     });
+  }
+
+  private navigateAfterLogin(path: string): void {
+    this.requestInProgress = false;
+    void this.router.navigateByUrl(path);
   }
 
   private loginError(error: unknown): string {

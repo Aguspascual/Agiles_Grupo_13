@@ -11,6 +11,7 @@ export interface ComplexRecord {
   zone: string;
   phone: string;
   managerIds: string[];
+  managers?: ManagerOption[];
 }
 
 export type ComplexDraft = Omit<ComplexRecord, 'id'>;
