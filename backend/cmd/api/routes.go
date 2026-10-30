@@ -84,6 +84,9 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		mux.HandleFunc("GET "+reservations.OwnPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar las reservas")
 		})
+		mux.HandleFunc("GET "+reservations.MyPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar las reservas")
+		})
 		for _, path := range []string{reservations.OwnCancelPath, reservations.ManagerCancelPath} {
 			mux.HandleFunc("POST "+path, func(w http.ResponseWriter, _ *http.Request) {
 				auth.WriteError(w, http.StatusInternalServerError, "no se pudo cancelar la reserva")
@@ -99,6 +102,7 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		mux.Handle("POST "+reservations.OwnCancelPath, protectedReservations)
 		mux.Handle("POST "+reservations.ManagerCancelPath, protectedReservations)
 		mux.Handle("GET "+reservations.OwnPath, protectedReservations)
+		mux.Handle("GET "+reservations.MyPath, protectedReservations)
 		mux.Handle("GET "+reservations.NoticesPath, protectedReservations)
 	}
 	return mux
