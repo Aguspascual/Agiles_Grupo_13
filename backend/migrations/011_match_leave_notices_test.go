@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func TestMigration009PreservesNoticesAndAllowsRepeatKinds(t *testing.T) {
+func TestMigration011PreservesNoticesAndAllowsRepeatKinds(t *testing.T) {
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
 		t.Skip("TEST_DATABASE_URL no está configurado")
@@ -50,7 +50,7 @@ func TestMigration009PreservesNoticesAndAllowsRepeatKinds(t *testing.T) {
 	if _, err := db.Exec(ctx, `CREATE TABLE schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())`); err != nil {
 		t.Fatal(err)
 	}
-	for _, version := range []string{"001_auth.sql", "002_complexes.sql", "003_courts.sql", "004_weekly_schedules.sql", "005_reservations.sql", "006_reservation_cancellation_notice.sql", "007_manual_reservations.sql", "008_pending_matches.sql"} {
+	for _, version := range []string{"001_auth.sql", "002_complexes.sql", "003_courts.sql", "004_weekly_schedules.sql", "005_reservations.sql", "006_reservation_cancellation_notice.sql", "007_manual_reservations.sql", "008_pending_matches.sql", "009_full_match_invitations.sql", "010_invitee_directory_search.sql"} {
 		if _, err := db.Exec(ctx, `INSERT INTO schema_migrations(version) VALUES($1)`, version); err != nil {
 			t.Fatal(err)
 		}

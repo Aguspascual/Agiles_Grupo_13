@@ -147,7 +147,7 @@ estado `reserved`. El organizador y el resto de los jugadores reciben un aviso i
 efectos; la transacción bloquea el partido y aplica la baja y los avisos de forma atómica.
 
 `GET /api/v1/match-notices` incluye `kind` (`match_completed` o `player_left`). La migración
-`009_match_leave_notices.sql` conserva los avisos existentes y permite nuevas notificaciones
+`011_match_leave_notices.sql` conserva los avisos existentes y permite nuevas notificaciones
 del mismo tipo cuando un partido vuelve a completarse tras una baja.
 
 Diseño: [TDD-0017](../docs/backend/TDDs/TDD-0017-hu-13-bajarse-de-partido-pendiente.md).

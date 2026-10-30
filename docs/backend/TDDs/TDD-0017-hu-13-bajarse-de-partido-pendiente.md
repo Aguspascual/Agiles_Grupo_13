@@ -35,7 +35,7 @@ Permitir que un jugador anotado libere su lugar de un partido pendiente cuando f
 
 ### Modelo de datos
 
-No se crean entidades. La inscripción se elimina de `pending_match_players`; el partido completo cambia de `full` a `open`; los avisos se guardan en `pending_match_notices`. La migración `009_match_leave_notices.sql` admite `player_left` y elimina la unicidad que impedía avisos repetidos tras ciclos posteriores de partido completo.
+No se crean entidades. La inscripción se elimina de `pending_match_players`; el partido completo cambia de `full` a `open`; los avisos se guardan en `pending_match_notices`. La migración `011_match_leave_notices.sql` admite `player_left` y elimina la unicidad que impedía avisos repetidos tras ciclos posteriores de partido completo.
 
 ### Contrato de API
 

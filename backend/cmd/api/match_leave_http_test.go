@@ -73,7 +73,7 @@ func TestHTTPLeaveFullMatchReopensAndNotifiesRemainingPlayers(t *testing.T) {
 	}
 	slotsPath := fmt.Sprintf("/api/v1/complexes/%s/slots?date=%s", f.complexID, now.Format("2006-01-02"))
 	slots := string(expectManual(t, f.request("GET", slotsPath, "", ""), 200))
-	if !strings.Contains(slots, `"startsAt":"18:00","endsAt":"19:00","status":"RESERVED"`) {
+	if !strings.Contains(slots, `"startsAt":"18:00","endsAt":"19:00","status":"PENDING_MATCH","isPast":false,"pendingMatch":{"missingPlayers":1,"level":"5ta"}`) {
 		t.Fatalf("the public court grid must continue showing the booked turn: %s", slots)
 	}
 	publicMatches := string(expectManual(t, f.request("GET", "/api/v1/matches", "", ""), 200))

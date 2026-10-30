@@ -274,13 +274,17 @@ func TestManualReservationMigrationPreservesWebData(t *testing.T) {
 	f := newManualFixture(t)
 	// Rebuild the pre-006 schema in this disposable fixture, including later dependents.
 	if _, err := f.db.Exec(f.ctx, `
+		DROP TABLE full_match_invitations, full_matches;
 		DROP TABLE pending_match_notices, pending_match_players;
 		DROP TABLE pending_matches;
 		DROP TABLE reservation_notices, reservations;
 		DELETE FROM schema_migrations WHERE version IN (
 			'006_reservation_cancellation_notice.sql',
 			'007_manual_reservations.sql',
-			'008_pending_matches.sql'
+			'008_pending_matches.sql',
+			'009_full_match_invitations.sql',
+			'010_invitee_directory_search.sql',
+			'011_match_leave_notices.sql'
 		)`); err != nil {
 		t.Fatal(err)
 	}

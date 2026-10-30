@@ -12,18 +12,22 @@
 
 - `backend/internal/matches/model.go`, `service.go` y `postgres.go`: contrato, validación, ruta y persistencia transaccional.
 - `backend/cmd/api/routes.go`: montaje de la ruta protegida y reloj inyectable.
-- `backend/migrations/009_match_leave_notices.sql`: tipo de aviso `player_left` y repetición segura de avisos `match_completed`.
-- `backend/internal/matches/leave_window_test.go`, `backend/cmd/api/match_leave_http_test.go` y `backend/migrations/009_match_leave_notices_test.go`: pruebas unitarias y de integración.
+- `backend/migrations/011_match_leave_notices.sql`: tipo de aviso `player_left` y repetición segura de avisos `match_completed`.
+- `backend/internal/matches/leave_window_test.go`, `backend/cmd/api/match_leave_http_test.go` y `backend/migrations/011_match_leave_notices_test.go`: pruebas unitarias y de integración.
 - `docs/backend/TDDs/TDD-0017-hu-13-bajarse-de-partido-pendiente.md`: TDD pendiente de aprobación de revisión.
 
 ## Validaciones
 
 - RED: `go test -count=1 ./internal/matches` falló inicialmente con referencias no definidas a `validateLeaveWindow` y `ErrTooLate`, como se esperaba.
-- GREEN: `go test -count=1 ./...` pasó con `TEST_DATABASE_URL` contra PostgreSQL temporal descartable; incluyó tests HTTP, concurrencia y migración 009.
+- GREEN: `go test -count=1 ./...` pasó con `TEST_DATABASE_URL` contra PostgreSQL temporal descartable; incluyó tests HTTP, concurrencia y migración 011.
 - `go vet ./...`: pasó.
 - `docker build --target build -f Dockerfile`: pasó.
 - `git diff --check`: pasó.
 - El contenedor PostgreSQL temporal `hu13-postgres-test` se usó solo para las pruebas y se detuvo al finalizar.
+
+## Actualización con Desarrollo
+
+Durante la preparación de la PR se integraron HU-16 y HU-05 en `Desarrollo`. La rama se actualizó mediante merge local de `origin/Desarrollo`. Como HU-16 ocupa las migraciones 009 y 010, HU-13 usa la siguiente versión disponible, `011_match_leave_notices.sql`.
 
 ## Límites y dependencias
 
