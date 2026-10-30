@@ -57,3 +57,11 @@ agenda pueda elegir turnos reservados, y `ConfirmDialogComponent` recibe `cancel
 Con Node 25 la suite completa falla en la primera prueba de `app.spec.ts` (ya fallaba antes de estos cambios) y esa falla se propaga a
 otros archivos. Con Node 22 (`npx -p node@22 node node_modules/@angular/cli/bin/ng.js test --runner-config=vitest.config.ts --watch=false`)
 las áreas tocadas pasan completas.
+
+## Integración en Desarrollo (2026-10-30)
+
+- Se recuperan los cambios de las PR #39 y #41, que se habían integrado en ramas intermedias; la PR #38 ya estaba en Desarrollo.
+- Se corrige únicamente la preparación de `TestManualReservationMigrationPreservesWebData`: elimina las tablas dependientes de partidos en la base descartable y restaura el historial de migraciones 006–008 antes de probar la actualización desde 005. No cambia SQL de producción.
+- Se completan tres entradas opcionales faltantes en `frontend/package-lock.json`, sin cambiar `package.json` ni las versiones ya fijadas.
+- Validaciones observadas: instalación limpia con Node 22/npm 10; suite backend sobre PostgreSQL 17 descartable (308 pruebas/subpruebas correctas) y `go vet` correctos. Compilación frontend correcta (cuatro advertencias de presupuesto). Suite frontend final: 181 pruebas correctas en 31 archivos. Se actualizaron las expectativas de `returnUrl`, la petición de permisos a `/available-managers` y las pruebas de búsqueda/inscripción para usar respuestas HTTP simuladas explícitas; se conservaron las comprobaciones de baja en su componente real. Verificación independiente: sin fallas nuevas ni pruebas debilitadas.
+- No se amplía el alcance funcional: se conservan los límites de partidos pendientes, avisos internos y pantalla de cancelación del jugador indicados arriba.
