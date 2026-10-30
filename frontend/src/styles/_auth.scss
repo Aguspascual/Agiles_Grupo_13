@@ -62,3 +62,37 @@ input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
 .side-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; background: #adedd3; border-radius: 12px; color: #006c49; font-size: 1.45rem; }
 .side-card > .status-dot { margin-top: 8px; }
 
+/* Login compacto: todo el contenido entra en una pantalla de escritorio sin scroll. */
+.login-page { display: grid; align-items: center; padding: clamp(16px, 3vh, 32px) clamp(20px, 4vw, 56px); }
+.login-page .auth-layout { max-width: 1180px; width: 100%; gap: clamp(28px, 4vw, 56px); align-items: center; }
+.login-page .brand-row { gap: 16px; margin-bottom: 20px; }
+.login-page .brand-mark { width: 68px; height: 68px; border-radius: 16px; }
+.login-page .login-brand-title { font-size: clamp(1.75rem, 2.6vw, 2.5rem); }
+.login-page .login-brand-title span { border-bottom-width: 4px; }
+.login-page .login-card { max-width: 520px; padding: clamp(18px, 2.4vh, 24px); }
+.login-page .field { margin-bottom: 10px; }
+.login-page .field label { margin-bottom: 5px; font-size: .88rem; }
+.login-page .field input:not([type='radio']):not([type='checkbox']) { min-height: 44px; padding-top: 9px; padding-bottom: 9px; font-size: .95rem; }
+.login-page .input-wrap > svg { left: 16px; width: 18px; height: 18px; }
+.login-page .input-wrap input:not([type='radio']):not([type='checkbox']) { padding-left: 44px; }
+.login-page .show-password { padding: 8px; }
+.login-page .check-row { margin: 2px 0 12px; font-size: .88rem; }
+.login-page .primary-button { min-height: 44px; }
+.login-page .divider { margin: 14px 0 10px; }
+.login-page .social-row button { min-height: 38px; }
+.login-page .switch-page { margin-top: 14px; font-size: .92rem; }
+.login-page .login-aside { gap: 14px; padding-top: 0; }
+.login-page .hero-photo { min-height: clamp(220px, 36vh, 320px); }
+.login-page .hero-photo-copy { inset: 16px 20px 18px; }
+.login-page .hero-photo-copy p { font-size: clamp(1.15rem, 1.6vw, 1.5rem); }
+.login-page .side-card { gap: 14px; padding: 16px 18px; }
+.login-page .side-card h2 { font-size: 1.02rem; }
+.login-page .side-card p { font-size: .87rem; line-height: 1.45; }
+.login-page .side-icon { width: 38px; height: 38px; font-size: 1.2rem; }
+
+@media (max-width: 900px) {
+  .login-page { align-items: start; }
+  .login-page .auth-layout { grid-template-columns: 1fr; }
+  .login-page .login-card { max-width: none; }
+}
+
