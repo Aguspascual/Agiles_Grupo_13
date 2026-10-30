@@ -9,6 +9,12 @@ export function parseMatchEnvelope(value: unknown): MatchPreview {
   return toMatchPreview(parseEnvelope(value, 'match', parseMatch));
 }
 
+export function parseMatchLeaveResult(value: unknown): { deleted: boolean } {
+  if (isRecord(value) && value['deleted'] === true && !('match' in value)) return { deleted: true };
+  parseMatchEnvelope(value);
+  return { deleted: false };
+}
+
 export function parseComplexList(value: unknown): ComplexOption[] {
   return readArray(value, 'complexes', (item) => {
     if (!isRecord(item) || !isStringFields(item, ['id', 'name', 'address', 'zone']) || !Array.isArray(item['courts'])) {
@@ -84,7 +90,7 @@ function toPlayer(player: ApiMatch['players'][number]): PlayerPreview {
   const initials = player.name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase();
   const tones = ['mint', 'lavender', 'peach', 'blue'];
   const tone = tones[(initials.charCodeAt(0) + (initials.charCodeAt(1) ?? 0)) % tones.length];
-  return { initials, name: player.name, level: player.level, tone, position: player.position as PlayerPreview['position'] };
+  return { initials, name: player.name, level: player.level, tone, position: player.position as PlayerPreview['position'], organizer: player.organizer };
 }
 
 function dayName(dateValue: string): string {

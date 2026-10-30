@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -28,11 +28,11 @@ import { CreateMatchDialogComponent } from '../matches/create-match-dialog.compo
   templateUrl: './match-search.page.html',
 })
 export class MatchSearchPage implements OnInit, OnDestroy {
-  selectedMatch: MatchPreview | null = null;
-  toastMessage = '';
+  readonly selectedMatch = signal<MatchPreview | null>(null);
+  readonly toastMessage = signal('');
   private lastDetailTrigger: HTMLElement | null = null;
   private toastTimer?: ReturnType<typeof setTimeout>;
-  readonly matches: MatchPreview[] = [];
+  readonly matches = signal<MatchPreview[]>([]);
   readonly session = inject(AuthSessionService);
   private readonly api = inject(MatchApiService);
   private readonly router = inject(Router);
@@ -59,9 +59,10 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   selectedClub = 'Todos los clubes de La Plata';
   onlyOpen = false;
   filtersOpen = false;
-  loadingMatches = true;
-  matchesError = '';
+  readonly loadingMatches = signal(true);
+  readonly matchesError = signal('');
   createDialogOpen = false;
+  readonly leavingMatchId = signal<string | null>(null);
 
   constructor(private readonly route: ActivatedRoute) {}
 
@@ -80,11 +81,11 @@ export class MatchSearchPage implements OnInit, OnDestroy {
 
   openDetails(detail: { match: MatchPreview; trigger: HTMLElement }): void {
     this.lastDetailTrigger = detail.trigger;
-    this.selectedMatch = detail.match;
+    this.selectedMatch.set(detail.match);
   }
 
   closeDetails(): void {
-    this.selectedMatch = null;
+    this.selectedMatch.set(null);
     setTimeout(() => this.lastDetailTrigger?.focus());
   }
 
@@ -99,8 +100,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
           next: (updated) => {
             if (updated.openSpots === 0) this.removeMatch(updated.id);
             else {
-              const index = this.matches.findIndex((item) => item.id === updated.id);
-              if (index >= 0) this.matches.splice(index, 1, updated);
+              this.matches.update((matches) => matches.map((item) => item.id === updated.id ? updated : item));
             }
             this.showToast(`Te sumaste al partido en ${updated.club}.`);
           },
@@ -108,6 +108,27 @@ export class MatchSearchPage implements OnInit, OnDestroy {
         });
       },
       error: () => void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: '/partidos' } }),
+    });
+  }
+
+  leaveMatch(match: MatchPreview): void {
+    if (this.leavingMatchId()) return;
+    this.leavingMatchId.set(match.id);
+    this.api.leave(match.id).subscribe({
+      next: (result) => {
+        this.leavingMatchId.set(null);
+        if (result.deleted) this.removeMatch(match.id);
+        this.closeDetails();
+        this.showToast(result.deleted
+          ? 'Te bajaste del partido. El partido se eliminó y el turno quedó libre.'
+          : 'Te bajaste del partido. Tu lugar quedó disponible.');
+        this.loadMatches();
+      },
+      error: (error: unknown) => {
+        this.leavingMatchId.set(null);
+        this.showToast(this.leaveError(error));
+        this.loadMatches();
+      },
     });
   }
 
@@ -160,38 +181,44 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   }
 
   loadMatches(): void {
-    this.loadingMatches = true;
-    this.matchesError = '';
+    this.loadingMatches.set(true);
+    this.matchesError.set('');
     this.session.restore().pipe(
       catchError(() => of(null)),
       switchMap(() => this.api.list()),
     ).subscribe({
       next: (matches) => {
-        this.matches.splice(0, this.matches.length, ...matches);
-        this.loadingMatches = false;
+        this.matches.set(matches);
+        this.loadingMatches.set(false);
       },
       error: () => {
-        this.loadingMatches = false;
-        this.matchesError = 'No pudimos cargar los partidos. Revisá tu conexión e intentá de nuevo.';
+        this.loadingMatches.set(false);
+        this.matchesError.set('No pudimos cargar los partidos. Revisá tu conexión e intentá de nuevo.');
       },
     });
   }
 
   private removeMatch(id: string): void {
-    const index = this.matches.findIndex((item) => item.id === id);
-    if (index >= 0) this.matches.splice(index, 1);
+    this.matches.update((matches) => matches.filter((item) => item.id !== id));
   }
 
   private showToast(message: string): void {
-    this.toastMessage = message;
+    this.toastMessage.set(message);
     if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => (this.toastMessage = ''), 3500);
+    this.toastTimer = setTimeout(() => this.toastMessage.set(''), 3500);
   }
 
   private matchActionError(error: unknown): string {
     if (error instanceof HttpErrorResponse && error.status === 409) return 'El partido ya está completo o ya estás anotado.';
     if (error instanceof HttpErrorResponse && error.status === 401) return 'Tu sesión venció. Iniciá sesión nuevamente.';
     return 'No pudimos completar la acción. Intentá otra vez.';
+  }
+
+  private leaveError(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.status === 409) return 'No podés bajarte: la baja cerró 2 horas antes o el partido cambió.';
+    if (error instanceof HttpErrorResponse && error.status === 401) return 'Tu sesión venció. Iniciá sesión nuevamente.';
+    if (error instanceof HttpErrorResponse && error.status === 404) return 'El partido ya no está disponible.';
+    return 'No pudimos procesar la baja. Intentá otra vez.';
   }
 
   get activeFiltersCount(): number {
@@ -206,7 +233,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   }
 
   get filteredMatches(): MatchPreview[] {
-    return this.matches.filter(
+    return this.matches().filter(
       (match) =>
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
         (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&

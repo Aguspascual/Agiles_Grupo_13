@@ -6,11 +6,12 @@ import {
   parseAvailability,
   parseComplexList,
   parseMatchEnvelope,
+  parseMatchLeaveResult,
   parseMatchList,
   parseNoticeList,
   toMatchPreview,
 } from './match-api.mapper';
-import { AvailabilityOption, ComplexOption, MatchCreateRequest, MatchNotice } from './match-api.model';
+import { AvailabilityOption, ComplexOption, MatchCreateRequest, MatchLeaveResult, MatchNotice } from './match-api.model';
 
 const MATCHES_API = '/api/v1/matches';
 
@@ -32,6 +33,11 @@ export class MatchApiService {
   join(matchId: string): Observable<MatchPreview> {
     return this.http.post<unknown>(`${MATCHES_API}/${encodeURIComponent(matchId)}/players`, null)
       .pipe(map(parseMatchEnvelope));
+  }
+
+  leave(matchId: string): Observable<MatchLeaveResult> {
+    return this.http.delete<unknown>(`${MATCHES_API}/${encodeURIComponent(matchId)}/players/me`)
+      .pipe(map(parseMatchLeaveResult));
   }
 
   complexes(): Observable<ComplexOption[]> {

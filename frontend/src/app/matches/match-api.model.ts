@@ -55,6 +55,10 @@ export interface MatchNotice {
   createdAt: string;
 }
 
+export interface MatchLeaveResult {
+  deleted: boolean;
+}
+
 export interface MatchCreateRequest {
   date: string;
   startsAt: string;
