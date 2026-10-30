@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { ComplexSlotsPage } from './complex-slots.page';
+import { AuthSessionService } from '../auth/auth-session.service';
+import { AuthTokenStore } from '../auth/auth-token.store';
 import { CLOCK } from './slot-grid.service';
 
 // Miércoles 21/10/2026, 20:18.
@@ -13,25 +15,28 @@ const SLOTS_URL = (id: string) => `/api/v1/complexes/${id}/slots`;
 
 function slotsBody(date: string) {
   const isToday = date === '2026-10-21';
-  const slot = (startsAt: string, endsAt: string, status: string, isPast = false) => ({
-    id: `court:${date}:${startsAt}`,
-    startsAt,
-    endsAt,
-    status,
-    isPast,
-  });
-  const court = (id: string, name: string, covered: boolean, pastToday: boolean) => ({
-    id,
-    name,
-    covered,
-    slots: [
-      slot('18:00', '19:30', 'AVAILABLE', pastToday && isToday),
-      slot('19:30', '21:00', 'AVAILABLE', pastToday && isToday),
-      slot('21:00', '22:30', 'AVAILABLE'),
-      slot('22:30', '24:00', 'RESERVED'),
-    ],
-    occupiedIntervals: [],
-  });
+  const court = (id: string, name: string, covered: boolean, pastToday: boolean) => {
+    const slot = (startsAt: string, endsAt: string, status: string, isPast = false) => ({
+      id: `${id}:${date}:${startsAt}`,
+      startsAt,
+      endsAt,
+      status,
+      isPast,
+      ...(status === 'PENDING_MATCH' ? { pendingMatch: { missingPlayers: 2, level: '5ta' } } : {}),
+    });
+    return {
+      id,
+      name,
+      covered,
+      slots: [
+        slot('18:00', '19:30', 'AVAILABLE', pastToday && isToday),
+        slot('19:30', '21:00', 'AVAILABLE', pastToday && isToday),
+        slot('21:00', '22:30', id === 'c2' ? 'PENDING_MATCH' : 'AVAILABLE'),
+        slot('22:30', '24:00', 'RESERVED'),
+      ],
+      occupiedIntervals: [],
+    };
+  };
   return {
     complex: { id: 'complex-gonnet', name: 'Club Universitario Gonnet', address: 'Calle 14', zone: 'Gonnet' },
     date,
@@ -147,37 +152,71 @@ describe('HU-05: página de turnos del complejo', () => {
     fixture.destroy();
   });
 
-  it('cierra la confirmación al cancelar la selección y no la vuelve a abrir', async () => {
-    const { fixture, root } = await render();
-    const page = fixture.componentInstance;
-    const slots = page.grid()!.courts.flatMap((court) => court.slots);
-    const [first, second] = slots.filter((slot) => slot.state === 'available');
+  it('permite elegir un turno de partido abierto y muestra faltantes y nivel', async () => {
+    const { fixture, root } = await render('complex-gonnet', '2026-10-22');
+    const cell = root.querySelector<HTMLButtonElement>('button.slot-cell.is-pending');
 
-    page.selectSlot(first);
-    page.replaceDialogOpen.set(true);
+    expect(cell?.textContent).toContain('Partido abierto');
+    cell?.click();
     fixture.detectChanges();
-    expect(root.querySelector('[role="alertdialog"]')).not.toBeNull();
+    const summary = root.querySelector('app-slot-summary');
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    fixture.detectChanges();
-    expect(page.replaceDialogOpen()).toBe(false);
-
-    page.selectSlot(second);
-    fixture.detectChanges();
-    expect(root.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(summary?.textContent).toContain('Partido abierto');
+    expect(summary?.textContent).toContain('Faltan 2 jugadores · nivel 5ta');
+    expect(summary?.querySelector('a[href="/ingresar"]')?.textContent).toContain(
+      'Ingresá para sumarte',
+    );
     fixture.destroy();
   });
 
-  it('cierra el aviso de reemplazo al cambiar el día', async () => {
-    const { fixture } = await render();
-    const page = fixture.componentInstance;
-    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    page.replacementNotice.set('Turno reservado para el grupo.');
+  it('ya no ofrece reservar como grupo completo ni cancelar el partido pendiente', async () => {
+    const { fixture, root } = await render('complex-gonnet', '2026-10-22');
+    const page = fixture.componentInstance as unknown as Record<string, unknown>;
 
-    page.changeDate('2026-10-22');
+    root.querySelector<HTMLButtonElement>('button.slot-cell.is-pending')?.click();
+    fixture.detectChanges();
 
-    expect(page.replacementNotice()).toBe('');
-    expect(page.replaceDialogOpen()).toBe(false);
+    expect(root.textContent).not.toContain('Reservar como grupo completo');
+    expect(root.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(page['canReplacePending']).toBeUndefined();
+    expect(page['replacementNotice']).toBeUndefined();
+    fixture.destroy();
+  });
+
+  it('con sesión, lleva a los partidos abiertos o a crear uno según el turno', async () => {
+    const { fixture, root } = await render('complex-gonnet', '2026-10-22');
+    TestBed.inject(AuthTokenStore).current.set('token');
+    TestBed.inject(AuthSessionService).currentUser.set({
+      id: 'u1',
+      name: 'Ana Pérez',
+      email: 'ana@example.com',
+      zone: 'Gonnet',
+      level: '5ta',
+    });
+
+    root.querySelector<HTMLButtonElement>('button.slot-cell.is-pending')?.click();
+    fixture.detectChanges();
+    const open = root.querySelector('app-slot-summary a.slot-summary__cta');
+    expect(open?.textContent).toContain('Ver partidos abiertos');
+    expect(open?.getAttribute('href')).toBe('/partidos');
+
+    root.querySelector<HTMLButtonElement>('button.slot-cell.is-available')?.click();
+    fixture.detectChanges();
+    const create = root.querySelector('app-slot-summary a.slot-summary__cta');
+    expect(create?.textContent).toContain('Reservar este turno');
+    expect(create?.getAttribute('href')).toBe('/partidos?crear=1');
+    fixture.destroy();
+  });
+
+  it('muestra un error si el backend envía un partido abierto sin datos válidos', async () => {
+    const { fixture, root } = await render('complex-gonnet', undefined, false);
+    const req = http.expectOne((request) => request.url === SLOTS_URL('complex-gonnet'));
+    const body = slotsBody('2026-10-21');
+    delete (body.courts[1].slots[2] as { pendingMatch?: unknown }).pendingMatch;
+    req.flush(body);
+    fixture.detectChanges();
+
+    expect(root.querySelector('.slots-message[role="alert"]')).not.toBeNull();
     fixture.destroy();
   });
 
@@ -197,7 +236,6 @@ describe('HU-05: página de turnos del complejo', () => {
     expect(root.querySelector('app-slot-summary')).toBeNull();
     fixture.destroy();
   });
-
   it('informa cuando el club no existe', async () => {
     const { fixture, root } = await render('club-inexistente', undefined, false);
     http.expectOne((req) => req.url === SLOTS_URL('club-inexistente'))
