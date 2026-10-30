@@ -3,11 +3,7 @@
 
   <section class="workspace" aria-labelledby="complex-title">
     <header class="topbar">
-      <div class="topbar-copy">
-        <p class="topbar-eyebrow">Gestión</p>
-        <h1 id="complex-title">Complejos</h1>
-        <p class="topbar-sub">Administrá tus sedes, canchas y agenda desde un solo lugar.</p>
-      </div>
+      <h1 id="complex-title">Complejos</h1>
       <div class="topbar-actions">
         @if (!loading() && visibleComplexes().length) {
           <span class="count-chip">{{ visibleComplexes().length }} {{ visibleComplexes().length === 1 ? 'complejo activo' : 'complejos activos' }}</span>
@@ -26,7 +22,7 @@
     } @else if (visibleComplexes().length) {
       <section class="complex-grid" aria-label="Complejos"><h2 class="visually-hidden">Complejos disponibles</h2>
         @for (complex of visibleComplexes(); track complex.id) {
-          <app-complex-card [complex]="complex" [managers]="managers()" [canManage]="true" [canDelete]="isAdmin()" (edit)="openEdit($event)" (remove)="deleteTarget.set($event)" />
+          <app-complex-card [complex]="complex" (open)="detailTarget.set($event)" />
         }
       </section>
     } @else if (!pageError()) {
@@ -34,6 +30,9 @@
     }
   </section>
 
+  @if (detailTarget(); as detail) {
+    <app-complex-detail-dialog [complex]="detail" [managers]="managers()" [canDelete]="isAdmin()" (close)="detailTarget.set(null)" (edit)="editFromDetail($event)" (remove)="removeFromDetail($event)" />
+  }
   @if (formOpen()) {
     <app-complex-form-dialog [complex]="editing()" [managers]="managers()" [managersReadOnly]="!isAdmin()" [errorMessage]="formError()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
   }

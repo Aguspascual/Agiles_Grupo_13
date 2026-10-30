@@ -1,0 +1,30 @@
+<div class="backdrop" (click)="onBackdrop($event)">
+  <section class="detail-card" role="dialog" aria-modal="true" aria-labelledby="complex-detail-title">
+    <button class="close-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
+    <div class="detail-media">
+      @if (complex.imageDataUrl) {
+        <img [src]="complex.imageDataUrl" [alt]="'Imagen de ' + complex.name" />
+      } @else {
+        <span class="court-mark" aria-hidden="true">⌂</span>
+      }
+    </div>
+    <div class="detail-body">
+      <h2 id="complex-detail-title">{{ complex.name }}</h2>
+      <dl class="detail-list">
+        <div><dt>Dirección</dt><dd>{{ complex.address }}</dd></div>
+        <div><dt>Teléfono</dt><dd>{{ complex.phone }}</dd></div>
+        <div><dt>Zona</dt><dd>{{ complex.zone }}</dd></div>
+        <div class="wide">
+          <dt>Encargados</dt>
+          <dd>@for (id of complex.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> } @empty { <span class="muted">Sin encargados asignados</span> }</dd>
+        </div>
+      </dl>
+      <div class="detail-actions">
+        <a class="action action-primary" [routerLink]="['/admin/complejos', complex.id, 'canchas']">Administrar canchas</a>
+        <a class="action" [routerLink]="['/admin/complejos', complex.id, 'agenda']">Ver agenda</a>
+        <button class="action" type="button" (click)="edit.emit(complex)">Editar</button>
+        @if (canDelete) { <button class="action action-danger" type="button" (click)="remove.emit(complex)">Eliminar</button> }
+      </div>
+    </div>
+  </section>
+</div>

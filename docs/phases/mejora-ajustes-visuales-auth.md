@@ -12,6 +12,7 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 6. **Flujo de alta.** Al registrarse se muestra un aviso (toast) y se lleva a `/ingresar` sin iniciar sesión.
 7. **Panel admin de complejos.** Sidebar siempre visible (188px entre 561px y 1000px; barra superior solo en celulares de 560px o menos) en las cuatro pantallas admin; encabezado con eyebrow, subtítulo y contador; tarjetas compactas con foto a la izquierda y acciones en grilla uniforme (acción principal destacada).
 8. **Agenda a 800x600.** Se corrige el desborde horizontal de la tira de días.
+9. **Tarjetas de complejo + modal.** El encabezado queda solo con el título. Cada tarjeta muestra la imagen en grande y el nombre; al presionarla se abre un modal (`complex-detail-dialog`) con todos los datos y las acciones Administrar canchas, Ver agenda, Editar y Eliminar. El modal se cierra con Escape, con la X o al hacer clic fuera.
 
 ## Archivos principales
 
@@ -19,6 +20,7 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 - `frontend/src/app/auth/login.page.{ts,html}`, `frontend/src/app/auth/register.page.{ts,html}`
 - `frontend/src/app/auth/auth-flash.store.ts` (aviso de una sola lectura entre páginas)
 - `frontend/src/app/complexes/complex-admin.page.{html,scss}`, `complex-admin-sidebar.component.scss`, `complex-card.component.scss`, y breakpoints en `agenda`, `availability` y `courts`
+- `frontend/src/app/complexes/complex-detail-dialog.component.*` (modal nuevo) y `complex-card.component.*` (tarjeta con imagen y nombre)
 - Tests: `login.page.spec.ts`, `register.page.spec.ts`
 
 ## Validaciones
@@ -29,6 +31,7 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 
 ## Límites de alcance
 
+- La imagen del complejo (campo `imageDataUrl`) proviene de un trabajo aparte de backend y formulario; la tarjeta y el modal la usan y muestran un ícono si no existe.
 - No se modificó backend, base de datos ni infraestructura.
 - **Zona habitual múltiple:** el servicio actual guarda una sola zona por jugador. El frontend permite elegir varias, pero envía solo la primera como zona principal. Guardar todas requiere un cambio de contrato en el backend.
 - El correo repetido se detecta al enviar el formulario, no mientras se escribe, porque no existe un endpoint de consulta.

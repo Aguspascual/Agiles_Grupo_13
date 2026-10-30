@@ -1,10 +1,10 @@
-<article class="complex-card">
-  <div class="card-topline"><span class="court-mark" aria-hidden="true">⌂</span><span class="zone-tag">{{ complex.zone }}</span></div>
-  <h3>{{ complex.name }}</h3>
-  <p class="detail"><span aria-hidden="true">⌖</span>{{ complex.address }}</p>
-  <p class="detail"><span aria-hidden="true">☎</span>{{ complex.phone }}</p>
-  <div class="manager-list"><span class="caption">ENCARGADOS</span><div class="manager-chips">@for (id of complex.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> }</div></div>
-  @if (canManage) {
-    <footer class="card-actions"><a class="court-action" [routerLink]="['/admin/complejos', complex.id, 'canchas']">Administrar canchas</a><a class="court-action agenda-action" [routerLink]="['/admin/complejos', complex.id, 'agenda']">Ver agenda</a><button type="button" (click)="edit.emit(complex)">Editar</button>@if (canDelete) { <button class="danger-action" type="button" (click)="remove.emit(complex)">Dar de baja</button> }</footer>
-  }
-</article>
+<button class="complex-card" type="button" [attr.aria-label]="'Ver datos de ' + complex.name" (click)="open.emit(complex)">
+  <span class="card-media">
+    @if (complex.imageDataUrl) {
+      <img [src]="complex.imageDataUrl" [alt]="'Imagen de ' + complex.name" />
+    } @else {
+      <span class="court-mark" aria-hidden="true">⌂</span>
+    }
+  </span>
+  <span class="card-name"><span class="card-title">{{ complex.name }}</span><span class="card-arrow" aria-hidden="true">→</span></span>
+</button>

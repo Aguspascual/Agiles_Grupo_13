@@ -1,40 +1,14 @@
-.complex-card { display: grid; gap: 12px; padding: 22px; border: 1px solid #edf0f6; border-radius: 16px; background: white; box-shadow: 0 5px 16px #141c2a08; animation: card-arrive .35s ease both; transition: transform .2s, box-shadow .2s; }
-.complex-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px #141c2a12; }
-.card-topline { display: flex; justify-content: space-between; align-items: center; }
-.court-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: #adedd3; color: #006c49; font-size: 1.35rem; }
-.complex-photo { width: 68px; height: 48px; border-radius: 10px; object-fit: cover; }
-.zone-tag { padding: 6px 10px; border-radius: 999px; background: #f1f5f2; color: #39445a; font-size: .72rem; font-weight: 800; }
-h3 { margin: 2px 0 0; color: #131b2e; font-size: 1.1rem; }
-.detail { display: flex; gap: 9px; margin: 0; color: #566357; font-size: .86rem; }
-.detail span { color: #006c49; }
-.manager-list { display: grid; gap: 9px; margin-top: 7px; padding-top: 15px; border-top: 1px solid #edf0f6; }
-.caption { color: #758177; font-size: .65rem; font-weight: 800; letter-spacing: .1em; }
-.manager-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.manager-chip { padding: 6px 9px; border-radius: 999px; background: #f1f5f2; color: #29364a; font-size: .73rem; font-weight: 700; }
-.card-actions { display: flex; justify-content: end; gap: 8px; margin-top: 4px; }
-.card-actions button, .court-action { padding: 8px 11px; border: 1px solid #dce2ed; border-radius: 8px; background: white; color: #006c49; font: inherit; font-size: .78rem; font-weight: 800; text-decoration: none; cursor: pointer; }
-.card-actions .court-action { margin-right: auto; border-color: #ccebdc; background: #f0faf5; }
-.card-actions .danger-action { border-color: #f1cccc; color: #a12828; }
+:host { display: block; }
+.complex-card { display: grid; width: 100%; padding: 0; overflow: hidden; border: 1px solid #dfe7e2; border-radius: 16px; background: #fff; color: #131b2e; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 14px #141c2a0d; animation: card-arrive .35s ease both; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.complex-card:hover { transform: translateY(-3px); border-color: #a9dcc3; box-shadow: 0 14px 28px #141c2a1a; }
+.complex-card:focus-visible { outline: 3px solid #10b98173; outline-offset: 2px; }
+.card-media { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; background: linear-gradient(135deg, #0f7a56, #005236); }
+.card-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+.complex-card:hover .card-media img { transform: scale(1.04); }
+.court-mark { color: #adedd3; font-size: 3.2rem; line-height: 1; }
+.card-name { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 16px; }
+.card-title { min-width: 0; overflow: hidden; font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+.card-arrow { flex: none; color: #006c49; font-weight: 800; transition: transform .2s; }
+.complex-card:hover .card-arrow { transform: translateX(3px); }
 @keyframes card-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .complex-card { animation: none; transition: none; } }
-@media (max-width: 480px) { .card-actions { flex-wrap: wrap; } .card-actions .court-action { flex-basis: 100%; margin-right: 0; text-align: center; } }
-
-/* Rediseño del panel admin: tarjeta compacta, acciones en grilla uniforme. */
-:host { display: block; container-type: inline-size; }
-.complex-card { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 4px 14px; padding: 18px; border-color: #dfe7e2; align-items: center; }
-.card-topline { display: contents; }
-.court-mark, .complex-photo { grid-column: 1; grid-row: 1 / span 3; width: 64px; height: 64px; border-radius: 14px; object-fit: cover; font-size: 1.6rem; }
-.zone-tag { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; background: #d9f2e6; color: #005236; }
-.complex-card h3 { grid-column: 2; grid-row: 1; margin: 0; font-size: 1.05rem; line-height: 1.25; }
-.complex-card .detail { grid-column: 2 / -1; font-size: .82rem; }
-.complex-card .detail:nth-of-type(1) { grid-row: 2; }
-.complex-card .detail:nth-of-type(2) { grid-row: 3; }
-.manager-list { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; padding-top: 12px; gap: 7px; }
-.card-actions { grid-column: 1 / -1; grid-row: 5; display: grid; grid-template-columns: 1fr 1fr; justify-content: stretch; gap: 8px; margin-top: 8px; }
-.card-actions button, .court-action { padding: 9px 10px; text-align: center; transition: background-color .15s ease, border-color .15s ease; }
-.card-actions .court-action { margin-right: 0; flex-basis: auto; }
-.card-actions .court-action:not(.agenda-action) { border-color: #006c49; background: #006c49; color: #fff; }
-.card-actions .court-action:not(.agenda-action):hover { background: #005236; }
-.card-actions button:hover, .card-actions .agenda-action:hover { background: #f0faf5; border-color: #9fd3b9; }
-.card-actions .danger-action:hover { background: #fdf1f1; border-color: #e3a3a3; }
-@container (min-width: 520px) { .card-actions { grid-template-columns: 1.3fr 1fr auto auto; } }
+@media (prefers-reduced-motion: reduce) { .complex-card, .card-media img, .card-arrow { animation: none; transition: none; } .complex-card:hover, .complex-card:hover .card-media img, .complex-card:hover .card-arrow { transform: none; } }
