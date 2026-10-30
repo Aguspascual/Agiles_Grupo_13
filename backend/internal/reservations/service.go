@@ -11,6 +11,7 @@ import (
 )
 
 const BasePath = "/api/v1/complexes/{complexId}/courts/{courtId}/reservations"
+const ManualPath = "/api/v1/complexes/{complexId}/courts/{courtId}/manual-reservations"
 const OwnPath = "/api/v1/reservations"
 
 type Service struct {
@@ -29,6 +30,7 @@ func NewService(repository *Repository) (*Service, error) {
 func (s *Service) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST "+BasePath, s.create)
+	mux.HandleFunc("POST "+ManualPath, s.createManual)
 	mux.HandleFunc("GET "+OwnPath, s.listOwn)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
 	return mux
@@ -60,6 +62,14 @@ func (s *Service) listOwn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) create(w http.ResponseWriter, r *http.Request) {
+	s.createReservation(w, r, false)
+}
+
+func (s *Service) createManual(w http.ResponseWriter, r *http.Request) {
+	s.createReservation(w, r, true)
+}
+
+func (s *Service) createReservation(w http.ResponseWriter, r *http.Request, manual bool) {
 	w.Header().Set("Cache-Control", "no-store")
 	actor, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
@@ -78,7 +88,11 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 	start, err := input.validate(time.Now(), s.location)
 	if err == nil {
 		var result Reservation
-		result, err = s.repository.Create(r.Context(), complexID, courtID, actor, input, start)
+		if manual {
+			result, err = s.repository.CreateManual(r.Context(), complexID, courtID, actor, input, start)
+		} else {
+			result, err = s.repository.Create(r.Context(), complexID, courtID, actor, input, start)
+		}
 		if err == nil {
 			auth.WriteJSON(w, 201, map[string]any{"reservation": result})
 			return
@@ -91,6 +105,8 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 		auth.WriteError(w, 409, "turno no disponible")
 	case errors.Is(err, ErrNotFound):
 		auth.WriteError(w, 404, "recurso no encontrado")
+	case errors.Is(err, ErrForbidden):
+		auth.WriteError(w, 403, "sin permisos")
 	default:
 		auth.WriteError(w, 500, "no se pudo crear la reserva")
 	}

@@ -71,8 +71,8 @@ func TestReservationEndAtExactCheckTime(t *testing.T) {
 
 func insertProtectionReservation(t *testing.T, ctx context.Context, db *pgxpool.Pool, court, status string, start, end time.Time) {
 	t.Helper()
-	_, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1,$2,$3,$4,$5,$6,3,'Test','123')`, testComplex, court, testActor, start, end, status)
+	_, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1,$2,$3,$3,$4,$5,$6,3,'Test','123')`, testComplex, court, testActor, start, end, status)
 	if err != nil {
 		t.Fatal(err)
 	}

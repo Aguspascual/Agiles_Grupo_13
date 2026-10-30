@@ -195,8 +195,8 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 		t.Fatal(err)
 	}
 	request("DELETE", courtsPath+"/"+emptyCourtResponse.Court.ID, manager.Token, "", "", 204)
-	_, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		SELECT $1,$2,$3, start_at, start_at + interval '1 hour','reserved',3,'Test','123'
+	_, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		SELECT $1,$2,$3,$3, start_at, start_at + interval '1 hour','reserved',3,'Test','123'
 		FROM (SELECT (date_trunc('week', now() AT TIME ZONE 'America/Argentina/Buenos_Aires') + interval '7 days 10 hours') AT TIME ZONE 'America/Argentina/Buenos_Aires' AS start_at) s`, complexResponse.Complex.ID, courtResponse.Court.ID, manager.User.ID)
 	if err != nil {
 		t.Fatal(err)

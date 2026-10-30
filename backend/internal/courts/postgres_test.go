@@ -141,8 +141,8 @@ func TestPostgresCourtsIntegration(t *testing.T) {
 		}
 		defer tx.Rollback(ctx)
 		end := time.Date(2030, 5, 6, 11, 0, 0, 0, time.UTC)
-		if _, err := tx.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-			VALUES($1,$2,$3,$4,$5,'reserved',3,'Test','123')`, complexID, created.ID, adminID, end.Add(-time.Hour), end); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+			VALUES($1,$2,$3,$3,$4,$5,'reserved',3,'Test','123')`, complexID, created.ID, adminID, end.Add(-time.Hour), end); err != nil {
 			t.Fatal(err)
 		}
 		checker := postgresReservationChecker{}
@@ -186,8 +186,8 @@ func TestPostgresCourtsIntegration(t *testing.T) {
 					_, _ = pool.Exec(context.Background(), `DELETE FROM courts WHERE id=$1`, courtID)
 				})
 				now := time.Now()
-				if _, err := pool.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-					VALUES($1,$2,$3,$4,$5,$6,3,'Test','123')`, complexID, courtID, adminID, now.Add(tc.start), now.Add(tc.end), tc.status); err != nil {
+				if _, err := pool.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+					VALUES($1,$2,$3,$3,$4,$5,$6,3,'Test','123')`, complexID, courtID, adminID, now.Add(tc.start), now.Add(tc.end), tc.status); err != nil {
 					t.Fatal(err)
 				}
 				err := NewPostgresRepository(pool).Delete(ctx, complexID, courtID, adminID, true)
