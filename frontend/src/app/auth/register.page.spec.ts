@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { AuthTokenStore } from './auth-token.store';
 import { authInterceptor } from './auth.interceptor';
+import { AuthFlashStore } from './auth-flash.store';
 import { RegisterPage } from './register.page';
 
 describe('registro de jugador HU-01', () => {
@@ -107,9 +108,9 @@ describe('registro de jugador HU-01', () => {
     expect(fixture.componentInstance.form.hasError('passwordMismatch')).toBe(true);
   });
 
-  it('envía el DTO exacto, guarda el JWT y navega al inicio tras registrarse', async () => {
+  it('envía el DTO exacto, no inicia sesión y lleva al login con un aviso', async () => {
     const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     fillValidForm();
 
     fixture.componentInstance.onSubmit();
@@ -135,9 +136,10 @@ describe('registro de jugador HU-01', () => {
     }, { status: 201, statusText: 'Created' });
     await fixture.whenStable();
 
-    expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBe('registered-jwt');
+    expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
     expect(localStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith(['/ingresar'], {});
+    expect(TestBed.inject(AuthFlashStore).take()).toContain('Cuenta creada con éxito');
     expect(fixture.componentInstance.requestInProgress).toBe(false);
   });
 

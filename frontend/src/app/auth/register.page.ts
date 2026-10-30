@@ -2,7 +2,8 @@ import { Component, ElementRef, HostListener } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthSessionService } from './auth-session.service';
+import { AuthApiService } from './auth-api.service';
+import { AuthFlashStore } from './auth-flash.store';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   return control.get('password')?.value === control.get('confirmPassword')?.value
@@ -52,7 +53,8 @@ export class RegisterPage {
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
-    private readonly session: AuthSessionService,
+    private readonly api: AuthApiService,
+    private readonly flash: AuthFlashStore,
     private readonly host: ElementRef<HTMLElement>,
   ) {}
 
@@ -133,10 +135,12 @@ export class RegisterPage {
     const { name, email, password, zones, level, position, hand, fairPlay } = this.form.getRawValue();
     // El contrato actual del servicio admite una sola zona: se envía la primera como zona principal.
     const zone = zones[0];
-    this.session.register({ name, email, password, zone, level, position, hand, fairPlay }, false).subscribe({
+    this.api.register({ name, email, password, zone, level, position, hand, fairPlay }).subscribe({
       next: () => {
         this.requestInProgress = false;
-        void this.router.navigateByUrl(this.returnUrl() ?? '/');
+        this.flash.set('¡Cuenta creada con éxito! Ya podés iniciar sesión.');
+        const returnUrl = this.returnUrl();
+        void this.router.navigate(['/ingresar'], returnUrl ? { queryParams: { returnUrl } } : {});
       },
       error: (error: unknown) => {
         this.requestInProgress = false;
