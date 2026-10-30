@@ -99,3 +99,16 @@ Diseño: [TDD-0012](../docs/backend/TDDs/TDD-0012-hu-15-alta-reserva-manual.md).
 Fases y validaciones: [implementación HU-15](../docs/backend/HU-15-implementacion.md).
 Frontend, agenda, edición, cancelación, participantes, pagos y notificaciones externas
 siguen fuera del alcance de esta entrega.
+
+## HU-14 y HU-07 - Cancelación de reservas
+
+- `POST /api/v1/reservations/{reservationId}/cancel`: el jugador organizador cancela su
+  reserva web hasta 4 h antes del inicio (límite inclusivo, RN-02). Las manuales responden 404.
+- `POST /api/v1/complexes/{complexId}/reservations/{reservationId}/cancel`: el encargado
+  asignado o el administrador general cancela una reserva web o manual que aún no terminó,
+  sin límite de 4 h. Si ya terminó responde 409.
+- Ambas: Bearer, sin body ni query, `Cache-Control: no-store`, idempotentes (200 si ya estaba
+  cancelada) y con aviso `reservation_cancelled` para el organizador de reservas web. La
+  migración `006_reservation_cancellation_notice.sql` solo ensancha el CHECK de los avisos.
+
+Detalle en [HU-14-implementacion](../docs/backend/HU-14-implementacion.md), TDD-0010 y TDD-0016.
