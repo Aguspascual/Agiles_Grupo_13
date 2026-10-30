@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatchPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-match-card',
+  imports: [RouterLink],
   template: `
     <article
       class="match-card"
@@ -23,7 +25,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
           }}
         </span>
       </header>
-      @if (searchMode) {
+      @if (searchMode && match.image) {
         <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" />
       }
       <div class="match-card__club">
@@ -54,11 +56,15 @@ import { AuthSessionService } from '../auth/auth-session.service';
         </div>
       </div>
       <footer class="match-card__bottom">
-        <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
+        @if (match.features[0]) {
+          <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
+        } @else { <span></span> }
         @if (detailsMode) {
           <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
             Ver partido <span aria-hidden="true">↗</span>
           </button>
+        } @else if (browseMode) {
+          <a class="match-card__details" routerLink="/partidos">Ver partido <span aria-hidden="true">→</span></a>
         } @else {
           <button type="button" data-match-action [disabled]="actionCompleted" (click)="completeDemoAction()" [attr.aria-label]="actionLabel + ' · ' + match.club">
             {{ actionLabel }} <span aria-hidden="true">→</span>
@@ -74,6 +80,7 @@ export class MatchCardComponent {
   @Input({ required: true }) match!: MatchPreview;
   @Input() searchMode = false;
   @Input() detailsMode = false;
+  @Input() browseMode = false;
   @Output() viewDetails = new EventEmitter<{ match: MatchPreview; trigger: HTMLElement }>();
   actionCompleted = false;
 

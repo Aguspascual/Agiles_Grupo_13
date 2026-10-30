@@ -190,52 +190,5 @@ export const MATCHES: MatchPreview[] = [
   },
 ];
 
-export const RECOMMENDED_MATCHES = MATCHES.slice(0, 3);
-export const HOME_MATCHES = [MATCHES[4], MATCHES[2], MATCHES[0]];
-
-export interface ClubPreview {
-  name: string;
-  matchSearchName?: string;
-  zone: string;
-  rating: string;
-  availabilityLabel: string;
-  openSlots: number;
-  image: string;
-  imagePosition: string;
-}
-
-export const FEATURED_CLUBS: ClubPreview[] = [
-  {
-    name: 'La Cumbre Pádel',
-    matchSearchName: 'La Cumbre Pádel',
-    zone: 'Calle 131 y 32 · San Carlos',
-    rating: '4.9',
-    availabilityLabel: '12 turnos disponibles hoy',
-    openSlots: 12,
-    image: '/images/cancha-interior.jpg',
-    imagePosition: 'center',
-  },
-  {
-    name: 'City Bell Padel Hub',
-    matchSearchName: 'Pádel City Bell',
-    zone: 'Camino Centenario 4462 · City Bell',
-    rating: '4.8',
-    availabilityLabel: '8 turnos disponibles hoy',
-    openSlots: 8,
-    image: '/images/cancha-exterior.jpg',
-    imagePosition: 'center 58%',
-  },
-  {
-    name: 'Estudiantes de La Plata',
-    matchSearchName: 'Estudiantes de La Plata',
-    zone: 'Calle 53 y 7 · Casco Histórico',
-    rating: '4.9',
-    availabilityLabel: '5 turnos disponibles hoy',
-    openSlots: 5,
-    image: '/images/cancha-exterior.jpg',
-    imagePosition: 'right center',
-  },
-];
-
 export const ZONES = ['Casco Urbano', 'City Bell', 'Gonnet', 'Tolosa', 'Villa Elisa'];
 export const LEVELS = ['2da', '3ra', '4ta', '5ta', '6ta', '7ma', '8va'];
