@@ -33,6 +33,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | [0003: modificación de un día](TDD-0003-hu-04-modificacion-horario-diario.md) | HU-04 | Aprobado v1 |
 | [0004: búsqueda de horarios](TDD-0004-hu-04-busqueda-horarios.md) | HU-04 | Aprobado v1 |
 | [0011: baja de cancha](TDD-0011-hu-03-baja-cancha.md) | HU-03 | Aprobado v1 |
+| [0012: alta de reserva manual](TDD-0012-hu-15-alta-reserva-manual.md) | HU-15 | Borrador v1 para aprobación humana |
 
 ### HU-04: acuerdos y contrato común aprobado
 
