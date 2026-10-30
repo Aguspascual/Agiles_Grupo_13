@@ -121,3 +121,15 @@ nombre y teléfono, `cancellable` y horas locales. Ventana hoy..hoy+13, único p
 La grilla pública `/slots` no cambia. Los partidos pendientes quedan para HU-09/10/11.
 
 Detalle en [HU-07-implementacion](../docs/backend/HU-07-implementacion.md) y TDD-0015.
+
+## HU-17 - Mis reservas y partidos
+
+`GET /api/v1/me/reservations?view=upcoming|past&limit=20&offset=0` (Bearer, `Cache-Control: no-store`)
+lista en `items` las reservas web que organicé (`kind=reservation`) y los partidos en que participo
+(`kind=match`, con `role`, `match.status`, `targetLevel` y `missingPlayers`). `view` es obligatorio;
+`limit` 1-100 (20 por defecto); `offset` >= 0; cualquier otro parámetro, repetido o vacío da 400.
+`cancellable` reutiliza la regla de 4 h de HU-14 y es siempre `false` para partidos. Las reservas
+manuales no aparecen y no se exponen contactos ni otros jugadores. No modifica
+`GET /api/v1/reservations?date=`, avisos ni cancelaciones.
+
+Detalle en [HU-17-implementacion](../docs/backend/HU-17-implementacion.md) y TDD-0013 (v2).
