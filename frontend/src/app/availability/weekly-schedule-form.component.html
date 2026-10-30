@@ -1,19 +1,21 @@
 <section class="schedule-editor" [formGroup]="form">
-  <button
-    class="editor-toggle"
-    type="button"
-    [attr.aria-expanded]="editorOpen"
-    aria-controls="weekly-schedule-panel"
-    (click)="editorOpen = !editorOpen"
-  >
-    <span>
-      <strong>Horario semanal</strong>
-      <small>{{ enabledDayCount }} {{ enabledDayCount === 1 ? 'día activo' : 'días activos' }}</small>
-    </span>
-    <svg class="chevron pm-chevron" [class.is-open]="editorOpen" aria-hidden="true" viewBox="0 0 20 20">
-      <path d="m5 7.5 5 5 5-5" />
-    </svg>
-  </button>
+  @if (showHeader) {
+    <button
+      class="editor-toggle"
+      type="button"
+      [attr.aria-expanded]="editorOpen"
+      aria-controls="weekly-schedule-panel"
+      (click)="editorOpen = !editorOpen"
+    >
+      <span>
+        <strong>Horario semanal</strong>
+        <small>{{ enabledDayCount }} {{ enabledDayCount === 1 ? 'día activo' : 'días activos' }}</small>
+      </span>
+      <svg class="chevron pm-chevron" [class.is-open]="editorOpen" aria-hidden="true" viewBox="0 0 20 20">
+        <path d="m5 7.5 5 5 5-5" />
+      </svg>
+    </button>
+  }
 
   @if (editorOpen) {
     <div class="editor-panel" id="weekly-schedule-panel">

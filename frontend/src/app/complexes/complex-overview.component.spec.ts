@@ -71,57 +71,69 @@ describe('vista completa del complejo', () => {
     expect(labels).toEqual(['Editar datos']);
   });
 
-  it('elige la cancha en un selector y lo informa a la página', async () => {
+  const pick = (label: string) => {
+    (root().querySelector('.select-trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const option = [...root().querySelectorAll<HTMLElement>('.select-menu [role="option"]')].find((item) => item.textContent?.includes(label));
+    option!.click();
+    fixture.detectChanges();
+  };
+
+  it('lista las canchas en el selector y deja "Crear cancha" como última opción', async () => {
     await open(true);
-    const select = root().querySelector('.court-select select') as HTMLSelectElement;
-    expect([...select.options].map((option) => option.textContent?.trim())).toEqual(['Cancha 1', 'Cancha 2']);
+    (root().querySelector('.select-trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const labels = [...root().querySelectorAll('.select-menu [role="option"]')].map((item) => item.textContent?.trim().replace(/^\+\s*/, ''));
+    expect(labels).toEqual(['Cancha 1', 'Cancha 2', 'Crear cancha']);
+    expect(root().querySelector('.court-kind')).toBeNull();
+    expect(root().querySelector('.court-close')).toBeNull();
+  });
+
+  it('informa la cancha elegida a la página', async () => {
+    await open(true);
     const chosen: string[] = [];
     fixture.componentInstance.courtIdChange.subscribe((id) => chosen.push(id));
 
-    select.value = 'k2';
-    select.dispatchEvent(new Event('change'));
+    pick('Cancha 2');
 
     expect(chosen).toEqual(['k2']);
   });
 
+  it('muestra Administrar horarios a la derecha del selector', async () => {
+    await open(true);
+    const toolbar = root().querySelector('.court-toolbar') as HTMLElement;
+    const children = [...toolbar.children].map((item) => item.className.split(' ')[0]);
+    expect(children).toEqual(['court-select', 'action']);
+    expect(toolbar.querySelector('.action')?.textContent).toContain('Administrar horarios');
+  });
+
   it('abre el modal de horarios de la cancha elegida', async () => {
     await open(true);
-    const button = [...root().querySelectorAll('.court-actions button')].find((item) => item.textContent?.includes('Administrar horarios')) as HTMLButtonElement;
-    button.click();
+    (root().querySelector('.court-toolbar .action') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     http.expectOne('/api/v1/complexes/c1/courts/k1/weekly-schedule/days').flush({ days: [] });
     expect(root().querySelector('app-court-schedule-dialog')).not.toBeNull();
-    expect(root().textContent).toContain('Cancha 1');
+    expect(root().querySelector('app-court-schedule-dialog')?.textContent).not.toContain('Horario semanal');
   });
-  it('cierra una cancha tras confirmar y avisa a la página', async () => {
+
+  it('crea una cancha desde la última opción y la deja seleccionada', async () => {
     await open(true);
     const events: string[] = [];
+    fixture.componentInstance.courtIdChange.subscribe((id) => events.push(`select:${id}`));
     fixture.componentInstance.courtsChanged.subscribe(() => events.push('reload'));
     fixture.componentInstance.notify.subscribe((message) => events.push(message));
 
-    (root().querySelector('.court-close') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect(root().textContent).toContain('¿Cerrar Cancha 1?');
-    (root().querySelector('app-confirm-dialog .danger-button') as HTMLButtonElement).click();
+    pick('Crear cancha');
+    expect(root().querySelector('app-court-form-dialog')).not.toBeNull();
 
-    const request = http.expectOne('/api/v1/complexes/c1/courts/k1');
-    expect(request.request.method).toBe('DELETE');
-    request.flush(null, { status: 204, statusText: 'No Content' });
+    fixture.componentInstance.saveCourt({ name: 'Cancha 3', covered: true, imageDataUrl: null, features: [] });
+    const request = http.expectOne('/api/v1/complexes/c1/courts');
+    expect(request.request.method).toBe('POST');
+    request.flush({ court: { id: 'k3', complexId: 'c1', name: 'Cancha 3', covered: true, imageDataUrl: null, features: [] } }, { status: 201, statusText: 'Created' });
+    fixture.componentInstance.finishCourtFormClose();
 
-    expect(events).toEqual(['Cancha 1 se cerró correctamente.', 'reload']);
-  });
-
-  it('explica por qué no se puede cerrar una cancha con reservas futuras', async () => {
-    await open(true);
-    const events: string[] = [];
-    fixture.componentInstance.notify.subscribe((message) => events.push(message));
-
-    (root().querySelector('.court-close') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    (root().querySelector('app-confirm-dialog .danger-button') as HTMLButtonElement).click();
-    http.expectOne('/api/v1/complexes/c1/courts/k1').flush({ error: 'reservas' }, { status: 409, statusText: 'Conflict' });
-
-    expect(events).toEqual(['No se puede cerrar esta cancha: tiene reservas futuras.']);
+    expect(events).toEqual(['select:k3', 'Cancha agregada.', 'reload']);
   });
 });

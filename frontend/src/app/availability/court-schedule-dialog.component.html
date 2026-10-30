@@ -1,9 +1,8 @@
 <div class="backdrop" (click)="onBackdrop($event)">
-  <section class="schedule-card" role="dialog" aria-modal="true" aria-labelledby="schedule-dialog-title">
+  <section class="schedule-card" role="dialog" aria-modal="true" [attr.aria-label]="'Administrar horarios de ' + courtName">
     <header class="schedule-head">
       <div>
-        <h2 id="schedule-dialog-title">Administrar horarios</h2>
-        <p>{{ courtName }}</p>
+        <h2>Administrar horarios</h2>
       </div>
       <button class="close-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
     </header>
@@ -13,7 +12,7 @@
       } @else if (loadError()) {
         <p class="schedule-error" role="alert">{{ loadError() }}</p>
       } @else {
-        <app-weekly-schedule-form [editorOpen]="true" [rules]="formRules()" (rulesChange)="saveRules($event)" />
+        <app-weekly-schedule-form [editorOpen]="true" [showHeader]="false" [rules]="formRules()" (rulesChange)="saveRules($event)" />
       }
     </div>
     <footer class="schedule-foot">

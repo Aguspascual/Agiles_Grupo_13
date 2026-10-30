@@ -63,6 +63,8 @@ export class WeeklyScheduleFormComponent implements OnDestroy {
 
   /** Permite abrir el editor semanal desde el inicio (por ejemplo, dentro de un modal). */
   @Input() editorOpen = false;
+  /** Oculta la tarjeta desplegable cuando el editor ya vive dentro de un modal. */
+  @Input() showHeader = true;
   validationMessage = '';
 
   get enabledDayCount(): number {

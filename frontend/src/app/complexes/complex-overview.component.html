@@ -46,17 +46,11 @@
     </div>
     @if (selectedCourt; as court) {
       <div class="court-toolbar">
-        <label class="court-select">
-          <span>Cancha</span>
-          <select [value]="court.id" (change)="onCourtChange($event)">
-            @for (item of courts; track item.id) { <option [value]="item.id" [selected]="item.id === court.id">{{ item.name }}</option> }
-          </select>
-        </label>
-        <span class="court-kind">{{ court.covered ? 'Cubierta' : 'Descubierta' }}</span>
-        <div class="court-actions">
-          <button class="action action-primary" type="button" (click)="scheduleOpen.set(true)">Administrar horarios</button>
-          <button class="court-close" type="button" (click)="courtTarget.set(court)">Cerrar cancha</button>
+        <div class="court-select">
+          <span class="court-select-label" id="court-select-label">Cancha</span>
+          <app-select-menu label="Cancha" [options]="courtOptions" [value]="court.id" (valueChange)="onCourtChange($event)" />
         </div>
+        <button class="action action-primary" type="button" (click)="scheduleOpen.set(true)">Administrar horarios</button>
       </div>
     } @else {
       <p class="muted">Este complejo todavía no tiene canchas.</p>
@@ -70,8 +64,8 @@
 @if (deleteOpen()) {
   <app-confirm-dialog [title]="'¿Dar de baja ' + (complex()?.name ?? 'el complejo') + '?'" message="El complejo dejará de aparecer en la lista activa." confirmLabel="Eliminar complejo" (cancel)="deleteOpen.set(false)" (confirm)="confirmDeleteComplex()" />
 }
-@if (courtTarget(); as court) {
-  <app-confirm-dialog [title]="'¿Cerrar ' + court.name + '?'" message="La cancha dejará de estar disponible. No se puede cerrar si tiene reservas futuras." confirmLabel="Cerrar cancha" cancelLabel="Volver" (cancel)="courtTarget.set(null)" (confirm)="confirmCloseCourt()" />
+@if (courtFormOpen()) {
+  <app-court-form-dialog [saving]="courtSaving()" [closing]="courtFormClosing()" (save)="saveCourt($event)" (close)="closeCourtForm()" (closed)="finishCourtFormClose()" />
 }
 @if (scheduleOpen() && selectedCourt; as court) {
   <app-court-schedule-dialog [complexId]="complexId" [courtId]="court.id" [courtName]="court.name" (close)="closeSchedule()" />

@@ -1,10 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CourtScheduleDialogComponent } from '../availability/court-schedule-dialog.component';
 import { CourtApiService } from '../courts/court-api.service';
+import { CourtFormDialogComponent } from '../courts/court-form-dialog.component';
+import { CourtDraft } from '../courts/court.model';
+import { SelectMenuComponent, SelectOption } from '../shared/select-menu.component';
 import { ComplexApiService } from './complex-api.service';
 import { ComplexFormDialogComponent } from './complex-form-dialog.component';
 import { ConfirmDialogComponent } from './confirm-dialog.component';
@@ -16,15 +19,17 @@ export interface OverviewCourt {
   covered: boolean;
 }
 
+const CREATE_COURT = '__create-court__';
+
 /** Cabecera de la vista completa de un complejo: datos, edición, baja y cierre de canchas. */
 @Component({
   selector: 'app-complex-overview',
   standalone: true,
-  imports: [RouterLink, ComplexFormDialogComponent, ConfirmDialogComponent, CourtScheduleDialogComponent],
+  imports: [RouterLink, ComplexFormDialogComponent, ConfirmDialogComponent, CourtScheduleDialogComponent, CourtFormDialogComponent, SelectMenuComponent],
   templateUrl: './complex-overview.component.html',
   styleUrl: './complex-overview.component.scss',
 })
-export class ComplexOverviewComponent implements OnInit {
+export class ComplexOverviewComponent implements OnInit, OnChanges {
   private readonly api = inject(ComplexApiService);
   private readonly courtApi = inject(CourtApiService);
   private readonly router = inject(Router);
@@ -45,11 +50,19 @@ export class ComplexOverviewComponent implements OnInit {
   readonly formError = signal('');
   readonly saving = signal(false);
   readonly deleteOpen = signal(false);
-  readonly courtTarget = signal<OverviewCourt | null>(null);
+  readonly courtFormOpen = signal(false);
+  readonly courtFormClosing = signal(false);
+  readonly courtSaving = signal(false);
   readonly dataOpen = signal(false);
   readonly scheduleOpen = signal(false);
 
+  courtOptions: SelectOption[] = [];
   private pendingNotice = '';
+  private createdCourtId = '';
+
+  ngOnChanges(): void {
+    this.courtOptions = [...this.courts.map((court) => ({ value: court.id, label: court.name })), { value: CREATE_COURT, label: 'Crear cancha', action: true }];
+  }
 
   ngOnInit(): void {
     forkJoin({
@@ -72,8 +85,44 @@ export class ComplexOverviewComponent implements OnInit {
     return this.courts.find((court) => court.id === this.courtId) ?? this.courts[0] ?? null;
   }
 
-  onCourtChange(event: Event): void {
-    this.courtIdChange.emit((event.target as HTMLSelectElement).value);
+  onCourtChange(value: string): void {
+    if (value === CREATE_COURT) {
+      this.courtFormClosing.set(false);
+      this.courtFormOpen.set(true);
+      return;
+    }
+    this.courtIdChange.emit(value);
+  }
+
+  closeCourtForm(): void {
+    if (!this.courtFormClosing()) this.courtFormClosing.set(true);
+  }
+
+  finishCourtFormClose(): void {
+    this.courtFormOpen.set(false);
+    this.courtFormClosing.set(false);
+    if (!this.createdCourtId) return;
+    this.courtIdChange.emit(this.createdCourtId);
+    this.createdCourtId = '';
+    this.notify.emit('Cancha agregada.');
+    this.courtsChanged.emit();
+  }
+
+  saveCourt(draft: CourtDraft): void {
+    if (this.courtSaving() || this.courtFormClosing()) return;
+    this.courtSaving.set(true);
+    this.courtApi.create(this.complexId, draft).subscribe({
+      next: (created) => {
+        this.courtSaving.set(false);
+        this.createdCourtId = created.id;
+        this.closeCourtForm();
+      },
+      error: (error: unknown) => {
+        this.courtSaving.set(false);
+        const status = error instanceof HttpErrorResponse ? error.status : 0;
+        this.notify.emit(status === 413 ? 'La imagen es demasiado pesada.' : status === 400 ? 'Revisá los datos de la cancha.' : status === 403 ? 'No tenés permisos para esta acción.' : 'No se pudo agregar la cancha. Intentá nuevamente.');
+      },
+    });
   }
 
   closeSchedule(): void {
@@ -139,29 +188,6 @@ export class ComplexOverviewComponent implements OnInit {
       error: () => {
         this.deleteOpen.set(false);
         this.notify.emit('No se pudo dar de baja el complejo.');
-      },
-    });
-  }
-
-  confirmCloseCourt(): void {
-    const court = this.courtTarget();
-    if (!court) return;
-    this.courtTarget.set(null);
-    this.courtApi.remove(this.complexId, court.id).subscribe({
-      next: () => {
-        this.notify.emit(`${court.name} se cerró correctamente.`);
-        this.courtsChanged.emit();
-      },
-      error: (error: unknown) => {
-        const status = error instanceof HttpErrorResponse ? error.status : 0;
-        this.notify.emit(
-          status === 409
-            ? 'No se puede cerrar esta cancha: tiene reservas futuras.'
-            : status === 404
-              ? 'La cancha ya no existe.'
-              : 'No se pudo cerrar la cancha. Intentá nuevamente.',
-        );
-        if (status === 404) this.courtsChanged.emit();
       },
     });
   }
