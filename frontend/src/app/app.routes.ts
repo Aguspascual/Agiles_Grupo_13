@@ -14,6 +14,11 @@ export const routes: Routes = [
   },
   { path: 'partidos', component: MatchSearchPage, title: 'Buscar partidos | PádelMatch' },
   {
+    path: 'partidos/invitacion/:token',
+    loadComponent: () => import('./matches/full-match-invitation.page').then((page) => page.FullMatchInvitationPage),
+    title: 'Invitación a partido | PádelMatch',
+  },
+  {
     path: 'clubes',
     loadComponent: () =>
       import('./landing/club-directory.page').then((page) => page.ClubDirectoryPage),

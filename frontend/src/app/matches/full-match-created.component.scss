@@ -1,0 +1,26 @@
+.invite-success { display: grid; gap: 18px; }
+.invite-success__summary { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border: 1px solid #cbe9d8; border-radius: 16px; background: #f0faf4; }
+.invite-success__check { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #d8f3e4; color: #087a59; font-weight: 900; }
+.invite-success h3 { margin: 0 0 5px; color: #1c3328; font-size: 1rem; }
+.invite-success p { margin: 0 0 5px; color: #43564b; font-size: .82rem; font-weight: 700; }
+.invite-success small { color: #65776d; font-size: .74rem; line-height: 1.45; }
+.invite-list { display: grid; gap: 9px; }
+.invite-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 12px 14px; border: 1px solid #e4ebe7; border-radius: 12px; }
+.invite-card__person { display: grid; gap: 3px; min-width: 0; }
+.invite-card__person b { overflow: hidden; color: #27362f; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+.invite-card__person span { overflow: hidden; color: #748178; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.invite-card__status { color: #9b6412; font-size: .7rem; font-weight: 800; }
+.invite-card__status.is-accepted { color: #087a59; }
+.invite-card__actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: 8px; }
+.invite-card__actions button, .invite-card__actions a { min-height: 35px; padding: 0 11px; border: 1px solid #dce5e0; border-radius: 9px; background: #fff; color: #41534a; font: inherit; font-size: .72rem; font-weight: 750; text-decoration: none; cursor: pointer; }
+.invite-card__actions button:hover, .invite-card__actions a:hover { background: #f4f8f6; }
+.invite-card__actions button:focus-visible, .invite-card__actions a:focus-visible { outline: 3px solid #35bd8b; outline-offset: 2px; }
+.invite-card__fallback { grid-column: 1 / -1; width: 100%; min-width: 0; min-height: 36px; padding: 0 9px; border: 1px solid #d9e3de; border-radius: 8px; color: #56665d; font: inherit; font-size: .7rem; }
+.create-match-dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.create-match-dialog__actions button { min-height: 44px; padding: 0 17px; border: 1px solid transparent; border-radius: 10px; font: inherit; font-size: .83rem; font-weight: 800; cursor: pointer; }
+.button-primary { background: #07865f; color: #fff; box-shadow: 0 7px 18px rgb(7 134 95 / 18%); }
+.button-primary:hover { background: #066e4e; }
+.button-primary:focus-visible { outline: 3px solid #35bd8b; outline-offset: 2px; }
+.form-error { margin: 14px 0 0; color: #a8323c; font-size: .82rem; font-weight: 700; }
+
+@media (max-width: 600px) { .create-match-dialog__actions button { flex: 1; padding-inline: 10px; } }

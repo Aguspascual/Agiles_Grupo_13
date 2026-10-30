@@ -12,31 +12,46 @@ import (
 
 const BasePath = "/api/v1/complexes/{complexId}/courts/{courtId}/reservations"
 const ManualPath = "/api/v1/complexes/{complexId}/courts/{courtId}/manual-reservations"
+const CreateFullMatchPath = "/api/v1/complexes/{complexId}/courts/{courtId}/full-matches"
+const FullMatchPath = "/api/v1/full-matches/{matchId}"
+const InvitationPath = "/api/v1/full-match-invitations/{token}"
+const InviteeSearchPath = "/api/v1/players/search"
 const OwnPath = "/api/v1/reservations"
 
 type Service struct {
 	repository *Repository
 	location   *time.Location
+	clock      func() time.Time
 }
 
 func NewService(repository *Repository) (*Service, error) {
+	return NewServiceWithClock(repository, time.Now)
+}
+
+func NewServiceWithClock(repository *Repository, clock func() time.Time) (*Service, error) {
 	location, err := time.LoadLocation("America/Argentina/Buenos_Aires")
 	if err != nil {
 		return nil, err
 	}
-	return &Service{repository: repository, location: location}, nil
+	return &Service{repository: repository, location: location, clock: clock}, nil
 }
 
 func (s *Service) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST "+BasePath, s.create)
 	mux.HandleFunc("POST "+ManualPath, s.createManual)
+	mux.HandleFunc("POST "+CreateFullMatchPath, s.createFullMatch)
+	mux.HandleFunc("GET "+InviteeSearchPath, s.searchInvitees)
+	mux.HandleFunc("GET "+FullMatchPath, s.getFullMatch)
+	mux.HandleFunc("POST "+InvitationPath+"/accept", s.acceptInvitation)
 	mux.HandleFunc("POST "+OwnCancelPath, s.cancelOwn)
 	mux.HandleFunc("POST "+ManagerCancelPath, s.cancelAsManager)
 	mux.HandleFunc("GET "+OwnPath, s.listOwn)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
 	return mux
 }
+
+func (s *Service) PublicInvitationHandler() http.Handler { return http.HandlerFunc(s.getInvitation) }
 
 func (s *Service) listOwn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")

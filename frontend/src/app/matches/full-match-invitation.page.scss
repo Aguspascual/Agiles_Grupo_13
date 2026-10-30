@@ -1,0 +1,23 @@
+.invitation-page { display: grid; min-height: 100dvh; place-items: center; padding: 24px; background: #f5f6fb; }
+.invitation-card { display: grid; justify-items: center; width: min(470px, 100%); gap: 14px; padding: 34px; border: 1px solid #e7e9f0; border-radius: 24px; background: #fff; box-shadow: 0 20px 60px rgb(29 43 58 / 10%); text-align: center; }
+.invitation-card__brand { margin-bottom: 8px; color: #172638; font-size: .95rem; font-weight: 900; }
+.invitation-card__brand span { color: #00a879; }
+.invitation-icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 18px; background: #e4f7ed; color: #07865f; font-size: 1.7rem; font-weight: 900; }
+.invitation-icon.is-expired { background: #fff0f0; color: #ad3843; }
+.invitation-card h1 { margin: 0; color: #172638; font-size: 1.55rem; letter-spacing: -.04em; }
+.invitation-card p { margin: 0; color: #687781; font-size: .9rem; line-height: 1.5; }
+.invitation-player { color: #087a59 !important; font-weight: 800; }
+.invitation-details { display: grid; width: 100%; gap: 7px; margin: 6px 0; padding: 17px; border-radius: 15px; background: #f5f6fc; color: #263744; }
+.invitation-details span, .invitation-details small { color: #6c7b83; }
+.invitation-details strong { color: #087a59; font-size: 1.25rem; }
+.invitation-details small { font-size: .78rem; }
+.invitation-hint { font-size: .8rem !important; }
+.invitation-hint a { color: #087a59; font-weight: 800; }
+.invitation-button { display: grid; width: 100%; min-height: 48px; place-items: center; padding: 0 16px; border: 0; border-radius: 12px; background: #07865f; color: #fff; font: inherit; font-size: .9rem; font-weight: 800; text-decoration: none; cursor: pointer; }
+.invitation-button:disabled { opacity: .6; cursor: wait; }
+.invitation-button:focus-visible { outline: 3px solid #35bd8b; outline-offset: 3px; }
+.invitation-error { color: #a8323c !important; font-size: .8rem !important; }
+.invitation-state { padding: 30px 0 !important; }
+
+@media (max-width: 520px) { .invitation-page { padding: 14px; } .invitation-card { padding: 27px 20px; border-radius: 20px; } .invitation-card h1 { font-size: 1.35rem; } }
+@media (prefers-reduced-motion: reduce) { .invitation-button { transition: none; } }

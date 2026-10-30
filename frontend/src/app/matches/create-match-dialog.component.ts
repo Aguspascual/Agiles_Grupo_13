@@ -2,24 +2,27 @@ import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@ang
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
-import { ReservationApiService } from '../bookings/reservation-api.service';
 import { AuthSessionService } from '../auth/auth-session.service';
 import { toDateKey } from '../shared/local-date';
 import { MatchApiService } from './match-api.service';
+import { FullMatch, FullMatchApiService } from './full-match-api.service';
+import { FullMatchCreatedComponent } from './full-match-created.component';
+import { InviteeAutocompleteComponent, InviteeDraft } from './invitee-autocomplete.component';
 import { AvailabilityOption, ComplexOption } from './match-api.model';
 
 @Component({
   selector: 'app-create-match-dialog',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, FullMatchCreatedComponent, InviteeAutocompleteComponent],
   templateUrl: './create-match-dialog.component.html',
   styleUrl: './create-match-dialog.component.scss',
 })
 export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();
+  @Output() fullMatchCreated = new EventEmitter<void>();
 
   private readonly matchesApi = inject(MatchApiService);
-  private readonly reservationsApi = inject(ReservationApiService);
+  private readonly fullMatchApi = inject(FullMatchApiService);
   readonly session = inject(AuthSessionService);
   private availabilityRequest?: Subscription;
 
@@ -34,6 +37,8 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   startsAt = '';
   targetLevel = this.session.currentUser()?.level ?? '5ta';
   phone = '';
+  invitees: InviteeDraft[] = Array.from({ length: 3 }, () => ({ query: '', selected: null }));
+  createdFullMatch: FullMatch | null = null;
   slots: AvailabilityOption[] = [];
   loadingOptions = true;
   loadingSlots = false;
@@ -61,7 +66,11 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   }
 
   get availableSlots(): AvailabilityOption[] {
-    return this.slots.filter((slot) => slot.status === 'AVAILABLE' && !slot.isPast);
+    return this.slots.filter((slot) => {
+      if (slot.status !== 'AVAILABLE' || slot.isPast) return false;
+      if (this.mode !== 'complete') return true;
+      return this.slotDate(slot.startsAt).getTime() >= Date.now() + 30 * 60 * 1000;
+    });
   }
 
   changeComplex(id: string): void {
@@ -104,6 +113,10 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
     });
   }
 
+  updateInvitee(index: number, invitee: InviteeDraft): void {
+    this.invitees[index] = invitee;
+  }
+
   submit(): void {
     if (this.saving || !this.complexId || !this.courtId || !this.startsAt) return;
     const user = this.session.currentUser();
@@ -116,21 +129,36 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
       this.errorMessage = 'Ingresá un teléfono de contacto para el complejo.';
       return;
     }
-    this.saving = true;
     let request: Observable<unknown>;
     if (this.mode === 'open') {
       request = this.matchesApi.createOpen(this.complexId, this.courtId, { date: this.date, startsAt: this.startsAt, targetLevel: this.targetLevel });
     } else {
-      request = this.reservationsApi.reserveGroup(this.complexId, this.courtId, {
+      if (this.invitees.some((invite) => !invite.query.trim())) {
+        this.errorMessage = 'Buscá o ingresá a tus tres invitados.';
+        return;
+      }
+      request = this.fullMatchApi.create(this.complexId, this.courtId, {
         date: this.date,
         startsAt: this.startsAt,
-        contact: { name: user.name, phone: this.phone.trim() },
+        phone: this.phone.trim(),
+        invites: this.invitees.map((invite) => {
+          const value = invite.query.trim();
+          return invite.selected
+            ? { name: invite.selected.name, email: '', userId: invite.selected.id }
+            : { name: value, email: isEmail(value) ? value : '' };
+        }),
       });
     }
+    this.saving = true;
     request.subscribe({
-      next: () => {
+      next: (result) => {
         this.saving = false;
-        this.created.emit();
+        if (this.mode === 'complete') {
+          this.createdFullMatch = result as FullMatch;
+          this.fullMatchCreated.emit();
+        } else {
+          this.created.emit();
+        }
       },
       error: (error: { status?: number }) => {
         this.saving = false;
@@ -147,6 +175,16 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.availabilityRequest?.unsubscribe();
   }
+
+  private slotDate(time: string): Date {
+    const [year, month, day] = this.date.split('-').map(Number);
+    const [hour, minute] = time.split(':').map(Number);
+    return new Date(year, month - 1, day, hour, minute);
+  }
+}
+
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function futureDateKey(days: number): string {
