@@ -1,15 +1,16 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { concatMap, finalize, from, map } from 'rxjs';
 import { ComplexAdminSidebarComponent } from '../complexes/complex-admin-sidebar.component';
 import { ComplexApiService } from '../complexes/complex-api.service';
-import { ComplexPreviewStore } from '../complexes/complex-preview.store';
-import { ComplexRecord, DemoRole } from '../complexes/complex.model';
+import { ComplexRecord } from '../complexes/complex.model';
 import { CourtApiService } from '../courts/court-api.service';
 import { ToastComponent } from '../shared/toast.component';
 import { AvailabilityCalendarComponent } from './availability-calendar.component';
-import { AvailabilityPreviewStore } from './availability-preview.store';
+import { generateAvailabilitySlots } from './availability-generator';
+import { ScheduleApiService } from './schedule-api.service';
 import { WeeklyScheduleFormComponent } from './weekly-schedule-form.component';
 import { CourtPickerComponent } from './court-picker.component';
 import { WeeklyScheduleRule } from './availability.model';
@@ -35,11 +36,10 @@ interface RouteIds {
 })
 export class CourtAvailabilityPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
-  private readonly complexStore = inject(ComplexPreviewStore);
   private readonly complexApi = inject(ComplexApiService);
   private readonly courtApi = inject(CourtApiService);
-  private readonly availabilityStore = inject(AvailabilityPreviewStore);
-  private readonly scheduleRevision = signal(0);
+  private readonly schedules = inject(ScheduleApiService);
+  private pendingRules: WeeklyScheduleRule[] | null = null;
   private readonly routeIds = toSignal(
     this.route.paramMap.pipe(
       map((params) => ({
@@ -65,28 +65,33 @@ export class CourtAvailabilityPage implements OnInit, OnDestroy {
   readonly court = computed(
     () => this.courts().find((item) => item.id === this.routeIds().courtId) ?? null,
   );
-  readonly rules = computed(() => {
-    this.scheduleRevision();
-    const court = this.court();
-    return court ? this.availabilityStore.rulesFor(court.id) : [];
-  });
+  /** Horarios tal como están en el backend (con `revision`); base del diff al guardar. */
+  readonly rules = signal<WeeklyScheduleRule[]>([]);
+  /** Horarios que recibe el formulario: solo cambian al cargar, para no pisar lo que se está editando. */
+  readonly formRules = signal<WeeklyScheduleRule[]>([]);
+  readonly loading = signal(true);
+  readonly loadError = signal('');
+  readonly saving = signal(false);
   readonly selectedDate = signal(startOfLocalDay());
   readonly selectedDateLabel = computed(() => formatSelectedDate(this.selectedDate()));
   readonly previousDayDisabled = computed(() => isSameLocalDate(this.selectedDate(), startOfLocalDay()));
   readonly slots = computed(() => {
     const court = this.court();
-    return court ? this.availabilityStore.slotsFor(court.id, this.selectedDate()) : [];
+    return court ? generateAvailabilitySlots(court.id, this.rules(), this.selectedDate(), new Set()) : [];
   });
-  readonly persistenceAvailable = this.availabilityStore.persistenceAvailable;
-  readonly managers = this.complexStore.managers;
-  readonly role = signal<DemoRole>('admin');
-  readonly managerId = signal(this.managers[0].id);
   readonly toastMessage = signal('');
 
   ngOnInit(): void {
     const complexId = this.currentComplexId();
     this.complexApi.list().subscribe({ next: (complexes) => this.apiComplexes.set(complexes), error: () => undefined });
     this.courtApi.load(complexId).subscribe({ error: () => undefined });
+    this.schedules.load(complexId, this.routeIds().courtId).subscribe({
+      next: (rules) => this.applyLoaded(rules),
+      error: (error: unknown) => {
+        this.loadError.set(loadMessage(error));
+        this.loading.set(false);
+      },
+    });
   }
 
   previousDay(): void {
@@ -98,33 +103,111 @@ export class CourtAvailabilityPage implements OnInit, OnDestroy {
     this.selectedDate.update((date) => shiftDate(date, 1));
   }
 
-  saveRules(rules: WeeklyScheduleRule[]): void {
-    const court = this.court();
-    if (!court) return;
-    try {
-      this.availabilityStore.saveRules(court.id, rules);
-      this.scheduleRevision.update((revision) => revision + 1);
-      this.showToast(this.persistenceAvailable() ? 'Horarios actualizados.' : 'Horarios aplicados en esta sesión.');
-    } catch {
-      this.showToast('No pudimos guardar los horarios. Revisá la configuración.');
+  saveRules(incoming: WeeklyScheduleRule[]): void {
+    if (this.saving()) {
+      this.pendingRules = incoming;
+      return;
     }
-  }
-
-  toggleSlot(slotId: string): void {
-    const slot = this.slots().find((item) => item.id === slotId);
-    if (!slot) return;
-    this.availabilityStore.toggleBlocked(slotId);
-    this.showToast(slot.status === 'blocked' ? 'Turno disponible nuevamente.' : 'Turno bloqueado.');
+    const { complexId, courtId } = this.routeIds();
+    const changed = changedDays(this.rules(), incoming);
+    if (!changed.length) return;
+    this.saving.set(true);
+    from(changed)
+      .pipe(
+        concatMap((rule) => this.schedules.saveDay(complexId, courtId, rule)),
+        finalize(() => this.finishSave()),
+      )
+      .subscribe({
+        next: (saved) =>
+          this.rules.update((rules) => rules.map((rule) => (rule.weekday === saved.weekday ? saved : rule))),
+        complete: () => this.showToast('Horarios actualizados.'),
+        error: (error: unknown) => {
+          this.pendingRules = null;
+          this.showToast(saveMessage(error));
+          this.reload();
+        },
+      });
   }
 
   ngOnDestroy(): void {
     if (this.toastTimer) clearTimeout(this.toastTimer);
   }
 
+  private finishSave(): void {
+    this.saving.set(false);
+    const pending = this.pendingRules;
+    this.pendingRules = null;
+    if (pending) this.saveRules(pending);
+  }
+
+  private reload(): void {
+    this.schedules.load(this.currentComplexId(), this.routeIds().courtId).subscribe({
+      next: (rules) => this.applyLoaded(rules),
+      error: () => undefined,
+    });
+  }
+
+  private applyLoaded(rules: WeeklyScheduleRule[]): void {
+    this.rules.set(rules);
+    this.formRules.set(rules);
+    this.loadError.set('');
+    this.loading.set(false);
+  }
+
   private showToast(message: string): void {
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.toastMessage.set(message);
     this.toastTimer = setTimeout(() => this.toastMessage.set(''), 3500);
+  }
+}
+
+/** Días del formulario que difieren de lo guardado, con la `revision` vigente de cada uno. */
+function changedDays(current: WeeklyScheduleRule[], incoming: WeeklyScheduleRule[]): WeeklyScheduleRule[] {
+  const saved = new Map(current.map((rule) => [rule.weekday, rule]));
+  return incoming
+    .filter((rule) => {
+      const base = saved.get(rule.weekday);
+      return !base || signature(base) !== signature(rule);
+    })
+    .map((rule) => ({ ...rule, revision: saved.get(rule.weekday)?.revision }));
+}
+
+function signature(rule: WeeklyScheduleRule): string {
+  const intervals = rule.intervals
+    .map(({ opensAt, closesAt }) => `${opensAt}-${closesAt}`)
+    .sort();
+  return JSON.stringify([rule.enabled, rule.durationMinutes, intervals]);
+}
+
+function errorStatus(error: unknown): number {
+  return error instanceof HttpErrorResponse ? error.status : -1;
+}
+
+function errorText(error: unknown): string {
+  const body = error instanceof HttpErrorResponse ? (error.error as { error?: unknown } | null) : null;
+  return typeof body?.error === 'string' ? body.error : '';
+}
+
+function loadMessage(error: unknown): string {
+  switch (errorStatus(error)) {
+    case 403: return 'No tenés permisos sobre este complejo.';
+    case 0: return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
+    default: return 'No pudimos cargar los horarios. Intentá nuevamente.';
+  }
+}
+
+function saveMessage(error: unknown): string {
+  switch (errorStatus(error)) {
+    case 400: return 'Revisá los horarios.';
+    case 403: return 'No tenés permisos para esta acción.';
+    case 404: return 'La cancha ya no existe.';
+    case 409:
+      return errorText(error).includes('reservas')
+        ? 'El cambio afecta reservas futuras vigentes.'
+        : 'El horario cambió; actualizamos los datos.';
+    case 412: return 'El horario cambió; actualizamos los datos.';
+    case 0: return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
+    default: return 'No pudimos guardar los horarios. Intentá nuevamente.';
   }
 }
 

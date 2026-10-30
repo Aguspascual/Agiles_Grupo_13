@@ -1,13 +1,5 @@
 <main class="availability-shell">
-  <app-complex-admin-sidebar
-    [complexId]="currentComplexId()"
-    [showRoleSimulation]="true"
-    [role]="role()"
-    [managers]="managers"
-    [managerId]="managerId()"
-    (roleChange)="role.set($event)"
-    (managerChange)="managerId.set($event)"
-  />
+  <app-complex-admin-sidebar [complexId]="currentComplexId()" />
 
   <section class="availability-workspace">
     @if (complex(); as currentComplex) {
@@ -31,12 +23,13 @@
         </header>
 
         <section class="schedule-panel" aria-label="Configuración semanal">
-          <app-weekly-schedule-form
-            [rules]="rules()"
-            (rulesChange)="saveRules($event)"
-          />
-          @if (!persistenceAvailable()) {
-            <p class="storage-notice" role="status">Los cambios se mantienen en esta sesión, pero el navegador no permitió guardarlos.</p>
+          @if (loadError()) {
+            <p class="load-error" role="alert">{{ loadError() }}</p>
+          } @else if (!loading()) {
+            <app-weekly-schedule-form
+              [rules]="formRules()"
+              (rulesChange)="saveRules($event)"
+            />
           }
         </section>
 
@@ -50,7 +43,7 @@
               <button type="button" aria-label="Día siguiente" (click)="nextDay()">›</button>
             </nav>
           </header>
-          <app-availability-calendar [slots]="slots()" (toggleBlocked)="toggleSlot($event)" />
+          <app-availability-calendar [slots]="slots()" />
         </section>
       } @else {
         <section class="missing-state">
