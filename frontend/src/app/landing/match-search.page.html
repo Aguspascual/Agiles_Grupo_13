@@ -181,7 +181,7 @@
       </div>
       <div class="search-match-grid" [class.is-list]="viewMode === 'list'">
         @for (match of filteredMatches; track match.id) {
-          <app-match-card [match]="match" [searchMode]="true" />
+          <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
         } @empty {
           <div class="search-empty">
             <span aria-hidden="true">⌕</span>
@@ -221,3 +221,7 @@
   </section>
   <app-landing-footer />
 </main>
+  @if (selectedMatch; as match) {
+    <app-match-detail-dialog [match]="match" (close)="closeDetails()" (join)="joinMatch($event)" />
+  }
+  <app-toast [message]="toastMessage" (dismiss)="toastMessage = ''" />

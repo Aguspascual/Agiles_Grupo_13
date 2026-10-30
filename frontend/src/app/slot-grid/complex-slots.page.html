@@ -63,8 +63,25 @@
               [slot]="chosen.slot"
               [courtName]="chosen.courtName"
               [dateLabel]="dateLabel()"
+              [canReplacePending]="canReplacePending()"
               (closed)="clearSelection()"
+              (replacePending)="requestPendingReplacement()"
             />
+          }
+          @if (replacementNotice()) {
+            <p class="slots-notice" role="status">{{ replacementNotice() }}</p>
+          }
+          @if (replaceDialogOpen() && selection(); as chosen) {
+            <div class="replacement-backdrop" (click)="replaceDialogOpen.set(false)">
+              <section class="replacement-dialog" role="alertdialog" aria-modal="true" aria-labelledby="replacement-title" (click)="$event.stopPropagation()">
+                <h2 id="replacement-title">¿Reservar el turno para tu grupo?</h2>
+                <p>El partido pendiente de {{ chosen.slot.startsAt }} se cancelará y el turno quedará reservado para cuatro jugadores.</p>
+                <div class="replacement-dialog__actions">
+                  <button type="button" (click)="replaceDialogOpen.set(false)">Volver</button>
+                  <button type="button" (click)="confirmPendingReplacement()">Confirmar reserva</button>
+                </div>
+              </section>
+            </div>
           }
         </section>
       }

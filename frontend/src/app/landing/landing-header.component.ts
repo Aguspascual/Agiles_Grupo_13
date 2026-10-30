@@ -1,6 +1,7 @@
-import { Component, ElementRef, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
+import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-landing-header',
@@ -64,16 +65,25 @@ import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
               <a class="nav-menu-panel__create" routerLink="/partidos" (click)="closeMenu()"
                 >Crear partido</a
               >
-              <a class="nav-menu-panel__account" routerLink="/perfil" (click)="closeMenu()"
-                >Mi perfil</a
-              >
-              <button
-                class="nav-menu-panel__logout"
-                type="button"
-                (click)="requestLogout()"
-              >
-                Cerrar sesión
-              </button>
+              @if (session.currentUser()) {
+                <a class="nav-menu-panel__account" routerLink="/perfil" (click)="closeMenu()"
+                  >Mi perfil</a
+                >
+                <button
+                  class="nav-menu-panel__logout"
+                  type="button"
+                  (click)="requestLogout()"
+                >
+                  Cerrar sesión
+                </button>
+              } @else {
+                <a class="nav-menu-panel__account" routerLink="/ingresar" (click)="closeMenu()"
+                  >Ingresar</a
+                >
+                <a class="nav-menu-panel__account" routerLink="/registro" (click)="closeMenu()"
+                  >Registrarse</a
+                >
+              }
             </div>
           }
         </div>
@@ -87,13 +97,31 @@ import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
             <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
             <path d="M10 21h4" /></svg
         ></a>
-        <a
-          class="profile-link"
-          routerLink="/ingresar"
-          aria-label="Iniciar sesión, perfil de jugador"
-          ><span class="profile-avatar">LM</span
-          ><span class="profile-copy"><b>Lucas M.</b><small>Nivel 5ta</small></span></a
-        >
+        @if (session.currentUser(); as user) {
+          <div class="profile-menu">
+            <button
+              class="profile-link"
+              type="button"
+              [attr.aria-expanded]="profileOpen"
+              aria-haspopup="menu"
+              aria-label="Abrir menú de usuario"
+              (click)="toggleProfile()"
+            >
+              <span class="profile-avatar">{{ initials }}</span>
+              <span class="profile-copy"><b>{{ user.name }}</b><small>Nivel {{ user.level }}</small></span>
+              <span class="profile-chevron" aria-hidden="true">⌄</span>
+            </button>
+            @if (profileOpen) {
+              <div class="profile-dropdown" role="menu">
+                <a routerLink="/perfil" role="menuitem" (click)="profileOpen = false">Mi perfil</a>
+                <button type="button" role="menuitem" (click)="requestLogout()">Cerrar sesión</button>
+              </div>
+            }
+          </div>
+        } @else {
+          <a class="profile-link" routerLink="/ingresar">Ingresar</a>
+          <a class="create-match-link" routerLink="/registro">Registrarse</a>
+        }
       </div>
     </header>
     @if (logoutOpen) {
@@ -109,16 +137,33 @@ import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
   styleUrl: './landing-header.component.scss',
 })
 export class LandingHeaderComponent {
+  readonly session = inject(AuthSessionService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly router = inject(Router);
   menuOpen = false;
+  profileOpen = false;
   logoutOpen = false;
 
-  constructor(
-    private readonly host: ElementRef<HTMLElement>,
-    private readonly router: Router,
-  ) {}
+  get initials(): string {
+    return (
+      this.session
+        .currentUser()
+        ?.name.split(/\s+/)
+        .map((part) => part[0] ?? '')
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() ?? ''
+    );
+  }
 
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
+    this.profileOpen = false;
+  }
+
+  toggleProfile(): void {
+    this.profileOpen = !this.profileOpen;
+    this.menuOpen = false;
   }
 
   closeMenu(): void {
@@ -126,23 +171,28 @@ export class LandingHeaderComponent {
   }
 
   requestLogout(): void {
-    this.closeMenu();
+    this.menuOpen = false;
+    this.profileOpen = false;
     this.logoutOpen = true;
   }
 
   logout(): void {
     this.logoutOpen = false;
+    this.session.logout();
     void this.router.navigateByUrl('/ingresar');
   }
 
   @HostListener('document:click', ['$event'])
-  closeMenuOnOutsideClick(event: MouseEvent): void {
-    if (!this.host.nativeElement.contains(event.target as Node)) this.closeMenu();
+  closeOnOutsideClick(event: MouseEvent): void {
+    const target = event.target as Element;
+    if (!this.host.nativeElement.contains(target)) this.menuOpen = false;
+    if (!target.closest?.('.profile-menu')) this.profileOpen = false;
   }
 
   @HostListener('document:keydown.escape')
-  closeMenuOnEscape(): void {
-    this.closeMenu();
+  closeOnEscape(): void {
+    this.menuOpen = false;
+    this.profileOpen = false;
     this.logoutOpen = false;
   }
 }

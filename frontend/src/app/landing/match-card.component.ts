@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { MatchPreview } from './landing.data';
+import { PlayerProfileStore } from '../profile/player-profile.store';
 
 @Component({
   selector: 'app-match-card',
@@ -40,7 +41,7 @@ import { MatchPreview } from './landing.data';
               ><i [class]="'player-chip__avatar tone-' + player.tone">{{ player.initials }}</i
               ><span
                 ><b>{{ player.name }}</b
-                ><small>Nivel {{ player.level }}</small></span
+                  ><small>Nivel {{ player.name === profile.profile().nickname ? profile.profile().level : player.level }}</small></span
               ></span
             >
           }
@@ -54,23 +55,26 @@ import { MatchPreview } from './landing.data';
       </div>
       <footer class="match-card__bottom">
         <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
-        <button
-          type="button"
-          data-match-action
-          [disabled]="actionCompleted"
-          (click)="completeDemoAction()"
-          [attr.aria-label]="actionLabel + ' · ' + match.club"
-        >
-          {{ actionLabel }} <span aria-hidden="true">→</span>
-        </button>
+        @if (detailsMode) {
+          <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
+            Ver partido <span aria-hidden="true">↗</span>
+          </button>
+        } @else {
+          <button type="button" data-match-action [disabled]="actionCompleted" (click)="completeDemoAction()" [attr.aria-label]="actionLabel + ' · ' + match.club">
+            {{ actionLabel }} <span aria-hidden="true">→</span>
+          </button>
+        }
       </footer>
     </article>
   `,
   styleUrl: './match-card.component.scss',
 })
 export class MatchCardComponent {
+  readonly profile = inject(PlayerProfileStore);
   @Input({ required: true }) match!: MatchPreview;
   @Input() searchMode = false;
+  @Input() detailsMode = false;
+  @Output() viewDetails = new EventEmitter<{ match: MatchPreview; trigger: HTMLElement }>();
   actionCompleted = false;
 
   get actionLabel(): string {
@@ -80,6 +84,10 @@ export class MatchCardComponent {
 
   completeDemoAction(): void {
     this.actionCompleted = true;
+  }
+
+  openDetails(event: Event): void {
+    this.viewDetails.emit({ match: this.match, trigger: event.currentTarget as HTMLElement });
   }
 
   get emptySlots(): number[] {

@@ -1,4 +1,4 @@
-<main class="auth-page login-page entrance" [class.is-exiting]="transitioning" (animationend)="finishTransition($event)">
+<main class="auth-page login-page entrance" [attr.aria-busy]="requestInProgress">
   <div class="auth-layout">
     <section class="login-main" aria-labelledby="login-title">
       <div class="brand-row">
@@ -39,22 +39,24 @@
           </div>
 
           @if (recoveryVisible) {
-            <p class="info-note" role="status">La recuperación de contraseña estará disponible cuando se conecte el servicio de autenticación.</p>
+            <p class="info-note" role="status">La recuperación de contraseña todavía no está disponible.</p>
           }
 
           <label class="check-row"><input type="checkbox" formControlName="remember" /> Recordarme en este equipo</label>
 
-          <button class="primary-button" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
-
-          @if (ready) {
-            <app-preview-notice message="Todavía no se inició una sesión: falta integrar el servicio de autenticación." />
+          @if (errorMessage) {
+            <p class="field-error" role="alert">{{ errorMessage }}</p>
           }
+
+          <button class="primary-button" type="submit" [disabled]="requestInProgress">
+            {{ requestInProgress ? 'Iniciando sesión…' : 'Iniciar sesión' }} <span aria-hidden="true">→</span>
+          </button>
         </form>
 
         <div class="divider"><span>O continuar con</span></div>
         <div class="social-row">
-          <button type="button" disabled title="Disponible al integrar proveedores de acceso">Google</button>
-          <button type="button" disabled title="Disponible al integrar proveedores de acceso">Apple</button>
+          <button type="button" disabled title="El acceso con Google está fuera del alcance actual">Google</button>
+          <button type="button" disabled title="El acceso con Apple está fuera del alcance actual">Apple</button>
         </div>
 
         <p class="switch-page">¿Todavía no tenés cuenta? <a routerLink="/registro">Registrate gratis</a></p>

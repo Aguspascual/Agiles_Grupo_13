@@ -139,17 +139,25 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('permite probar la acción de unirse sin enviar al login', () => {
+  it('abre el detalle del partido y permite unirse sin enviar al login', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    const action = root.querySelector('[data-match-action]') as HTMLButtonElement;
+    const details = root.querySelector('[data-match-detail]') as HTMLButtonElement;
 
-    expect(action).not.toBeNull();
+    expect(details).not.toBeNull();
     expect(root.querySelector('.match-card__bottom a[href="/ingresar"]')).toBeNull();
-    action.click();
+    details.click();
     fixture.detectChanges();
-    expect(action.textContent).toContain('Solicitud enviada');
+    const dialog = root.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Club Universitario Gonnet');
+    expect(dialog?.textContent).toContain('Drive');
+
+    root.querySelector<HTMLButtonElement>('.join-match-button')?.click();
+    fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('.join-confirm-submit')?.click();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Solicitud para unirte enviada');
     fixture.destroy();
   });
 

@@ -13,10 +13,11 @@ export class ComplexCardComponent {
   @Input({ required: true }) complex!: ComplexRecord;
   @Input() managers: ManagerOption[] = [];
   @Input() canManage = false;
+  @Input() canDelete = false;
   @Output() edit = new EventEmitter<ComplexRecord>();
   @Output() remove = new EventEmitter<ComplexRecord>();
 
   managerName(id: string): string {
-    return this.managers.find(manager => manager.id === id)?.name ?? 'Encargado';
+    return this.managers.find(manager => manager.id === id)?.name ?? this.complex.managers?.find(manager => manager.id === id)?.name ?? 'Encargado';
   }
 }
