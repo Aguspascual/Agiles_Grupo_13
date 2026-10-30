@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { CourtAvailabilityPage } from './court-availability.page';
 import { WeeklyScheduleRule } from './availability.model';
@@ -19,11 +21,23 @@ describe('HU-04: página de horarios por cancha', () => {
       imports: [CourtAvailabilityPage],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap }, paramMap: of(paramMap) } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(CourtAvailabilityPage);
     fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/complexes').flush({
+      complexes: [{ id: 'complex-gonnet', name: 'Club Universitario Gonnet', address: 'Calle 14', zone: 'Gonnet', phone: '1', managerIds: [] }],
+    });
+    http.expectOne('/api/v1/complexes/complex-gonnet/courts').flush({
+      courts: [
+        { id: 'court-gonnet-1', complexId: 'complex-gonnet', name: 'Cancha 1', covered: true, imageDataUrl: null, features: [] },
+        { id: 'court-gonnet-2', complexId: 'complex-gonnet', name: 'Cancha 2', covered: false, imageDataUrl: null, features: [] },
+      ],
+    });
     await fixture.whenStable();
     fixture.detectChanges();
     return { fixture, root: fixture.nativeElement as HTMLElement };
