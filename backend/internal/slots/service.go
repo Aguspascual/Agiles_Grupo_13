@@ -13,6 +13,7 @@ import (
 
 type Repository interface {
 	ReadAvailability(context.Context, string, time.Time, time.Time, int) (Snapshot, error)
+	ListComplexes(context.Context) ([]Complex, error)
 }
 
 type Service struct {
@@ -77,6 +78,34 @@ func (s *Service) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/complexes/{complexId}/slots", s.handleGet)
 	return mux
+}
+
+// ListHandler serves the public complex directory (TDD-0014). It takes no query.
+func (s *Service) ListHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/public/complexes", s.handleList)
+	return mux
+}
+
+func (s *Service) handleList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	if len(r.URL.Query()) != 0 {
+		writeError(w, http.StatusBadRequest, "consulta inválida")
+		return
+	}
+	complexes, err := s.repository.ListComplexes(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "no se pudo consultar los complejos")
+		return
+	}
+	if complexes == nil {
+		complexes = []Complex{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(struct {
+		Complexes []Complex `json:"complexes"`
+	}{complexes})
 }
 
 func (s *Service) handleGet(w http.ResponseWriter, r *http.Request) {

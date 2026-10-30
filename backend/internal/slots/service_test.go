@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,9 +13,15 @@ import (
 )
 
 type repositoryStub struct {
-	snapshot Snapshot
-	err      error
-	calls    int
+	snapshot  Snapshot
+	err       error
+	calls     int
+	complexes []Complex
+	listErr   error
+}
+
+func (r *repositoryStub) ListComplexes(context.Context) ([]Complex, error) {
+	return r.complexes, r.listErr
 }
 
 func (r *repositoryStub) ReadAvailability(context.Context, string, time.Time, time.Time, int) (Snapshot, error) {
@@ -124,5 +131,53 @@ func TestHandlerMapsNotFoundAndInternalErrors(t *testing.T) {
 				t.Fatalf("status=%d want=%d body=%s", recorder.Code, test.want, recorder.Body.String())
 			}
 		})
+	}
+}
+
+// TDD-0014: public complex directory.
+func TestListHandlerReturnsComplexesWithoutStoring(t *testing.T) {
+	repository := &repositoryStub{complexes: []Complex{{ID: "a", Name: "Norte", Address: "Calle 1", Zone: "Gonnet"}}}
+	response := httptest.NewRecorder()
+	NewService(repository).ListHandler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/public/complexes", nil))
+	if response.Code != http.StatusOK || response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("status=%d cache=%q", response.Code, response.Header().Get("Cache-Control"))
+	}
+	want := `{"complexes":[{"id":"a","name":"Norte","address":"Calle 1","zone":"Gonnet"}]}` + "\n"
+	if response.Body.String() != want {
+		t.Fatalf("body=%q want %q", response.Body.String(), want)
+	}
+}
+
+func TestListHandlerReturnsEmptyArrayNeverNull(t *testing.T) {
+	response := httptest.NewRecorder()
+	NewService(&repositoryStub{}).ListHandler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/public/complexes", nil))
+	if response.Code != http.StatusOK || response.Body.String() != `{"complexes":[]}`+ "\n" {
+		t.Fatalf("status=%d body=%q", response.Code, response.Body.String())
+	}
+}
+
+func TestListHandlerRejectsAnyQueryWithoutReadingRepository(t *testing.T) {
+	for _, query := range []string{"?zone=Gonnet", "?", "?a=1&a=2"} {
+		repository := &repositoryStub{}
+		response := httptest.NewRecorder()
+		NewService(repository).ListHandler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/public/complexes"+query, nil))
+		if query == "?" {
+			// An empty query string carries no parameters and is accepted.
+			if response.Code != http.StatusOK {
+				t.Errorf("query %q status=%d", query, response.Code)
+			}
+			continue
+		}
+		if response.Code != http.StatusBadRequest || response.Body.String() != `{"error":"consulta inválida"}`+ "\n" {
+			t.Errorf("query %q status=%d body=%q", query, response.Code, response.Body.String())
+		}
+	}
+}
+
+func TestListHandlerHidesRepositoryErrors(t *testing.T) {
+	response := httptest.NewRecorder()
+	NewService(&repositoryStub{listErr: errors.New("secret dsn")}).ListHandler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/public/complexes", nil))
+	if response.Code != http.StatusInternalServerError || strings.Contains(response.Body.String(), "secret") {
+		t.Fatalf("status=%d body=%q", response.Code, response.Body.String())
 	}
 }
