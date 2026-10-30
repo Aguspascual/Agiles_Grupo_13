@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/agenda"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/courts"
@@ -63,6 +64,14 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		"GET " + schedules.BasePath + "/{weekday}", "PUT " + schedules.BasePath + "/{weekday}",
 		"DELETE " + schedules.BasePath + "/{weekday}"} {
 		mux.Handle(pattern, protectedSchedules)
+	}
+	agendaService, agendaErr := agenda.NewService(agenda.NewRepository(db), clock)
+	if agendaErr != nil {
+		mux.HandleFunc("GET "+agenda.Path, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudo consultar la agenda")
+		})
+	} else {
+		mux.Handle("GET "+agenda.Path, auth.RequireUser(secret, auth.NewPostgresRepository(db), agendaService.Handler()))
 	}
 	reservationService, err := reservations.NewService(reservations.NewRepositoryWithClock(db, clock))
 	if err != nil {

@@ -72,6 +72,11 @@ type Snapshot struct {
 	Reservations []ReservationData
 }
 
+// ProjectCourt builds one court's grid for a day. It is shared with the manager agenda.
+func ProjectCourt(court CourtData, reservations []ReservationData, day time.Time, location *time.Location, now time.Time) (Court, error) {
+	return projectCourt(court, reservations, day, location, now)
+}
+
 func projectCourt(court CourtData, reservations []ReservationData, day time.Time, location *time.Location, now time.Time) (Court, error) {
 	result := Court{ID: court.ID, Name: court.Name, Covered: court.Covered, Slots: []Slot{}, OccupiedIntervals: []OccupiedInterval{}}
 	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, location)

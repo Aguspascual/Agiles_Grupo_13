@@ -38,3 +38,8 @@ func authorizeManual(ctx context.Context, tx pgx.Tx, complexID, actorID string, 
 		return err
 	}
 }
+
+// AuthorizeManager lets other modules reuse the manager check inside their own transaction.
+func AuthorizeManager(ctx context.Context, tx pgx.Tx, complexID, actorID string, missing bool) error {
+	return authorizeManual(ctx, tx, complexID, actorID, missing)
+}

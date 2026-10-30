@@ -49,48 +49,10 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 	if err != nil {
 		return Snapshot{}, err
 	}
-	rows, err := tx.Query(ctx, `SELECT c.id::text,c.name,c.covered,d.id::text,d.weekday,d.enabled,d.duration_minutes,
-		d.revision::text,i.id::text,to_char(i.opens_at,'HH24:MI'),to_char(i.closes_at,'HH24:MI')
-		FROM courts c LEFT JOIN court_schedule_days d ON d.court_id=c.id AND d.weekday=$2
-		LEFT JOIN court_schedule_intervals i ON i.schedule_day_id=d.id
-		WHERE c.complex_id=$1::uuid AND c.deleted_at IS NULL
-		ORDER BY c.name,c.id,i.opens_at,i.id`, complexID, weekday)
+	snapshot.Courts, err = ReadCourtData(ctx, tx, complexID, weekday)
 	if err != nil {
 		return Snapshot{}, err
 	}
-	byID := make(map[string]int)
-	for rows.Next() {
-		var courtID, name string
-		var covered bool
-		var scheduleID, revision, intervalID, opensAt, closesAt *string
-		var scheduleWeekday, duration *int16
-		var enabled *bool
-		if err := rows.Scan(&courtID, &name, &covered, &scheduleID, &scheduleWeekday, &enabled, &duration,
-			&revision, &intervalID, &opensAt, &closesAt); err != nil {
-			rows.Close()
-			return Snapshot{}, err
-		}
-		index, exists := byID[courtID]
-		if !exists {
-			index = len(snapshot.Courts)
-			byID[courtID] = index
-			snapshot.Courts = append(snapshot.Courts, CourtData{ID: courtID, Name: name, Covered: covered})
-		}
-		if scheduleID != nil {
-			court := &snapshot.Courts[index]
-			if court.Schedule == nil {
-				court.Schedule = &schedules.Day{Weekday: int(*scheduleWeekday), Enabled: *enabled, DurationMinutes: int(*duration), Revision: *revision, Intervals: []schedules.Interval{}}
-			}
-			if intervalID != nil {
-				court.Schedule.Intervals = append(court.Schedule.Intervals, schedules.Interval{ID: *intervalID, OpensAt: *opensAt, ClosesAt: *closesAt})
-			}
-		}
-	}
-	if err := rows.Err(); err != nil {
-		rows.Close()
-		return Snapshot{}, err
-	}
-	rows.Close()
 	reservationRows, err := tx.Query(ctx, `SELECT r.court_id::text,r.starts_at,r.ends_at
 		FROM reservations r JOIN courts c ON c.id=r.court_id
 		WHERE c.complex_id=$1::uuid AND c.deleted_at IS NULL AND r.status='reserved'
@@ -123,4 +85,52 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 		snapshot.Reservations = []ReservationData{}
 	}
 	return snapshot, nil
+}
+
+// ReadCourtData reads active courts with the schedule of one weekday inside an open transaction.
+func ReadCourtData(ctx context.Context, tx pgx.Tx, complexID string, weekday int) ([]CourtData, error) {
+	rows, err := tx.Query(ctx, `SELECT c.id::text,c.name,c.covered,d.id::text,d.weekday,d.enabled,d.duration_minutes,
+		d.revision::text,i.id::text,to_char(i.opens_at,'HH24:MI'),to_char(i.closes_at,'HH24:MI')
+		FROM courts c LEFT JOIN court_schedule_days d ON d.court_id=c.id AND d.weekday=$2
+		LEFT JOIN court_schedule_intervals i ON i.schedule_day_id=d.id
+		WHERE c.complex_id=$1::uuid AND c.deleted_at IS NULL
+		ORDER BY c.name,c.id,i.opens_at,i.id`, complexID, weekday)
+	if err != nil {
+		return nil, err
+	}
+	var courts []CourtData
+	byID := make(map[string]int)
+	for rows.Next() {
+		var courtID, name string
+		var covered bool
+		var scheduleID, revision, intervalID, opensAt, closesAt *string
+		var scheduleWeekday, duration *int16
+		var enabled *bool
+		if err := rows.Scan(&courtID, &name, &covered, &scheduleID, &scheduleWeekday, &enabled, &duration,
+			&revision, &intervalID, &opensAt, &closesAt); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		index, exists := byID[courtID]
+		if !exists {
+			index = len(courts)
+			byID[courtID] = index
+			courts = append(courts, CourtData{ID: courtID, Name: name, Covered: covered})
+		}
+		if scheduleID != nil {
+			court := &courts[index]
+			if court.Schedule == nil {
+				court.Schedule = &schedules.Day{Weekday: int(*scheduleWeekday), Enabled: *enabled, DurationMinutes: int(*duration), Revision: *revision, Intervals: []schedules.Interval{}}
+			}
+			if intervalID != nil {
+				court.Schedule.Intervals = append(court.Schedule.Intervals, schedules.Interval{ID: *intervalID, OpensAt: *opensAt, ClosesAt: *closesAt})
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	return courts, nil
 }
