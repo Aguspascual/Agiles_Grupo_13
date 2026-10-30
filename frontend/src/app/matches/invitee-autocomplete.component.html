@@ -1,0 +1,42 @@
+<div class="invitee-field">
+  <label [for]="inputId">{{ label }}</label>
+  <div class="invitee-field__control">
+    <input
+      [id]="inputId"
+      type="text"
+      [ngModel]="query"
+      (ngModelChange)="updateQuery($event)"
+      [name]="inputId"
+      autocomplete="off"
+      role="combobox"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="suggestions.length > 0"
+      [attr.aria-controls]="inputId + '-list'"
+      [placeholder]="selected ? 'Jugador seleccionado' : 'Escribí nombre o correo'"
+      required
+    />
+    @if (selected) {
+      <button type="button" class="invitee-field__clear" (click)="clear()" [attr.aria-label]="'Quitar a ' + selected.name">×</button>
+    }
+  </div>
+  @if (selected) {
+    <small class="field-hint">Cuenta seleccionada · solo esta persona puede aceptar la invitación.</small>
+  } @else if (queryLength(query) > 0 && queryLength(query) < 6) {
+    <small class="field-hint">Escribí al menos 6 caracteres para buscar jugadores.</small>
+  } @else if (searching) {
+    <small class="field-hint" role="status">Buscando jugadores…</small>
+  }
+  @if (suggestions.length > 0) {
+    <ul class="invitee-suggestions" [id]="inputId + '-list'" role="listbox" [attr.aria-label]="'Jugadores encontrados para ' + label">
+      @for (player of suggestions; track player.id) {
+        <li role="presentation">
+          <button type="button" role="option" (click)="select(player)">
+            <b>{{ player.name }}</b><small>{{ player.emailHint }}</small>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (searched && !searching && !selected) {
+    <small class="field-hint">{{ searchFailed ? 'No se pudo buscar; intentá de nuevo.' : 'Sin coincidencias; podés dejar el nombre o correo y compartir el enlace.' }}</small>
+  }
+</div>

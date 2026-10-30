@@ -73,13 +73,19 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	} else {
 		mux.Handle("GET "+agenda.Path, auth.RequireUser(secret, auth.NewPostgresRepository(db), agendaService.Handler()))
 	}
-	reservationService, err := reservations.NewService(reservations.NewRepositoryWithClock(db, clock))
+	reservationService, err := reservations.NewServiceWithClock(reservations.NewRepositoryWithClock(db, clock), clock)
 	if err != nil {
 		mux.HandleFunc("POST "+reservations.ManualPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
 		})
 		mux.HandleFunc("POST "+reservations.BasePath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
+		})
+		mux.HandleFunc("POST "+reservations.CreateFullMatchPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear el partido")
+		})
+		mux.HandleFunc("GET "+reservations.InvitationPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudo consultar la invitación")
 		})
 		mux.HandleFunc("GET "+reservations.OwnPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar las reservas")
@@ -97,7 +103,12 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		})
 	} else {
 		protectedReservations := auth.RequireUser(secret, auth.NewPostgresRepository(db), reservationService.Handler())
+		mux.Handle("GET "+reservations.InviteeSearchPath, protectedReservations)
+		mux.Handle("GET "+reservations.InvitationPath, reservationService.PublicInvitationHandler())
 		mux.Handle("POST "+reservations.BasePath, protectedReservations)
+		mux.Handle("POST "+reservations.CreateFullMatchPath, protectedReservations)
+		mux.Handle("GET "+reservations.FullMatchPath, protectedReservations)
+		mux.Handle("POST "+reservations.InvitationPath+"/accept", protectedReservations)
 		mux.Handle("POST "+reservations.ManualPath, protectedReservations)
 		mux.Handle("POST "+reservations.OwnCancelPath, protectedReservations)
 		mux.Handle("POST "+reservations.ManagerCancelPath, protectedReservations)

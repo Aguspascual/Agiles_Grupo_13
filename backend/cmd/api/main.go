@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/database"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/reservations"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -34,6 +35,9 @@ func main() {
 	if err := database.Migrate(ctx, db); err != nil {
 		log.Fatalf("aplicar migraciones: %v", err)
 	}
+	expirationContext, stopExpirationWorker := context.WithCancel(context.Background())
+	defer stopExpirationWorker()
+	reservations.StartFullMatchExpirationWorker(expirationContext, reservations.NewRepository(db), 10*time.Second)
 
 	mux := newHandler(db, []byte(jwtSecret))
 

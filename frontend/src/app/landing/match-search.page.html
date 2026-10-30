@@ -198,6 +198,10 @@
     <app-match-detail-dialog [match]="match" (close)="closeDetails()" (join)="joinMatch($event)" />
   }
   @if (createDialogOpen) {
-    <app-create-match-dialog (close)="closeCreateDialog()" (created)="onMatchCreated()" />
+    <app-create-match-dialog
+      (close)="closeCreateDialog()"
+      (created)="onMatchCreated()"
+      (fullMatchCreated)="refreshAfterFullMatch()"
+    />
   }
   <app-toast [message]="toastMessage" (dismiss)="toastMessage = ''" />

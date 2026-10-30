@@ -1,0 +1,41 @@
+<main class="invitation-page">
+  <section class="invitation-card" aria-labelledby="invitation-title">
+    <div class="invitation-card__brand">Pádel<span>Match</span></div>
+    @if (loading) {
+      <p class="invitation-state" role="status">Cargando invitación…</p>
+    } @else if (match; as invitation) {
+      @if (invitationStatus === 'expired' || invitation.status === 'expired' || invitation.status === 'cancelled') {
+        <span class="invitation-icon is-expired" aria-hidden="true">×</span>
+        <h1 id="invitation-title">La invitación venció</h1>
+        <p>El plazo de confirmación terminó y el turno volvió a estar disponible.</p>
+        <a class="invitation-button" routerLink="/partidos">Buscar otro partido</a>
+      } @else if (invitationStatus === 'accepted' || invitation.status === 'full') {
+        <span class="invitation-icon" aria-hidden="true">✓</span>
+        <h1 id="invitation-title">Tu lugar está confirmado</h1>
+        <p>{{ invitation.complex }} · {{ invitation.date }} · {{ invitation.startsAt }}–{{ invitation.endsAt }}</p>
+        <a class="invitation-button" routerLink="/partidos">Ir a partidos</a>
+      } @else {
+        <span class="invitation-icon" aria-hidden="true">＋</span>
+        <h1 id="invitation-title">Te invitaron a jugar</h1>
+        <p class="invitation-player">{{ invitation.invitations[0]?.name }}</p>
+        <div class="invitation-details">
+          <b>{{ invitation.complex }}</b>
+          <span>{{ invitation.court }} · {{ invitation.date }}</span>
+          <strong>{{ invitation.startsAt }}–{{ invitation.endsAt }}</strong>
+          <small>Confirmá antes de {{ invitation.expiresAt | date:'HH:mm' }} para conservar el turno.</small>
+        </div>
+        @if (!session.currentUser()) {
+          <p class="invitation-hint">Iniciá sesión para confirmar. <a [routerLink]="['/registro']" [queryParams]="{ returnUrl: returnUrl }">Crear cuenta</a></p>
+        }
+        <button class="invitation-button" type="button" (click)="accept()" [disabled]="accepting">
+          {{ accepting ? 'Confirmando…' : 'Aceptar invitación' }}
+        </button>
+      }
+    } @else {
+      <h1 id="invitation-title">Invitación no disponible</h1>
+      <p>El enlace es inválido, venció o el turno ya fue liberado.</p>
+      <a class="invitation-button" routerLink="/partidos">Buscar otro partido</a>
+    }
+    @if (message) { <p class="invitation-error" role="alert">{{ message }}</p> }
+  </section>
+</main>

@@ -122,6 +122,10 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     this.loadMatches();
   }
 
+  refreshAfterFullMatch(): void {
+    this.loadMatches();
+  }
+
   ngOnDestroy(): void {
     if (this.toastTimer) clearTimeout(this.toastTimer);
   }
