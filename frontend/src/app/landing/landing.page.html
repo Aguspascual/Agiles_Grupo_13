@@ -9,10 +9,14 @@
         clubes más emblemáticos de la ciudad.
       </p>
       <div class="player-proof">
-        <span aria-hidden="true">✓</span><b>{{ playerProfile().nickname }} · Nivel {{ playerProfile().level }} verificado</b
-        ><a routerLink="/registro"
-          >Ver sugerencias para tu categoría <span aria-hidden="true">→</span></a
-        >
+        <span aria-hidden="true">✓</span>
+        @if (session.currentUser(); as user) {
+          <b>{{ user.level }} · {{ user.zone }}</b>
+          <a routerLink="/perfil">Editar perfil <span aria-hidden="true">→</span></a>
+        } @else {
+          <b>Encontrá jugadores de tu nivel</b>
+          <a routerLink="/ingresar">Iniciá sesión <span aria-hidden="true">→</span></a>
+        }
       </div>
     </div>
     <article class="featured-court" aria-label="Cancha destacada La Cumbre Pádel">

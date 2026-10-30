@@ -14,6 +14,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UpdateProfileRequest {
+  name: string;
+  zone: string;
+  level: string;
+  position: string;
+  hand: string;
+}
+
 export interface AuthUser {
   id: string;
   name: string;

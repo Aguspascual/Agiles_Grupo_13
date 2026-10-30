@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { AuthSessionService } from './auth-session.service';
 import { AuthTokenStore } from './auth-token.store';
 import { authInterceptor } from './auth.interceptor';
-import { AuthResponse, AuthUser } from './auth.model';
+import { AuthResponse, AuthUser, UpdateProfileRequest } from './auth.model';
 
 const user: AuthUser = {
   id: 'user-1',
@@ -94,6 +94,38 @@ describe('AuthSessionService', () => {
 
     http.expectNone('/api/v1/auth/me');
     expect(result).toBeNull();
+  });
+
+  it('actualiza el perfil en el servidor y reemplaza el usuario de sesión', () => {
+    session.accept({ user, token: 'jwt-token' }, true);
+    const request: UpdateProfileRequest = {
+      name: 'Ana Pérez', zone: 'City Bell', level: '6ta', position: 'Revés', hand: 'Zurdo',
+    };
+    const updatedUser: AuthUser = { ...user, ...request };
+    let result: AuthUser | undefined;
+
+    session.updateProfile(request).subscribe((value) => (result = value));
+
+    const req = http.expectOne('/api/v1/auth/me');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer jwt-token');
+    req.flush({ user: updatedUser });
+
+    expect(result).toEqual(updatedUser);
+    expect(session.currentUser()).toEqual(updatedUser);
+  });
+
+  it('no restaura un usuario si se cierra sesión mientras se actualiza el perfil', () => {
+    session.accept({ user, token: 'old-token' }, true);
+    session.updateProfile({
+      name: user.name, zone: user.zone, level: user.level, position: '', hand: '',
+    }).subscribe();
+    const req = http.expectOne('/api/v1/auth/me');
+    session.logout();
+    req.flush({ user });
+
+    expect(session.currentUser()).toBeNull();
+    expect(session.token).toBeNull();
   });
 
   it('limpia token y usuario cuando una API protegida responde 401', () => {

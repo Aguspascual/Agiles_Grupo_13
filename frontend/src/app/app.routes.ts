@@ -30,6 +30,7 @@ export const routes: Routes = [
   {
     path: 'perfil',
     loadComponent: () => import('./profile/player-profile.page').then((page) => page.PlayerProfilePage),
+    canActivate: [authGuard],
     title: 'Editar perfil | PádelMatch',
   },
   // Las pantallas de administración se cargan bajo demanda para aliviar la carga inicial del jugador.

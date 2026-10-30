@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AuthApiService } from './auth-api.service';
-import { AuthResponse, LoginRequest, RegisterRequest } from './auth.model';
+import { AuthResponse, LoginRequest, RegisterRequest, UpdateProfileRequest } from './auth.model';
 
 describe('AuthApiService', () => {
   let api: AuthApiService;
@@ -73,6 +73,23 @@ describe('AuthApiService', () => {
 
     const req = http.expectOne('/api/v1/auth/me');
     expect(req.request.method).toBe('GET');
+    req.flush({ user });
+    expect(result).toEqual(user);
+  });
+
+  it('actualiza el perfil propio enviando solo los cinco campos admitidos', () => {
+    const request: UpdateProfileRequest = {
+      name: 'Ana Pérez', zone: 'Gonnet', level: '6ta', position: 'Drive', hand: 'Diestro',
+    };
+    const user = { id: 'user-1', ...request, email: 'ana@example.com' };
+    let result: unknown;
+
+    api.updateProfile(request).subscribe((value) => (result = value));
+
+    const req = http.expectOne('/api/v1/auth/me');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(request);
+    expect(Object.keys(req.request.body).sort()).toEqual(['hand', 'level', 'name', 'position', 'zone']);
     req.flush({ user });
     expect(result).toEqual(user);
   });

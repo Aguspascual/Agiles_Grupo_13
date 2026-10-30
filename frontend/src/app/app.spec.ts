@@ -60,11 +60,24 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.querySelector('.login-page')).not.toBeNull();
   });
 
-  it('mantiene disponible la ruta /perfil integrada por HU-08', async () => {
-    const { root, fixture } = await open('/perfil');
+  it('permite editar /perfil con sesión válida', async () => {
+    sessionStorage.setItem(AuthTokenStore.storageKey, 'profile-jwt');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/me');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer profile-jwt');
+    request.flush({
+      user: { id: 'u1', name: 'Ana Pérez', email: 'ana@example.com', zone: 'Gonnet', level: '7ma', position: 'Drive', hand: 'Diestro' },
+    });
+    await TestBed.inject(Router).navigateByUrl('/perfil');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
 
     expect(TestBed.inject(Router).url).toBe('/perfil');
-    expect(root.textContent).toContain('Foto de perfil e identidad');
+    expect(root.textContent).toContain('Identidad');
+    expect(root.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Ana Pérez');
+    expect(root.querySelector<HTMLInputElement>('#profile-email')?.value).toBe('ana@example.com');
     fixture.destroy();
   });
 

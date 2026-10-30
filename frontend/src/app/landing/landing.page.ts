@@ -13,7 +13,8 @@ import {
 } from './landing.data';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
-import { PlayerProfileStore } from '../profile/player-profile.store';
+import { AuthSessionService } from '../auth/auth-session.service';
+import { ProfileFeedbackStore } from '../profile/profile-feedback.store';
 import { ToastComponent } from '../shared/toast.component';
 
 @Component({
@@ -30,9 +31,9 @@ import { ToastComponent } from '../shared/toast.component';
   templateUrl: './landing.page.html',
 })
 export class LandingPage {
-  private readonly profileStore = inject(PlayerProfileStore);
-  readonly playerProfile = this.profileStore.profile;
-  readonly toastMessage = signal(this.profileStore.saveNotice());
+  readonly session = inject(AuthSessionService);
+  private readonly feedback = inject(ProfileFeedbackStore);
+  readonly toastMessage = signal(this.feedback.saveNotice());
   readonly zones = ZONES;
   readonly levels = LEVELS;
   readonly recommendedMatches = RECOMMENDED_MATCHES;
@@ -53,14 +54,14 @@ export class LandingPage {
     if (this.toastMessage()) {
       setTimeout(() => {
         this.toastMessage.set('');
-        this.profileStore.clearSaveNotice();
+        this.feedback.clear();
       }, 3500);
     }
   }
 
   dismissToast(): void {
     this.toastMessage.set('');
-    this.profileStore.clearSaveNotice();
+    this.feedback.clear();
   }
 
   get availableMatches(): MatchPreview[] {

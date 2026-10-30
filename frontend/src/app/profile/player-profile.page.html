@@ -1,51 +1,82 @@
 <main class="profile-page">
   <app-landing-header />
-  <div class="profile-layout">
-    <div class="profile-main">
-      <section class="profile-card" aria-labelledby="identity-title">
-        <div class="section-heading"><span class="section-icon" aria-hidden="true">♙</span><div><h1 id="identity-title">Foto de perfil e identidad</h1><p>Datos visibles en las canchas y chats de partido</p></div></div>
-        <div class="photo-panel">
-          <div class="avatar-preview">@if (photoUrl()) { <img [src]="photoUrl()" alt="Vista previa de la foto de perfil" /> } @else { <span>{{ initials }}</span> }</div>
-          <div class="photo-actions"><label class="outline-button" for="profile-photo">Cambiar foto</label><input id="profile-photo" class="visually-hidden" type="file" accept="image/png,image/jpeg" (change)="selectPhoto($event)" /><small>PNG o JPG · máximo 5 MB</small></div>
-        </div>
-        <div class="form-grid">
-          <label class="field"><span>Nombre completo</span><input [(ngModel)]="profile.fullName" autocomplete="name" /></label>
-          <label class="field"><span>Nombre visible en cancha / apodo</span><input [(ngModel)]="profile.nickname" autocomplete="nickname" /></label>
-          <label class="field"><span>Correo electrónico</span><input [(ngModel)]="profile.email" type="email" autocomplete="email" /></label>
-          <label class="field"><span>Teléfono móvil / WhatsApp</span><input [(ngModel)]="profile.phone" type="tel" autocomplete="tel" /></label>
-        </div>
-        <label class="privacy-inline"><input type="checkbox" [(ngModel)]="profile.shareWhatsapp" /><span><b>Mostrar WhatsApp a compañeros confirmados</b><small>Visible para los jugadores del partido una vez cerrado.</small></span></label>
-      </section>
+  <form class="profile-form" (ngSubmit)="save()">
+    <div class="profile-layout">
+      <div class="profile-main">
+        <section class="profile-card" aria-labelledby="identity-title">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true">♙</span>
+            <div><h1 id="identity-title">Identidad</h1><p>Actualizá tus datos de jugador</p></div>
+          </div>
+          <div class="form-grid">
+            <label class="field" for="profile-name">
+              <span>Nombre completo</span>
+              <input id="profile-name" name="name" [(ngModel)]="profile.name" autocomplete="name" required />
+            </label>
+            <label class="field" for="profile-email">
+              <span>Correo electrónico</span>
+              <input id="profile-email" [value]="email" type="email" autocomplete="email" readonly />
+              <small>El correo asociado a la cuenta no se modifica desde esta pantalla.</small>
+            </label>
+          </div>
+        </section>
 
-      <section class="profile-card" aria-labelledby="zones-title">
-        <div class="section-heading"><span class="section-icon" aria-hidden="true">⌖</span><div><h2 id="zones-title">Ubicación y zonas habituales</h2><p>Elegí los lugares donde te gustaría jugar</p></div><span class="step-pill">PASO 2 DE 3</span></div>
-        <div class="zone-options" aria-label="Zonas habituales">
-          @for (zone of zones; track zone) {
-            <button type="button" class="zone-chip" [class.selected]="profile.zones.includes(zone)" [attr.aria-pressed]="profile.zones.includes(zone)" (click)="toggleZone(zone)"><span aria-hidden="true">{{ profile.zones.includes(zone) ? '✓' : '+' }}</span>{{ zone }}</button>
-          }
-        </div>
-      </section>
+        <section class="profile-card" aria-labelledby="zone-title">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true">⌖</span>
+            <div><h2 id="zone-title">Zona habitual</h2><p>Elegí una zona para buscar partidos cercanos</p></div>
+          </div>
+          <div class="field">
+            <span id="zone-label">Zona</span>
+            <app-styled-select label="Zona" [options]="zones" [(value)]="profile.zone" />
+          </div>
+        </section>
 
-      <section class="profile-card" aria-labelledby="game-title">
-        <div class="section-heading"><span class="section-icon" aria-hidden="true">⚑</span><div><h2 id="game-title">Nivel y estilo de juego</h2><p>Ayuda a encontrar partidos compatibles</p></div><span class="step-pill">PASO 3 DE 3</span></div>
-        <div class="form-grid game-grid">
-          <div class="field"><span>Categoría</span><app-styled-select label="Categoría" [options]="levels" [(value)]="profile.level" /></div>
-          <div class="field"><span>Estilo de juego</span><app-styled-select label="Estilo de juego" [options]="styles" [(value)]="profile.style" /></div>
-        </div>
-        <fieldset class="choice-field"><legend>Lado de juego habitual</legend><div class="choice-grid">@for (position of ['Drive', 'Revés', 'Indistinto']; track position) { <label class="position-option" [class.selected]="profile.position === position"><input type="radio" name="position" [value]="$any(position)" [(ngModel)]="profile.position" /><span class="position-arrow" aria-hidden="true">{{ position === 'Drive' ? '→' : position === 'Revés' ? '←' : '↔' }}</span><b>{{ position }}</b><small>{{ position === 'Drive' ? 'Lado derecho' : position === 'Revés' ? 'Lado izquierdo' : 'Ambos lados' }}</small></label> }</div></fieldset>
-        <fieldset class="choice-field"><legend>Mano hábil</legend><div class="hand-options">@for (hand of ['Diestro', 'Zurdo']; track hand) { <label class="hand-option" [class.selected]="profile.hand === hand"><input type="radio" name="hand" [value]="$any(hand)" [(ngModel)]="profile.hand" />{{ hand }}</label> }</div></fieldset>
-      </section>
+        <section class="profile-card" aria-labelledby="game-title">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true">⚑</span>
+            <div><h2 id="game-title">Nivel y posición</h2><p>Tu categoría ayuda a encontrar partidos compatibles</p></div>
+          </div>
+          <div class="field category-field">
+            <span id="level-label">Categoría</span>
+            <app-styled-select label="Categoría" [options]="levels" [(value)]="profile.level" />
+          </div>
+          <fieldset class="choice-field">
+            <legend>Lado de juego habitual</legend>
+            <div class="choice-grid">
+              @for (position of positions; track position.value) {
+                <label class="position-option" [class.selected]="profile.position === position.value">
+                  <input type="radio" name="position" [value]="position.value" [(ngModel)]="profile.position" />
+                  <b>{{ position.label }}</b><small>{{ position.detail }}</small>
+                </label>
+              }
+            </div>
+          </fieldset>
+          <fieldset class="choice-field">
+            <legend>Mano hábil</legend>
+            <div class="hand-options">
+              @for (hand of hands; track hand.value) {
+                <label class="hand-option" [class.selected]="profile.hand === hand.value">
+                  <input type="radio" name="hand" [value]="hand.value" [(ngModel)]="profile.hand" />{{ hand.label }}
+                </label>
+              }
+            </div>
+          </fieldset>
+        </section>
+
+        @if (errorMessage()) { <p class="form-error" role="alert">{{ errorMessage() }}</p> }
+      </div>
+
+      <aside class="profile-aside">
+        <div class="profile-note"><span aria-hidden="true">✓</span><p>Tu categoría y posición se mostrarán en los partidos donde participes.</p></div>
+      </aside>
     </div>
 
-    <aside class="profile-aside">
-      <section class="profile-card privacy-card" aria-labelledby="privacy-title"><h2 id="privacy-title"><span aria-hidden="true">♢</span> Privacidad y convivencia</h2>
-        <label class="toggle-row"><span><b>Perfil público en La Plata</b><small>Visible en el buscador general de jugadores para armar partidos.</small></span><input type="checkbox" [(ngModel)]="profile.publicProfile" aria-label="Perfil público en La Plata" /></label>
-        <label class="toggle-row"><span><b>Invitaciones directas</b><small>Permitir desafíos de otros jugadores de tu categoría.</small></span><input type="checkbox" [(ngModel)]="profile.directInvitations" aria-label="Permitir invitaciones directas" /></label>
-      </section>
-      <div class="profile-note"><span aria-hidden="true">✓</span><p>Tu categoría se mostrará junto a tu nombre cuando aparezcas en partidos.</p></div>
-    </aside>
-  </div>
-  <div class="profile-actions"><button class="save-button" type="button" (click)="save()"><span aria-hidden="true">✓</span> Guardar cambios</button></div>
+    <div class="profile-actions">
+      <button class="save-button" type="submit" [disabled]="!isValid() || isSaving()" [attr.aria-busy]="isSaving()">
+        <span aria-hidden="true">✓</span>{{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </form>
   <app-landing-footer />
-  @if (toastMessage()) { <app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" /> }
 </main>
