@@ -10,6 +10,7 @@ describe('sidebar de administración', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ComplexAdminSidebarComponent);
+    fixture.componentRef.setInput('complexId', 'complex-centro');
     fixture.detectChanges();
     const navigation = fixture.nativeElement.querySelectorAll('.nav-item');
     const labels = [...navigation].map((item: Element) => item.textContent?.trim());
@@ -60,6 +61,19 @@ describe('sidebar de administración', () => {
 
     expect(fixture.nativeElement.querySelector('#demo-manager')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.logout-link')?.textContent).toContain('Cerrar sesión');
+    fixture.destroy();
+  });
+
+  it('oculta Canchas mientras no hay un complejo abierto', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ComplexAdminSidebarComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ComplexAdminSidebarComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.courts-nav')).toBeNull();
     fixture.destroy();
   });
 });

@@ -15,6 +15,14 @@
         <a routerLink="/clubes">Ver clubes</a>
       </section>
     }
+    @case ('error') {
+      <section class="slots-message" role="alert">
+        <span aria-hidden="true">!</span>
+        <h1>No pudimos cargar los turnos</h1>
+        <p>No pudimos cargar los turnos. Revisá tu conexión e intentá nuevamente.</p>
+        <button type="button" (click)="retry()">Reintentar</button>
+      </section>
+    }
     @default {
       @if (grid(); as day) {
         <section class="slots-heading">

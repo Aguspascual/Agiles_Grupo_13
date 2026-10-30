@@ -13,57 +13,66 @@
       <label class="clubs-search">
         <span aria-hidden="true">⌕</span>
         <input
-          [(ngModel)]="searchTerm"
+          [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
           aria-label="Buscar club"
           placeholder="Buscar por club o localidad"
         />
       </label>
       <label class="clubs-zone">
         <span>Zona</span>
-        <select [(ngModel)]="selectedZone" aria-label="Filtrar por zona">
-          @for (zone of zones; track zone) {
+        <select [ngModel]="selectedZone()" (ngModelChange)="selectedZone.set($event)" aria-label="Filtrar por zona">
+          @for (zone of zones(); track zone) {
             <option [value]="zone">{{ zone }}</option>
           }
         </select>
       </label>
     </div>
 
-    <div class="clubs-directory__grid">
-      @for (club of filteredClubs; track club.name) {
-        <article class="directory-card" data-club-card>
-          <div class="directory-card__image">
-            <img
-              [src]="club.image"
-              [alt]="'Cancha de pádel en ' + club.name"
-              [style.object-position]="club.imagePosition"
-              loading="lazy"
-            />
-            <span class="directory-card__rating">★ {{ club.rating }}</span>
-          </div>
-          <div class="directory-card__content">
-            <div class="directory-card__title">
-              <h2>{{ club.name }}</h2>
-              <span>Club adherido</span>
-            </div>
-            <p class="directory-card__location"><span aria-hidden="true">⌖</span>{{ club.zone }}</p>
-            <div class="directory-card__details">
-              <span><i aria-hidden="true">◷</i>{{ club.availabilityLabel }}</span>
-            </div>
-            <a [routerLink]="['/clubes', club.complexId, 'turnos']"
-              >Explorar turnos <span aria-hidden="true">→</span></a
-            >
-          </div>
-        </article>
-      } @empty {
-        <div class="clubs-empty">
-          <h2>No encontramos clubes</h2>
-          <p>Probá con otro nombre o localidad.</p>
-          <button type="button" (click)="searchTerm = ''; selectedZone = 'Todas las zonas'">
-            Limpiar búsqueda
-          </button>
+    @switch (status()) {
+      @case ('loading') {
+        <div class="clubs-empty" role="status"><p>Cargando clubes…</p></div>
+      }
+      @case ('error') {
+        <div class="clubs-empty" role="alert">
+          <h2>No pudimos cargar los clubes</h2>
+          <p>Revisá tu conexión e intentá nuevamente.</p>
+          <button type="button" (click)="load()">Reintentar</button>
         </div>
       }
-    </div>
+      @default {
+        <div class="clubs-directory__grid">
+          @for (club of filteredClubs(); track club.id) {
+            <article class="directory-card" data-club-card>
+              <div class="directory-card__image">
+                <img src="/images/cancha-exterior.jpg" [alt]="'Cancha de pádel en ' + club.name" loading="lazy" />
+              </div>
+              <div class="directory-card__content">
+                <div class="directory-card__title">
+                  <h2>{{ club.name }}</h2>
+                  <span>Club adherido</span>
+                </div>
+                <p class="directory-card__location">
+                  <span aria-hidden="true">⌖</span>{{ club.address }} · {{ club.zone }}
+                </p>
+                <a [routerLink]="['/clubes', club.id, 'turnos']"
+                  >Explorar turnos <span aria-hidden="true">→</span></a
+                >
+              </div>
+            </article>
+          } @empty {
+            <div class="clubs-empty">
+              @if (clubs().length) {
+                <h2>No encontramos clubes</h2>
+                <p>Probá con otro nombre o localidad.</p>
+                <button type="button" (click)="clearFilters()">Limpiar búsqueda</button>
+              } @else {
+                <h2>Todavía no hay clubes adheridos.</h2>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
   </section>
 
   <app-landing-footer />

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, map, startWith, switchMap } from 'rxjs';
@@ -63,8 +63,11 @@ export class ComplexSlotsPage implements OnDestroy {
     { initialValue: this.clampDate(this.route.snapshot.queryParamMap.get('fecha')) },
   );
 
+  /** Cada reintento vuelve a emitir la consulta de la grilla. */
+  private readonly attempt = signal(0);
+
   readonly state = toSignal(
-    combineLatest([this.route.paramMap, this.route.queryParamMap]).pipe(
+    combineLatest([this.route.paramMap, this.route.queryParamMap, toObservable(this.attempt)]).pipe(
       switchMap(([params, query]) => {
         const date =
           fromDateKey(this.clampDate(query.get('fecha'))) ?? startOfLocalDay(this.loadedAt);
@@ -144,6 +147,10 @@ export class ComplexSlotsPage implements OnDestroy {
       this.replaceDialogOpen.set(false);
       this.clearReplacementNotice();
     });
+  }
+
+  retry(): void {
+    this.attempt.update((count) => count + 1);
   }
 
   selectSlot(slot: GridSlot): void {

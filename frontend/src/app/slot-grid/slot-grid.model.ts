@@ -43,7 +43,7 @@ export interface GridComplex {
   zone: string;
 }
 
-/** Respuesta equivalente a `GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`. */
+/** Respuesta de `GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD`. */
 export interface DayGrid {
   complex: GridComplex;
   date: string;

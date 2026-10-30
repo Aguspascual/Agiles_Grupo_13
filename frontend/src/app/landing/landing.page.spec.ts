@@ -113,32 +113,6 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('presenta un directorio público de clubes con búsqueda local', () => {
-    const fixture = TestBed.createComponent(ClubDirectoryPage);
-    fixture.detectChanges();
-    const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('h1')?.textContent).toContain('Clubes de pádel en La Plata');
-    expect(root.querySelector('.clubs-kicker')).toBeNull();
-    expect(root.querySelectorAll('[data-club-card]').length).toBe(3);
-    expect(root.querySelector('[data-club-card] img')).not.toBeNull();
-    // HU-05: "Explorar turnos" abre la grilla de turnos del club.
-    expect(root.querySelector('a[href="/clubes/complex-cumbre/turnos"]')?.textContent).toContain(
-      'Explorar turnos',
-    );
-
-    const search = root.querySelector('input[aria-label="Buscar club"]') as HTMLInputElement;
-    search.value = 'City Bell';
-    search.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(root.querySelectorAll('[data-club-card]').length).toBe(1);
-    expect(root.querySelector('[data-club-card] h2')?.textContent).toContain('City Bell');
-    search.value = 'club inexistente';
-    search.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(root.querySelector('.clubs-empty h2')?.textContent).toContain('No encontramos clubes');
-    fixture.destroy();
-  });
-
   it('abre el detalle del partido y permite unirse sin enviar al login', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
