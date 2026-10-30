@@ -34,7 +34,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | [0004: búsqueda de horarios](TDD-0004-hu-04-busqueda-horarios.md) | HU-04 | Aprobado v1 |
 | [0011: baja de cancha](TDD-0011-hu-03-baja-cancha.md) | HU-03 | Aprobado v1 |
 | [0012: alta de reserva manual](TDD-0012-hu-15-alta-reserva-manual.md) | HU-15 | Borrador v1 para aprobación humana |
-| [0013: consulta de reservas propias próximas y pasadas](TDD-0013-hu-17-consulta-reservas-propias.md) | HU-17 | Aprobado por solicitante; revisión backend pendiente |
+| [0013: consulta de reservas y partidos propios, próximos y jugados](TDD-0013-hu-17-consulta-reservas-propias.md) | HU-17 | Borrador para aprobación humana (v2) |
 | [0014: listado público de complejos](TDD-0014-hu-05-listado-publico-complejos.md) | HU-05 | Aprobado v1 |
 | [0010: cancelación de una reserva (jugador)](TDD-0010-hu-14-cancelacion-reserva.md) | HU-14 | Borrador v3 para aprobación humana |
 | [0015: consulta de la agenda del complejo](TDD-0015-hu-07-consulta-agenda-complejo.md) | HU-07 | Borrador v1 para aprobación humana |
