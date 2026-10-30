@@ -97,3 +97,37 @@
   min-width: 0;
   padding: 3px 5px;
 }
+
+.slot-grid-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 40px 20px 44px;
+  text-align: center;
+
+  span {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 6px;
+    place-items: center;
+    border-radius: 50%;
+    background: #e8f8ef;
+    color: #006c49;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  h3 {
+    margin: 0;
+    color: #131b2e;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin: 0;
+    color: #687469;
+    font-size: 0.88rem;
+  }
+}
