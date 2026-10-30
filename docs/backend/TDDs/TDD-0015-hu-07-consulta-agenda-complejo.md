@@ -1,7 +1,7 @@
 ---
 id: "0015"
-estado: "Borrador v1 para aprobación humana; la aprobación ocurre en la revisión de la PR"
-version: 1
+estado: "Borrador v2 para aprobación humana; la aprobación ocurre en la revisión de la PR"
+version: 2
 autor: "Equipo backend"
 fecha: "2026-10-30"
 titulo: "Consulta de la agenda del complejo"
@@ -36,11 +36,18 @@ sigue sin exponer datos personales.
     el servidor.
 *   **CA-06 — Sin regresión**: el JSON de `GET /complexes/{id}/slots` no cambia.
 *   **CA-07 — Canchas**: las canchas dadas de baja no aparecen.
+*   **CA-08 — Partidos pendientes (v2)**: cada reserva `origin='open_match'` trae `pendingMatch`
+    con estado, nivel buscado, cuántos jugadores faltan y los anotados (nombre, nivel y
+    posición). Las reservas `web` y `manual` no emiten la clave.
+*   **CA-09 — Privacidad (v2)**: los anotados se publican sin id de usuario, correo ni teléfono
+    (misma información que `GET /matches`). `GET /complexes/{id}/slots` no cambia.
+*   **CA-10 — Consistencia (v2)**: un `open_match` sin fila en `pending_matches` se devuelve sin
+    `pendingMatch` y sin error. Una baja de anotado se refleja como un faltante más.
 
 ## Diseño Técnico (RFC)
 
 ### Modelo de Datos
-Sin migraciones. Nuevo paquete `backend/internal/agenda`; reutiliza `slots.ReadCourtData` y
+Sin migraciones (v2 solo lee `pending_matches`, `pending_match_players` y `player_profiles`). Paquete `backend/internal/agenda`; reutiliza `slots.ReadCourtData` y
 `slots.ProjectCourt` (exportados sin cambiar `slots.Slot`).
 
 ### Contrato de API (C1)
@@ -55,14 +62,30 @@ Sin migraciones. Nuevo paquete `backend/internal/agenda`; reutiliza `slots.ReadC
        "originalStartsAt":"2026-11-02T18:00:00-03:00","originalEndsAt":"2026-11-02T19:30:00-03:00",
        "contact":{"name":"…","phone":"…"},"cancellable":true}] }] }
 ```
-`pendingMatch` (partidos pendientes con anotados/faltantes) no se emite: depende de HU-09/10/11,
-sin backend. Queda como extensión futura documentada.
+Solo las reservas con `origin == "open_match"` agregan `pendingMatch` (las `web` y `manual` no
+emiten la clave):
+```json
+"pendingMatch": {
+  "id": "<uuid del partido>",
+  "status": "open|full",
+  "targetLevel": "5ta",
+  "missingPlayers": 2,
+  "players": [
+    {"name": "Ana Pérez", "level": "5ta", "position": "Drive", "organizer": true},
+    {"name": "Luis Gómez", "level": "6ta", "organizer": false}
+  ]
+}
+```
+*   `players` va ordenado: organizador primero y luego por `joined_at`. `position` solo se emite si
+    existe. `missingPlayers = 4 − len(players)`. `status` es `pending_matches.status`.
+*   Los `slots[]` no cambian (siguen `RESERVED` con `reservationId`).
 
 ### Componentes del Monolito Modular
 *   **Modelo**: tipos de respuesta y asociación slot ↔ reserva.
 *   **Servicio HTTP**: valida fecha y ventana, resuelve el actor y mapea errores.
 *   **Repositorio**: transacción con complejo `FOR SHARE`, autorización, lectura de canchas,
-    horario del día y reservas con contacto.
+    horario del día y reservas con contacto. v2: segunda consulta parametrizada, en la misma
+    transacción, de los partidos de esas reservas (sin bloqueos nuevos).
 
 ## Casos de Borde y Errores
 | Escenario | Resultado Esperado | Código HTTP |
@@ -73,6 +96,8 @@ sin backend. Queda como extensión futura documentada.
 | Fecha ausente, inválida, fuera de ventana, query extra | `solicitud inválida` | 400 Bad Request |
 | Reserva que terminó | Se lista con `cancellable:false` | 200 OK |
 | Reserva desalineada de la grilla | Solo en `reservations[]` | 200 OK |
+| `open_match` sin fila de partido (dato inconsistente) | Sin `pendingMatch`, sin error | 200 OK |
+| Partido de una reserva cancelada | No aparece | 200 OK |
 
 ## Plan de Implementación
 1. Aprobar criterios y contrato en la revisión de la PR.

@@ -14,7 +14,20 @@ Estado: implementado, a la espera de revisión. Diseño: [TDD-0015](TDDs/TDD-001
   complejo inexistente 404 solo tras autorizar. Por ese lock la transacción no es de solo lectura.
 - `reservations[]` incluye toda reserva `reserved` que se superpone con el día, aunque no alinee con la grilla;
   `cancellable = ends_at > now`. Canchas dadas de baja no aparecen.
-- `pendingMatch` no se emite (depende de HU-09/10/11, sin backend).
+
+## Partidos pendientes en la agenda (TDD-0015 v2)
+
+- Cada reserva `origin='open_match'` agrega `pendingMatch`: `id`, `status` (`open|full`), `targetLevel`,
+  `missingPlayers` (`4 − anotados`) y `players` (`name`, `level`, `position` solo si existe, `organizer`).
+  Las reservas `web` y `manual` no emiten la clave.
+- `players` va con el organizador primero y luego por `joined_at`. No incluye ids de usuario, correo ni teléfono.
+- Archivo `internal/agenda/pending.go`: segunda consulta parametrizada (`reservation_id = ANY($1)`) en la misma
+  transacción que autoriza y lee el día; solo lectura, sin bloqueos nuevos ni migración.
+- Un `open_match` sin fila en `pending_matches` se devuelve sin `pendingMatch` y sin error. Si un anotado se da de
+  baja (HU-13) la agenda muestra un faltante más. No se toca `matches/`, `reservations/` ni `slots/`.
+- Pruebas: `cmd/api/agenda_pending_http_test.go` (solo organizador, con anotados, completo, orden, web/manual sin la
+  clave, reserva cancelada, baja de un anotado, sin fugas de datos, permisos, dato huérfano) y la prueba de que
+  `/slots` no expone jugadores ni campos nuevos con un partido abierto.
 
 ## Validación
 
@@ -25,4 +38,4 @@ Estado: implementado, a la espera de revisión. Diseño: [TDD-0015](TDDs/TDD-001
 
 ## Límites
 
-Sin partidos pendientes ni anotados, sin edición de reservas, ventana hoy..hoy+13.
+Cancelar un partido abierto no avisa a los anotados (HU-14), no se editan ni mueven anotados desde la agenda, sin edición de reservas, ventana hoy..hoy+13.

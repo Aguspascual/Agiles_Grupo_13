@@ -118,7 +118,8 @@ Detalle en [HU-14-implementacion](../docs/backend/HU-14-implementacion.md), TDD-
 `GET /api/v1/complexes/{complexId}/agenda?date=AAAA-MM-DD` (Bearer, solo administrador o encargado
 asignado) devuelve por cancha los turnos con `reservationId` y las reservas del día con origen,
 nombre y teléfono, `cancellable` y horas locales. Ventana hoy..hoy+13, único parámetro `date`.
-La grilla pública `/slots` no cambia. Los partidos pendientes quedan para HU-09/10/11.
+La grilla pública `/slots` no cambia. Las reservas `open_match` suman `pendingMatch` (estado, nivel
+buscado, `missingPlayers` y anotados con nombre, nivel y posición, sin ids ni contacto).
 
 Detalle en [HU-07-implementacion](../docs/backend/HU-07-implementacion.md) y TDD-0015.
 
