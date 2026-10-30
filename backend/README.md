@@ -33,6 +33,7 @@ go run ./cmd/api
 
 ## HU-02 — Complejos
 
+- `GET /api/v1/public/complexes`: público (sin JWT, sin query); devuelve `{"complexes":[{id,name,address,zone}]}` de complejos activos ordenados por `name, id`, con `Cache-Control: no-store` (TDD-0014).
 - `GET /api/v1/complexes`: requiere JWT; ADMIN ve todos los activos y los encargados solo los asignados.
 - `POST /api/v1/complexes`: requiere ADMIN; recibe `name`, `address`, `zone`, `phone` y `managerIds`.
 - `PUT /api/v1/complexes/{id}`: ADMIN puede cambiar datos y encargados; un encargado asignado puede cambiar datos conservando la misma lista de encargados.

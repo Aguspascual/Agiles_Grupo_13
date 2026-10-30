@@ -45,6 +45,8 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar los partidos")
 		})
 	}
+	// The player-facing club directory is public: it exposes only id, name, address and zone (TDD-0014).
+	mux.Handle("GET /api/v1/public/complexes", availabilityService.ListHandler())
 	complexService := complexes.NewService(complexes.NewPostgresRepository(db))
 	protectedComplexes := auth.RequireUser(secret, auth.NewPostgresRepository(db), complexService.Handler())
 	mux.Handle("/api/v1/complexes", protectedComplexes)

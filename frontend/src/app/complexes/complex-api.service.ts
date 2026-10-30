@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { ComplexDraft, ComplexRecord, ManagerOption } from './complex.model';
+import { ComplexDraft, ComplexRecord, ManagerOption, PublicComplex } from './complex.model';
 
 const COMPLEXES_API = '/api/v1/complexes';
+const PUBLIC_COMPLEXES_API = '/api/v1/public/complexes';
 
 @Injectable({ providedIn: 'root' })
 export class ComplexApiService {
@@ -11,6 +12,11 @@ export class ComplexApiService {
 
   list(): Observable<ComplexRecord[]> {
     return this.http.get<unknown>(COMPLEXES_API).pipe(map(parseComplexList));
+  }
+
+  /** Listado público (sin sesión) para el directorio de clubes. */
+  listPublic(): Observable<PublicComplex[]> {
+    return this.http.get<unknown>(PUBLIC_COMPLEXES_API).pipe(map(parsePublicComplexList));
   }
 
   availableManagers(): Observable<ManagerOption[]> {
@@ -33,6 +39,21 @@ export class ComplexApiService {
 function parseComplexList(value: unknown): ComplexRecord[] {
   if (!isRecord(value) || !Array.isArray(value['complexes'])) throw new Error('Respuesta de complejos inválida');
   return value['complexes'].map(parseComplex);
+}
+
+function parsePublicComplexList(value: unknown): PublicComplex[] {
+  if (!isRecord(value) || !Array.isArray(value['complexes'])) throw new Error('Respuesta de complejos inválida');
+  return value['complexes'].map((item) => {
+    if (!isRecord(item) || ['id', 'name', 'address', 'zone'].some(key => typeof item[key] !== 'string')) {
+      throw new Error('Datos de complejo inválidos');
+    }
+    return {
+      id: item['id'] as string,
+      name: item['name'] as string,
+      address: item['address'] as string,
+      zone: item['zone'] as string,
+    };
+  });
 }
 
 function parseComplexEnvelope(value: unknown): ComplexRecord {

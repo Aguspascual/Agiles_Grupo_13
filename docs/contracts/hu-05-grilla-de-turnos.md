@@ -1,6 +1,12 @@
 # Contrato propuesto — HU-05 Grilla de turnos del complejo
 
-**Estado:** propuesta del frontend para acordar con backend. Hoy el frontend arma esta misma respuesta con datos de demostración en `SlotGridService` (`frontend/src/app/slot-grid/slot-grid.service.ts`); cuando el endpoint exista se reemplaza esa función por la llamada HTTP sin tocar las pantallas.
+**Estado:** implementado por backend (`backend/internal/slots`) e integrado en el frontend (`SlotGridService`). Diferencias reales respecto de la propuesta original:
+
+- Cada turno trae `{id, startsAt, endsAt, status, isPast}`; `isPast` lo calcula el backend en hora de Buenos Aires. El turno no trae `courtId` ni `date`: el frontend los deriva de la cancha y del día pedido.
+- `status` es solo `AVAILABLE | RESERVED | BLOCKED`. `PENDING_MATCH` y `CLASS` (y `pendingMatch`) quedan pendientes de HU-09/HU-12; `BLOCKED` equivale a un día deshabilitado en HU-04.
+- Cada cancha agrega `occupiedIntervals[]`; el frontend lo ignora.
+- Ventana: desde hoy hasta hoy + 13 días (fuera de ella, `400`). La consulta acepta **solo** `date`; cualquier otro parámetro devuelve `400`. `404` si el complejo no existe o está dado de baja; `400` si el id no es UUID.
+- El listado de clubes para llegar a la grilla es `GET /api/v1/public/complexes` (TDD-0014).
 
 ## Endpoint
 

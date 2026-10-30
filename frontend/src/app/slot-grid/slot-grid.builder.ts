@@ -1,55 +1,5 @@
-import { AvailabilitySlot } from '../availability/availability.model';
-import { BookingRecord } from '../bookings/booking.model';
-import { SlotRef } from '../bookings/booking-preview.store';
-import { minutesOfDay, toDateKey } from '../shared/local-date';
-import { DayGrid, GridComplex, GridCourt, GridSlot } from './slot-grid.model';
-
-export interface GridSource {
-  complex: GridComplex;
-  courts: { id: string; name: string; covered: boolean }[];
-  date: Date;
-  now: Date;
-  slotsFor: (courtId: string, date: Date) => AvailabilitySlot[];
-  bookingFor: (slot: SlotRef) => BookingRecord | null;
-}
-
-/** Combina horarios (HU-04), bloqueos y reservas en la grilla de un día. */
-export function buildDayGrid(source: GridSource): DayGrid {
-  const courts: GridCourt[] = source.courts.map((court) => ({
-    id: court.id,
-    name: court.name,
-    covered: court.covered,
-    slots: source.slotsFor(court.id, source.date).map((slot) => toGridSlot(slot, source)),
-  }));
-  return { complex: source.complex, date: toDateKey(source.date), courts };
-}
-
-function toGridSlot(slot: AvailabilitySlot, source: GridSource): GridSlot {
-  const base = {
-    id: slot.id,
-    courtId: slot.courtId,
-    date: slot.date,
-    startsAt: slot.startsAt,
-    endsAt: slot.endsAt,
-    isPast: hasStarted(slot.date, slot.startsAt, source.now),
-  };
-  if (slot.status === 'blocked') return { ...base, state: 'blocked' };
-
-  const booking = source.bookingFor(slot);
-  if (!booking) return { ...base, state: 'available' };
-  if (booking.kind === 'class') return { ...base, state: 'class' };
-  if (booking.kind === 'pending' && booking.pendingMatch) {
-    return { ...base, state: 'pending', pendingMatch: { ...booking.pendingMatch } };
-  }
-  return { ...base, state: 'reserved' };
-}
-
-export function hasStarted(dateKey: string, startsAt: string, now: Date): boolean {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const minute = minutesOfDay(startsAt);
-  const start = new Date(year, month - 1, day, Math.floor(minute / 60), minute % 60);
-  return start.getTime() <= now.getTime();
-}
+import { minutesOfDay } from '../shared/local-date';
+import { GridCourt, GridSlot } from './slot-grid.model';
 
 export interface GridLayout {
   /** Primer minuto visible (hora en punto). */

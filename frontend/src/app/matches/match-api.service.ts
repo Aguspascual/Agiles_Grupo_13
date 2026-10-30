@@ -35,7 +35,7 @@ export class MatchApiService {
   }
 
   complexes(): Observable<ComplexOption[]> {
-    return this.http.get<unknown>('/api/v1/public/complexes').pipe(map(parseComplexList));
+    return this.http.get<unknown>(`${MATCHES_API}/options`).pipe(map(parseComplexList));
   }
 
   availability(complexId: string, date: string): Observable<Map<string, AvailabilityOption[]>> {

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
@@ -7,15 +9,46 @@ import { CLOCK } from './slot-grid.service';
 // Miércoles 21/10/2026, 20:18.
 const NOW = new Date(2026, 9, 21, 20, 18);
 
+const SLOTS_URL = (id: string) => `/api/v1/complexes/${id}/slots`;
+
+function slotsBody(date: string) {
+  const isToday = date === '2026-10-21';
+  const slot = (startsAt: string, endsAt: string, status: string, isPast = false) => ({
+    id: `court:${date}:${startsAt}`,
+    startsAt,
+    endsAt,
+    status,
+    isPast,
+  });
+  const court = (id: string, name: string, covered: boolean, pastToday: boolean) => ({
+    id,
+    name,
+    covered,
+    slots: [
+      slot('18:00', '19:30', 'AVAILABLE', pastToday && isToday),
+      slot('19:30', '21:00', 'AVAILABLE', pastToday && isToday),
+      slot('21:00', '22:30', 'AVAILABLE'),
+      slot('22:30', '24:00', 'RESERVED'),
+    ],
+    occupiedIntervals: [],
+  });
+  return {
+    complex: { id: 'complex-gonnet', name: 'Club Universitario Gonnet', address: 'Calle 14', zone: 'Gonnet' },
+    date,
+    courts: [court('c1', 'Cancha 1', true, true), court('c2', 'Cancha 2', false, true)],
+  };
+}
+
 describe('HU-05: página de turnos del complejo', () => {
   let params: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let query: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
-  beforeEach(() => localStorage.clear());
+  let http: HttpTestingController;
 
   async function render(
     complexId = 'complex-gonnet',
     fecha?: string,
+    respond = true,
   ): Promise<{
     fixture: ComponentFixture<ComplexSlotsPage>;
     root: HTMLElement;
@@ -26,6 +59,8 @@ describe('HU-05: página de turnos del complejo', () => {
       imports: [ComplexSlotsPage],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: CLOCK, useValue: () => NOW },
         {
           provide: ActivatedRoute,
@@ -37,8 +72,13 @@ describe('HU-05: página de turnos del complejo', () => {
         },
       ],
     }).compileComponents();
+    http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(ComplexSlotsPage);
     fixture.detectChanges();
+    if (respond) {
+      const req = http.expectOne((request) => request.url === SLOTS_URL(complexId));
+      req.flush(slotsBody(req.request.params.get('date') ?? ''));
+    }
     await fixture.whenStable();
     fixture.detectChanges();
     return { fixture, root: fixture.nativeElement as HTMLElement };
@@ -159,10 +199,29 @@ describe('HU-05: página de turnos del complejo', () => {
   });
 
   it('informa cuando el club no existe', async () => {
-    const { fixture, root } = await render('club-inexistente');
+    const { fixture, root } = await render('club-inexistente', undefined, false);
+    http.expectOne((req) => req.url === SLOTS_URL('club-inexistente'))
+      .flush({ error: 'no encontrado' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
 
     expect(root.textContent).toContain('No encontramos este club');
     expect(root.querySelector('a[href="/clubes"]')).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('muestra el error de conexión y vuelve a consultar al reintentar', async () => {
+    const { fixture, root } = await render('complex-gonnet', undefined, false);
+    http.expectOne((req) => req.url === SLOTS_URL('complex-gonnet')).error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('No pudimos cargar los turnos. Revisá tu conexión e intentá nuevamente.');
+    root.querySelector<HTMLButtonElement>('.slots-message button')?.click();
+    fixture.detectChanges();
+    const retried = http.expectOne((req) => req.url === SLOTS_URL('complex-gonnet'));
+    retried.flush(slotsBody('2026-10-21'));
+    fixture.detectChanges();
+
+    expect(root.querySelector('h1')?.textContent).toContain('Club Universitario Gonnet');
     fixture.destroy();
   });
 });

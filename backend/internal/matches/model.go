@@ -21,7 +21,7 @@ const (
 	CreatePath  = "/api/v1/complexes/{complexId}/courts/{courtId}/matches"
 	JoinPath    = "/api/v1/matches/{matchId}/players"
 	NoticesPath = "/api/v1/match-notices"
-	OptionsPath = "/api/v1/public/complexes"
+	OptionsPath = "/api/v1/matches/options"
 )
 
 var validLevels = map[string]bool{

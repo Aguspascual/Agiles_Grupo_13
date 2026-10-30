@@ -10,7 +10,7 @@ import { DemoRole, ManagerOption } from './complex.model';
   styleUrl: './complex-admin-sidebar.component.scss',
 })
 export class ComplexAdminSidebarComponent {
-  @Input() complexId = 'complex-gonnet';
+  @Input() complexId = '';
   @Input() showRoleSimulation = false;
   @Input() role: DemoRole = 'admin';
   @Input() managers: ManagerOption[] = [];
