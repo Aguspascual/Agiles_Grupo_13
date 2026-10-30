@@ -61,7 +61,8 @@ export class WeeklyScheduleFormComponent implements OnDestroy {
     if (firstEnabled) this.openDays.add(firstEnabled.weekday);
   }
 
-  editorOpen = false;
+  /** Permite abrir el editor semanal desde el inicio (por ejemplo, dentro de un modal). */
+  @Input() editorOpen = false;
   validationMessage = '';
 
   get enabledDayCount(): number {

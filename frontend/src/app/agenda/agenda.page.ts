@@ -87,6 +87,9 @@ export class AgendaPage implements OnDestroy {
   readonly overview = this.route.snapshot.data?.['overview'] === true;
 
   readonly state = signal<PageState>({ status: 'loading' });
+  /** Recarga en el lugar: se mantiene la pantalla y solo se atenúa la grilla de turnos. */
+  readonly refreshing = signal(false);
+  readonly selectedCourtId = signal('');
   readonly selectedSlotId = signal<string | null>(null);
   readonly manualTarget = signal<Selection | null>(null);
   readonly manualClosing = signal(false);
@@ -122,10 +125,21 @@ export class AgendaPage implements OnDestroy {
     return byId;
   });
 
+  /** En la vista del complejo la grilla muestra solo la cancha elegida en el selector. */
+  readonly courtId = computed(() => {
+    const courts = this.agenda()?.courts ?? [];
+    return courts.find((court) => court.id === this.selectedCourtId())?.id ?? courts[0]?.id ?? '';
+  });
+
+  private readonly visibleCourts = computed(() => {
+    const courts = this.agenda()?.courts ?? [];
+    return this.overview ? courts.filter((court) => court.id === this.courtId()) : courts;
+  });
+
   readonly gridCourts = computed<GridCourt[]>(() => {
     const agenda = this.agenda();
     if (!agenda) return [];
-    return agenda.courts.map((court) => ({
+    return this.visibleCourts().map((court) => ({
       id: court.id,
       name: court.name,
       covered: court.covered,
@@ -177,7 +191,7 @@ export class AgendaPage implements OnDestroy {
 
   /** Reservas vigentes del día que ningún turno de la grilla actual representa. */
   readonly offGrid = computed<OffGridReservation[]>(() =>
-    (this.agenda()?.courts ?? []).flatMap((court) => {
+    this.visibleCourts().flatMap((court) => {
       const shown = new Set(court.slots.map((slot) => slot.reservationId).filter(Boolean));
       return court.reservations
         .filter((reservation) => !shown.has(reservation.id))
@@ -207,6 +221,10 @@ export class AgendaPage implements OnDestroy {
 
   notice(message: string): void {
     this.showToast(message);
+  }
+
+  reloadQuietly(): void {
+    this.load(this.complexId(), this.dateKey(), true);
   }
 
   retry(): void {
@@ -349,10 +367,17 @@ export class AgendaPage implements OnDestroy {
   /** `silent` conserva la agenda visible mientras se recarga tras una acción. */
   private load(complexId: string, date: string, silent: boolean): void {
     this.loadSubscription?.unsubscribe();
-    if (!silent) this.state.set({ status: 'loading' });
+    const current = this.state();
+    const inPlace = silent || (current.status === 'ok' && current.agenda.complex.id === complexId);
+    if (inPlace) this.refreshing.set(true);
+    else this.state.set({ status: 'loading' });
     this.loadSubscription = this.api.load(complexId, date).subscribe({
-      next: (agenda) => this.state.set({ status: 'ok', agenda }),
+      next: (agenda) => {
+        this.refreshing.set(false);
+        this.state.set({ status: 'ok', agenda });
+      },
       error: (error: unknown) => {
+        this.refreshing.set(false);
         const status = error instanceof HttpErrorResponse ? error.status : 0;
         this.state.set(
           status === 403 ? { status: 'forbidden' } : status === 404 ? { status: 'not-found' } : { status: 'error' },

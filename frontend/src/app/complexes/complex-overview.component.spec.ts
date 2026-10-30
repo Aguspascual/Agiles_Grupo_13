@@ -28,7 +28,8 @@ describe('vista completa del complejo', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ComplexOverviewComponent);
     fixture.componentRef.setInput('complexId', 'c1');
-    fixture.componentRef.setInput('courts', [{ id: 'k1', name: 'Cancha 1', covered: true }]);
+    fixture.componentRef.setInput('courts', [{ id: 'k1', name: 'Cancha 1', covered: true }, { id: 'k2', name: 'Cancha 2', covered: false }]);
+    fixture.componentRef.setInput('courtId', 'k1');
     fixture.detectChanges();
     http.expectOne('/api/v1/complexes').flush({ complexes: [complex] });
     const managers = http.expectOne('/api/v1/complexes/available-managers');
@@ -40,26 +41,59 @@ describe('vista completa del complejo', () => {
 
   afterEach(() => http.verify());
 
-  it('muestra los datos del complejo y sus canchas', async () => {
-    await open(true);
-    const text = root().textContent ?? '';
+  const expand = () => {
+    (root().querySelector('.data-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+  };
 
-    ['Club Norte', 'Calle 1', '221 555 0000', 'Gonnet', 'Ana Gómez', 'Cancha 1', 'Cubierta'].forEach((value) => expect(text).toContain(value));
-    expect(root().querySelector('a[href="/admin/complejos/c1/canchas/k1/horarios"]')).not.toBeNull();
+  it('muestra los datos en una tarjeta desplegable cerrada por defecto', async () => {
+    await open(true);
+    expect(root().querySelector('.data-panel')).toBeNull();
+    expect(root().querySelector('.data-toggle')?.getAttribute('aria-expanded')).toBe('false');
+
+    expand();
+    const text = root().textContent ?? '';
+    ['Club Norte', 'Calle 1', '221 555 0000', 'Gonnet', 'Ana Gómez'].forEach((value) => expect(text).toContain(value));
+    expect(root().querySelector('.data-toggle')?.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('ofrece editar datos y eliminar solo a administradores', async () => {
     await open(true);
+    expand();
     const labels = [...root().querySelectorAll('.overview-actions button')].map((item) => item.textContent?.trim());
     expect(labels).toEqual(['Editar datos', 'Eliminar complejo']);
   });
 
   it('un encargado puede editar pero no eliminar el complejo', async () => {
     await open(false);
+    expand();
     const labels = [...root().querySelectorAll('.overview-actions button')].map((item) => item.textContent?.trim());
     expect(labels).toEqual(['Editar datos']);
   });
 
+  it('elige la cancha en un selector y lo informa a la página', async () => {
+    await open(true);
+    const select = root().querySelector('.court-select select') as HTMLSelectElement;
+    expect([...select.options].map((option) => option.textContent?.trim())).toEqual(['Cancha 1', 'Cancha 2']);
+    const chosen: string[] = [];
+    fixture.componentInstance.courtIdChange.subscribe((id) => chosen.push(id));
+
+    select.value = 'k2';
+    select.dispatchEvent(new Event('change'));
+
+    expect(chosen).toEqual(['k2']);
+  });
+
+  it('abre el modal de horarios de la cancha elegida', async () => {
+    await open(true);
+    const button = [...root().querySelectorAll('.court-actions button')].find((item) => item.textContent?.includes('Administrar horarios')) as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+
+    http.expectOne('/api/v1/complexes/c1/courts/k1/weekly-schedule/days').flush({ days: [] });
+    expect(root().querySelector('app-court-schedule-dialog')).not.toBeNull();
+    expect(root().textContent).toContain('Cancha 1');
+  });
   it('cierra una cancha tras confirmar y avisa a la página', async () => {
     await open(true);
     const events: string[] = [];

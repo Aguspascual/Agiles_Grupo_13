@@ -13,6 +13,7 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 7. **Panel admin de complejos.** Sidebar siempre visible (188px entre 561px y 1000px; barra superior solo en celulares de 560px o menos) en las cuatro pantallas admin; encabezado con eyebrow, subtítulo y contador; tarjetas compactas con foto a la izquierda y acciones en grilla uniforme (acción principal destacada).
 8. **Agenda a 800x600.** Se corrige el desborde horizontal de la tira de días.
 9. **Tarjetas de complejo y vista completa.** El encabezado queda solo con el título. Cada tarjeta muestra la imagen en grande y el nombre; al presionarla se abre la vista completa del complejo (/admin/complejos/:complexId): portada con imagen, datos, **Editar datos**, **Eliminar complejo** (solo administradores), listado de canchas con **Horarios** y **Cerrar cancha** (baja con confirmación; el servicio rechaza el cierre si hay reservas futuras) y la agenda del día con turnos libres, reservados y quién reservó.
+10. **Ajustes de la vista del complejo.** Cambiar de día recarga solo la grilla (se atenúa mientras carga, sin reiniciar la pantalla); los datos del complejo van en una tarjeta desplegable; los modales vuelven a centrarse en toda la pantalla (la animación de entrada de las pantallas admin dejaba un 	ransform activo que cambiaba el bloque contenedor de los modales ixed); la tarjeta Canchas tiene un selector de cancha, la grilla muestra solo los turnos de la cancha elegida y **Administrar horarios** abre un modal con el editor semanal.
 
 ## Archivos principales
 
@@ -22,6 +23,7 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 - `frontend/src/app/complexes/complex-admin.page.{html,scss}`, `complex-admin-sidebar.component.scss`, `complex-card.component.scss`, y breakpoints en `agenda`, `availability` y `courts`
 - `frontend/src/app/complexes/complex-overview.component.*` (cabecera de la vista completa) y `complex-card.component.*` (tarjeta con imagen y nombre)
 - `frontend/src/app/agenda/agenda.page.*` y `app.routes.ts` (ruta con `data.overview`)
+- `frontend/src/app/availability/court-schedule-dialog.component.*` y `schedule-utils.ts` (modal de horarios y utilidades compartidas con la página de disponibilidad)
 - Tests: `login.page.spec.ts`, `register.page.spec.ts`
 
 ## Validaciones

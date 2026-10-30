@@ -14,19 +14,28 @@
   </div>
 
   @if (complex(); as current) {
-    <div class="overview-body">
-      <dl class="facts">
-        <div><dt>Dirección</dt><dd>{{ current.address }}</dd></div>
-        <div><dt>Teléfono</dt><dd>{{ current.phone }}</dd></div>
-        <div class="facts-wide">
-          <dt>Encargados</dt>
-          <dd>@for (id of current.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> } @empty { <span class="muted">Sin encargados asignados</span> }</dd>
+    <div class="data-card" [class.is-open]="dataOpen()">
+      <button class="data-toggle" type="button" [attr.aria-expanded]="dataOpen()" aria-controls="complex-data-panel" (click)="dataOpen.set(!dataOpen())">
+        <span class="data-title">Datos del complejo</span>
+        <span class="data-summary">{{ current.address }} · {{ current.phone }}</span>
+        <svg class="data-chevron" aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
+      </button>
+      @if (dataOpen()) {
+        <div class="data-panel" id="complex-data-panel">
+          <dl class="facts">
+            <div><dt>Dirección</dt><dd>{{ current.address }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ current.phone }}</dd></div>
+            <div class="facts-wide">
+              <dt>Encargados</dt>
+              <dd>@for (id of current.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> } @empty { <span class="muted">Sin encargados asignados</span> }</dd>
+            </div>
+          </dl>
+          <div class="overview-actions">
+            <button class="action action-primary" type="button" (click)="openEdit()">Editar datos</button>
+            @if (isAdmin()) { <button class="action action-danger" type="button" (click)="deleteOpen.set(true)">Eliminar complejo</button> }
+          </div>
         </div>
-      </dl>
-      <div class="overview-actions">
-        <button class="action action-primary" type="button" (click)="openEdit()">Editar datos</button>
-        @if (isAdmin()) { <button class="action action-danger" type="button" (click)="deleteOpen.set(true)">Eliminar complejo</button> }
-      </div>
+      }
     </div>
   }
 
@@ -35,17 +44,20 @@
       <h2>Canchas</h2>
       <a class="manage-link" [routerLink]="['/admin/complejos', complexId, 'canchas']">Administrar canchas</a>
     </div>
-    @if (courts.length) {
-      <ul class="court-list">
-        @for (court of courts; track court.id) {
-          <li class="court-item">
-            <span class="court-name">{{ court.name }}</span>
-            <span class="court-kind">{{ court.covered ? 'Cubierta' : 'Descubierta' }}</span>
-            <a class="court-link" [routerLink]="['/admin/complejos', complexId, 'canchas', court.id, 'horarios']">Horarios</a>
-            <button class="court-close" type="button" (click)="courtTarget.set(court)">Cerrar cancha</button>
-          </li>
-        }
-      </ul>
+    @if (selectedCourt; as court) {
+      <div class="court-toolbar">
+        <label class="court-select">
+          <span>Cancha</span>
+          <select [value]="court.id" (change)="onCourtChange($event)">
+            @for (item of courts; track item.id) { <option [value]="item.id" [selected]="item.id === court.id">{{ item.name }}</option> }
+          </select>
+        </label>
+        <span class="court-kind">{{ court.covered ? 'Cubierta' : 'Descubierta' }}</span>
+        <div class="court-actions">
+          <button class="action action-primary" type="button" (click)="scheduleOpen.set(true)">Administrar horarios</button>
+          <button class="court-close" type="button" (click)="courtTarget.set(court)">Cerrar cancha</button>
+        </div>
+      </div>
     } @else {
       <p class="muted">Este complejo todavía no tiene canchas.</p>
     }
@@ -60,4 +72,7 @@
 }
 @if (courtTarget(); as court) {
   <app-confirm-dialog [title]="'¿Cerrar ' + court.name + '?'" message="La cancha dejará de estar disponible. No se puede cerrar si tiene reservas futuras." confirmLabel="Cerrar cancha" cancelLabel="Volver" (cancel)="courtTarget.set(null)" (confirm)="confirmCloseCourt()" />
+}
+@if (scheduleOpen() && selectedCourt; as court) {
+  <app-court-schedule-dialog [complexId]="complexId" [courtId]="court.id" [courtName]="court.name" (close)="closeSchedule()" />
 }

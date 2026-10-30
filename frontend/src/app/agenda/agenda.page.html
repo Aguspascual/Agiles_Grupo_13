@@ -32,7 +32,7 @@
       @default {
         @if (agenda(); as day) {
           @if (overview) {
-            <app-complex-overview [complexId]="complexId()" [courts]="day.courts" [fallbackName]="day.complex.name" (courtsChanged)="retry()" (notify)="notice($event)" />
+            <app-complex-overview [complexId]="complexId()" [courts]="day.courts" [courtId]="courtId()" [fallbackName]="day.complex.name" (courtIdChange)="selectedCourtId.set($event); selectedSlotId.set(null)" (courtsChanged)="reloadQuietly()" (notify)="notice($event)" />
           } @else {
             <header class="agenda-header">
               <h1>Agenda</h1>
@@ -45,7 +45,7 @@
             </header>
           }
 
-          <section class="agenda-board" aria-labelledby="agenda-date">
+          <section class="agenda-board" [class.is-refreshing]="refreshing()" [attr.aria-busy]="refreshing()" aria-labelledby="agenda-date">
             <div class="agenda-toolbar">
               <h2 id="agenda-date">{{ dateLabel() }}</h2>
               <app-day-strip

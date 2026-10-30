@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { CourtScheduleDialogComponent } from '../availability/court-schedule-dialog.component';
 import { CourtApiService } from '../courts/court-api.service';
 import { ComplexApiService } from './complex-api.service';
 import { ComplexFormDialogComponent } from './complex-form-dialog.component';
@@ -19,7 +20,7 @@ export interface OverviewCourt {
 @Component({
   selector: 'app-complex-overview',
   standalone: true,
-  imports: [RouterLink, ComplexFormDialogComponent, ConfirmDialogComponent],
+  imports: [RouterLink, ComplexFormDialogComponent, ConfirmDialogComponent, CourtScheduleDialogComponent],
   templateUrl: './complex-overview.component.html',
   styleUrl: './complex-overview.component.scss',
 })
@@ -30,7 +31,9 @@ export class ComplexOverviewComponent implements OnInit {
 
   @Input({ required: true }) complexId = '';
   @Input() courts: OverviewCourt[] = [];
+  @Input() courtId = '';
   @Input() fallbackName = '';
+  @Output() courtIdChange = new EventEmitter<string>();
   @Output() courtsChanged = new EventEmitter<void>();
   @Output() notify = new EventEmitter<string>();
 
@@ -43,6 +46,8 @@ export class ComplexOverviewComponent implements OnInit {
   readonly saving = signal(false);
   readonly deleteOpen = signal(false);
   readonly courtTarget = signal<OverviewCourt | null>(null);
+  readonly dataOpen = signal(false);
+  readonly scheduleOpen = signal(false);
 
   private pendingNotice = '';
 
@@ -61,6 +66,19 @@ export class ComplexOverviewComponent implements OnInit {
       },
       error: () => this.complex.set(null),
     });
+  }
+
+  get selectedCourt(): OverviewCourt | null {
+    return this.courts.find((court) => court.id === this.courtId) ?? this.courts[0] ?? null;
+  }
+
+  onCourtChange(event: Event): void {
+    this.courtIdChange.emit((event.target as HTMLSelectElement).value);
+  }
+
+  closeSchedule(): void {
+    this.scheduleOpen.set(false);
+    this.courtsChanged.emit();
   }
 
   managerName(id: string): string {
