@@ -5,7 +5,8 @@
 1. Se revisó la tarjeta de Trello: HU-13 trata de liberar el lugar de un jugador anotado en un partido pendiente, no de cancelar el turno alquilado.
 2. Se preparó un mockup en `/partidos` de un partido completo (4/4) con el jugador actual incluido.
 3. La acción “Bajarme del partido” solicita confirmación y, al aceptar, devuelve el estado a 3/4 y muestra un lugar libre.
-4. La confirmación visual informa que se avisará al grupo; el envío real queda pendiente de backend.
+4. Se aplicó RN-03: la baja solo se habilita si faltan al menos 2 horas para el inicio (a las 2 horas exactas todavía se puede); después el botón queda deshabilitado.
+5. La confirmación visual informa que se avisará al grupo; el envío real queda pendiente de backend.
 
 ## Archivos principales
 
@@ -16,7 +17,7 @@
 
 ## Validaciones
 
-- Pruebas dirigidas de estado inicial, cancelación del diálogo y baja confirmada.
+- Pruebas dirigidas de estado inicial, cancelación del diálogo, baja confirmada y límite de RN-03 (2 horas exactas, menos de 2 horas, partido iniciado).
 - Build del frontend.
 - Reinicio del contenedor frontend para prueba manual.
 

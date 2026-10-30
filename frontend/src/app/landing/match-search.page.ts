@@ -35,6 +35,7 @@ export class MatchSearchPage implements OnInit {
     'Grava sintética',
     'Estacionamiento',
   ];
+  searchTerm = '';
   selectedZones: string[] = [];
   selectedLevels: string[] = [];
   selectedDay = 'Hoy';
@@ -43,6 +44,8 @@ export class MatchSearchPage implements OnInit {
   selectedFeatures: string[] = [];
   selectedClub = 'Todos los clubes de La Plata';
   onlyOpen = true;
+  sortBy = 'Más cercanos en horario';
+  viewMode: 'grid' | 'list' = 'grid';
   filtersOpen = false;
 
   constructor(private readonly route: ActivatedRoute) {}
@@ -94,9 +97,10 @@ export class MatchSearchPage implements OnInit {
   }
 
   get filteredMatches(): MatchPreview[] {
-    return this.matches.filter(
+    const term = this.searchTerm.trim().toLowerCase();
+    const filtered = this.matches.filter(
       (match) =>
-        match.id !== 'gonnet-2030' &&
+        (!term || `${match.club} ${match.zone} ${match.address}`.toLowerCase().includes(term)) &&
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
         (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&
         (!this.dayFilterEnabled ||
@@ -109,6 +113,11 @@ export class MatchSearchPage implements OnInit {
         this.matchesPreferredTime(match) &&
         this.selectedFeatures.every((feature) => this.matchesCourtFeature(match, feature)),
     );
+    return this.sortBy === 'Menor precio'
+      ? [...filtered].sort(
+          (a, b) => Number(a.price.replace(/\D/g, '')) - Number(b.price.replace(/\D/g, '')),
+        )
+      : filtered;
   }
 
   toggleSelection(collection: string[], value: string): string[] {
@@ -136,6 +145,7 @@ export class MatchSearchPage implements OnInit {
   }
 
   clearFilters(): void {
+    this.searchTerm = '';
     this.selectedZones = [];
     this.selectedLevels = [];
     this.selectedDay = 'Todos';

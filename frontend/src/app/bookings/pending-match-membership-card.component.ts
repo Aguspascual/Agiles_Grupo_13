@@ -6,7 +6,7 @@ import { PendingMatchMembershipStore } from './pending-match-membership.store';
   template: `
     <article class="membership-card" aria-labelledby="membership-title">
       <div class="membership-card__top">
-        <span class="membership-card__eyebrow">TU PARTIDO PENDIENTE · DEMO</span>
+        <span class="membership-card__eyebrow">{{ store.membership().openSpots > 0 ? 'TU PARTIDO PENDIENTE' : 'TU TURNO COMPLETO' }} · DEMO</span>
         <span class="membership-card__occupancy">{{ store.membership().players.length }}/4</span>
       </div>
       <div class="membership-card__body">
@@ -29,9 +29,9 @@ import { PendingMatchMembershipStore } from './pending-match-membership.store';
         <p class="membership-card__vacancy">Falta {{ store.membership().openSpots }} jugador · Nivel {{ store.membership().match.level }}</p>
       }
       <footer>
-        <span>{{ store.membership().openSpots > 0 ? 'Partido pendiente' : 'Turno completo' }}</span>
         @if (store.membership().players.some(isCurrentPlayer)) {
-          <button type="button" (click)="confirmationOpen.set(true)">Bajarme del partido</button>
+          <span>{{ canLeave() ? 'Podés bajarte hasta 2 horas antes del inicio' : 'Baja cerrada: faltan menos de 2 horas' }}</span>
+          <button type="button" [disabled]="!canLeave()" (click)="confirmationOpen.set(true)">Bajarme del partido</button>
         } @else {
           <span class="membership-card__left">Ya no estás anotado</span>
         }
@@ -59,6 +59,7 @@ import { PendingMatchMembershipStore } from './pending-match-membership.store';
 export class PendingMatchMembershipCardComponent implements OnDestroy {
   readonly store = inject(PendingMatchMembershipStore);
   readonly confirmationOpen = signal(false);
+  readonly canLeave = () => this.store.canLeave();
   readonly isCurrentPlayer = (player: { initials: string }) => player.initials === 'LM';
   private noticeTimer?: ReturnType<typeof setTimeout>;
   readonly emptyPlaces = computed(() =>
