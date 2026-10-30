@@ -81,6 +81,46 @@ describe('HU-05: SlotGridService', () => {
     expect(result()).toEqual({ status: 'error' });
   });
 
+  function bodyWithPending(pendingMatch?: unknown) {
+    const slot = {
+      id: 'court-1:2026-10-23:15:00',
+      startsAt: '15:00',
+      endsAt: '16:30',
+      status: 'PENDING_MATCH',
+      isPast: false,
+      ...(pendingMatch === undefined ? {} : { pendingMatch }),
+    };
+    return { ...body, courts: [{ ...body.courts[0], slots: [...body.courts[0].slots, slot] }] };
+  }
+
+  it('mapea PENDING_MATCH a pending con faltantes y nivel', () => {
+    const { result } = load();
+    http
+      .expectOne((request) => request.url === URL)
+      .flush(bodyWithPending({ missingPlayers: 2, level: '5ta' }));
+
+    const value = result();
+    if (value?.status !== 'ok') throw new Error('se esperaba ok');
+    const pending = value.grid.courts[0].slots[4];
+    expect(pending.state).toBe('pending');
+    expect(pending.pendingMatch).toEqual({ missingPlayers: 2, level: '5ta' });
+    expect(value.grid.courts[0].slots[0].pendingMatch).toBeUndefined();
+  });
+
+  it.each([
+    ['sin pendingMatch', undefined],
+    ['con faltantes en cero', { missingPlayers: 0, level: '5ta' }],
+    ['con faltantes mayores a tres', { missingPlayers: 4, level: '5ta' }],
+    ['con faltantes decimales', { missingPlayers: 1.5, level: '5ta' }],
+    ['con faltantes como texto', { missingPlayers: '2', level: '5ta' }],
+    ['sin nivel', { missingPlayers: 2 }],
+    ['con nivel numérico', { missingPlayers: 2, level: 5 }],
+    ['con pendingMatch nulo', null],
+  ])('trata un PENDING_MATCH %s como error de parseo', (_name, pendingMatch) => {
+    const { result } = load();
+    http.expectOne((request) => request.url === URL).flush(bodyWithPending(pendingMatch));
+    expect(result()).toEqual({ status: 'error' });
+  });
   it('trata una respuesta mal formada como error', () => {
     const { result } = load();
     http.expectOne((request) => request.url === URL).flush({ complex: {} });

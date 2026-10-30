@@ -106,9 +106,19 @@ function parseSlot(value: unknown, courtId: string, date: string): GridSlot {
     state,
     isPast: value['isPast'],
   };
-  const pending = value['pendingMatch'];
-  if (state === 'pending' && isRecord(pending)) slot.pendingMatch = pending as unknown as PendingMatchInfo;
+  if (state === 'pending') slot.pendingMatch = parsePendingMatch(value['pendingMatch']);
   return slot;
+}
+
+function parsePendingMatch(value: unknown): PendingMatchInfo {
+  if (!isRecord(value) || typeof value['level'] !== 'string') {
+    throw new Error('Partido abierto inválido');
+  }
+  const missing = value['missingPlayers'];
+  if (missing !== 1 && missing !== 2 && missing !== 3) {
+    throw new Error('Jugadores faltantes inválidos');
+  }
+  return { missingPlayers: missing, level: value['level'] };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
