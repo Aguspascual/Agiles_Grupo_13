@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -34,7 +35,7 @@ type PostgresRepository struct {
 }
 
 func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
-	return NewPostgresRepositoryWithReservationChecker(db, unavailableReservationChecker{})
+	return NewPostgresRepositoryWithReservationChecker(db, postgresReservationChecker{})
 }
 
 func NewPostgresRepositoryWithReservationChecker(db *pgxpool.Pool, checker FutureReservationChecker) *PostgresRepository {
@@ -196,25 +197,14 @@ func insertCourt(ctx context.Context, tx pgx.Tx, complexID string, draft Draft) 
 }
 
 func authorizeComplex(ctx context.Context, tx pgx.Tx, complexID, actorID string, admin bool) error {
-	var exists bool
-	err := tx.QueryRow(ctx, `SELECT true FROM complexes WHERE id=$1::uuid AND deleted_at IS NULL FOR SHARE`, complexID).Scan(&exists)
-	if errors.Is(err, pgx.ErrNoRows) {
+	err := complexes.AuthorizeInTransaction(ctx, tx, complexID, actorID, admin)
+	if errors.Is(err, complexes.ErrNotFound) {
 		return ErrNotFound
 	}
-	if err != nil {
-		return err
-	}
-	if admin {
-		return nil
-	}
-	err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM complex_managers WHERE complex_id=$1::uuid AND user_id=$2::uuid)`, complexID, actorID).Scan(&exists)
-	if err != nil {
-		return err
-	}
-	if !exists {
+	if errors.Is(err, complexes.ErrForbidden) {
 		return ErrForbidden
 	}
-	return nil
+	return err
 }
 
 func featureEnabled(features []string, name string) bool {

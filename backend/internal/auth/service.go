@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -27,6 +28,54 @@ func NewService(repository Repository, jwtSecret []byte) *Service {
 func (s *Service) RegisterHandler() http.Handler { return http.HandlerFunc(s.register) }
 func (s *Service) LoginHandler() http.Handler    { return http.HandlerFunc(s.login) }
 func (s *Service) MeHandler() http.Handler       { return http.HandlerFunc(s.me) }
+func (s *Service) ProfileUpdateHandler() http.Handler {
+	return http.HandlerFunc(s.updateProfile)
+}
+
+type profileUpdater interface {
+	UpdateProfile(ctx context.Context, id, name, zone, level, position, hand string) (User, error)
+}
+
+func (s *Service) updateProfile(w http.ResponseWriter, r *http.Request) {
+	header := strings.TrimSpace(r.Header.Get("Authorization"))
+	if !strings.HasPrefix(header, "Bearer ") {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	id, err := UserIDFromToken(strings.TrimSpace(strings.TrimPrefix(header, "Bearer ")), s.jwtSecret)
+	if err != nil || !ValidUUID(id) {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if _, ok := s.repository.(profileUpdater); !ok {
+		writeError(w, http.StatusInternalServerError, "no se pudo actualizar el perfil")
+		return
+	}
+	var request UpdateProfileRequest
+	if err := DecodeJSONWithLimit(w, r, &request, 1<<20); err != nil {
+		writeError(w, http.StatusBadRequest, "JSON inválido")
+		return
+	}
+	if request.Name == nil || request.Zone == nil || request.Level == nil || request.Position == nil || request.Hand == nil {
+		writeError(w, http.StatusBadRequest, "todos los campos del perfil son obligatorios")
+		return
+	}
+	if err := normalizeAndValidateProfile(request.Name, request.Zone, request.Level, request.Position, request.Hand); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	updater := s.repository.(profileUpdater)
+	user, err := updater.UpdateProfile(r.Context(), id, *request.Name, *request.Zone, *request.Level, *request.Position, *request.Hand)
+	if errors.Is(err, ErrProfileNotFound) {
+		writeError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "no se pudo actualizar el perfil")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"user": user})
+}
 
 func (s *Service) me(w http.ResponseWriter, r *http.Request) {
 	header := strings.TrimSpace(r.Header.Get("Authorization"))
@@ -117,15 +166,26 @@ func (s *Service) issueToken(userID string) (string, error) {
 	return unsigned + "." + encode(mac.Sum(nil)), nil
 }
 
-func decodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+// ErrTrailingJSON distinguishes extra content from an invalid first document.
+var ErrTrailingJSON = errors.New("unexpected trailing JSON")
+
+// DecodeJSONWithLimit reads one strict JSON document without writing a response.
+// Each caller retains its own body limit, error mapping and response messages.
+func DecodeJSONWithLimit(w http.ResponseWriter, r *http.Request, destination any, limit int64) error {
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(destination); err != nil {
-		writeError(w, http.StatusBadRequest, "JSON inválido")
-		return false
+		return err
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return ErrTrailingJSON
+	}
+	return nil
+}
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
+	if err := DecodeJSONWithLimit(w, r, destination, 1<<20); err != nil {
 		writeError(w, http.StatusBadRequest, "JSON inválido")
 		return false
 	}

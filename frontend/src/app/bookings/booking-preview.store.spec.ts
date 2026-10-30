@@ -1,10 +1,17 @@
 import { demoBookingFor } from './booking-preview.store';
+import { isPendingReplacementWindowOpen } from './booking.model';
 
 function ref(courtId: string, date: string, startsAt: string) {
   return { id: `${courtId}:${date}:${startsAt}`, courtId, date, startsAt };
 }
 
 describe('HU-05: reservas de demostración', () => {
+  it('permite reemplazar un partido incompleto solo en las últimas cuatro horas', () => {
+    const now = new Date('2026-10-28T10:00:00');
+    expect(isPendingReplacementWindowOpen(new Date('2026-10-28T14:00:00'), now)).toBe(false);
+    expect(isPendingReplacementWindowOpen(new Date('2026-10-28T13:59:59'), now)).toBe(true);
+    expect(isPendingReplacementWindowOpen(new Date('2026-10-28T10:00:00'), now)).toBe(false);
+  });
   const slots = Array.from({ length: 30 }, (_, day) =>
     ['08:00', '09:30', '11:00', '18:30', '20:00', '21:30'].map((time) =>
       ref('court-gonnet-1', `2026-11-${String(day + 1).padStart(2, '0')}`, time),

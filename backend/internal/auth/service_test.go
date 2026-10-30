@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +12,36 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+func TestDecodeJSONWithLimit(t *testing.T) {
+	for _, tt := range []struct {
+		name, body        string
+		limit             int64
+		invalid, trailing bool
+	}{
+		{"valid", `{"name":"ok"}`, 64, false, false},
+		{"unknown field", `{"extra":"x"}`, 64, true, false},
+		{"malformed", `{`, 64, true, false},
+		{"second document", `{"name":"ok"} {}`, 64, true, true},
+		{"trailing garbage", `{"name":"ok"} x`, 64, true, true},
+		{"limit exceeded", `{"name":"too long"}`, 8, true, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var value struct {
+				Name string `json:"name"`
+			}
+			req := httptest.NewRequest("POST", "/", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			err := DecodeJSONWithLimit(rec, req, &value, tt.limit)
+			if (err != nil) != tt.invalid || errors.Is(err, ErrTrailingJSON) != tt.trailing {
+				t.Fatalf("error=%v", err)
+			}
+			if rec.Body.Len() != 0 || rec.Code != 200 {
+				t.Fatal("decoder must not write a response")
+			}
+		})
+	}
+}
 
 type memoryRepo struct {
 	users      map[string]User
@@ -40,6 +72,16 @@ func (m *memoryRepo) FindUserByEmail(email string) (User, string, error) {
 func (m *memoryRepo) FindUserByID(id string) (User, error) {
 	for _, u := range m.users {
 		if u.ID == id {
+			return u, nil
+		}
+	}
+	return User{}, ErrInvalidCredentials
+}
+func (m *memoryRepo) UpdateProfile(_ context.Context, id, name, zone, level, position, hand string) (User, error) {
+	for email, u := range m.users {
+		if u.ID == id {
+			u.Name, u.Zone, u.Level, u.Position, u.Hand = name, zone, level, position, hand
+			m.users[email] = u
 			return u, nil
 		}
 	}
@@ -122,5 +164,71 @@ func TestRegisterCannotSetAdminRole(t *testing.T) {
 	NewService(newMemoryRepo(), []byte(strings.Repeat("s", 32))).RegisterHandler().ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body)))
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("public role assignment status %d, body %s", w.Code, w.Body)
+	}
+}
+
+func TestUpdateProfileHandlerValidatesCompleteProfileAndAuthorization(t *testing.T) {
+	repo := newMemoryRepo()
+	repo.users["ana@example.com"] = User{ID: "11111111-1111-4111-8111-111111111111", Name: "Ana", Email: "ana@example.com", Zone: "Gonnet", Level: "7ma", Position: "Drive", Hand: "Diestro"}
+	svc := NewService(repo, []byte(strings.Repeat("s", 32)))
+	validToken, err := svc.issueToken("11111111-1111-4111-8111-111111111111")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name, token, body string
+		want              int
+	}{
+		{"missing token", "", `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro"}`, http.StatusUnauthorized},
+		{"invalid token", "invalid", `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro"}`, http.StatusUnauthorized},
+		{"unknown protected field", validToken, `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive","hand":"Diestro","email":"other@example.com"}`, http.StatusBadRequest},
+		{"missing required field", validToken, `{"name":"Ana","zone":"Gonnet","level":"6ta","position":"Drive"}`, http.StatusBadRequest},
+		{"null field", validToken, `{"name":"Ana","zone":"Gonnet","level":"6ta","position":null,"hand":"Diestro"}`, http.StatusBadRequest},
+		{"invalid value", validToken, `{"name":"Ana","zone":"Gonnet","level":"pro","position":"Drive","hand":"Diestro"}`, http.StatusBadRequest},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/me", strings.NewReader(tc.body))
+			if tc.token != "" {
+				req.Header.Set("Authorization", "Bearer "+tc.token)
+			}
+			w := httptest.NewRecorder()
+			svc.ProfileUpdateHandler().ServeHTTP(w, req)
+			if w.Code != tc.want {
+				t.Fatalf("status=%d want=%d body=%s", w.Code, tc.want, w.Body)
+			}
+		})
+	}
+}
+
+func TestUpdateProfileHandlerUpdatesOnlyAuthenticatedUserAndAllowsClearingOptionals(t *testing.T) {
+	repo := newMemoryRepo()
+	first := User{ID: "11111111-1111-4111-8111-111111111111", Name: "Ana", Email: "ana@example.com", Zone: "Gonnet", Level: "7ma", Position: "Drive", Hand: "Diestro"}
+	second := User{ID: "22222222-2222-4222-8222-222222222222", Name: "Beto", Email: "beto@example.com", Zone: "Tolosa", Level: "8va", Position: "Revés", Hand: "Zurdo"}
+	repo.users[first.Email], repo.users[second.Email] = first, second
+	secret := []byte(strings.Repeat("s", 32))
+	svc := NewService(repo, secret)
+	token, err := svc.issueToken(first.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"name":"  Ana Pérez  ","zone":"City Bell","level":"6ta","position":"","hand":""}`
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/me", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	svc.ProfileUpdateHandler().ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body)
+	}
+	updated, err := repo.FindUserByID(first.ID)
+	if err != nil || updated.Name != "Ana Pérez" || updated.Zone != "City Bell" || updated.Level != "6ta" || updated.Position != "" || updated.Hand != "" {
+		t.Fatalf("updated=%+v err=%v", updated, err)
+	}
+	unchanged, err := repo.FindUserByID(second.ID)
+	if err != nil || unchanged != second {
+		t.Fatalf("other user changed: %+v err=%v", unchanged, err)
+	}
+	if strings.Contains(w.Body.String(), `"token"`) {
+		t.Fatalf("update unexpectedly issued token: %s", w.Body)
 	}
 }

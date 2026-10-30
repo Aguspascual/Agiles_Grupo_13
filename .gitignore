@@ -1,1 +1,13 @@
+# Secretos locales (mantener versionado únicamente el archivo de ejemplo).
+.env
+.env.*
+!.env.example
+
+# Artefactos generados.
+**/node_modules/
+frontend/dist/
+frontend/.angular/
+coverage/
+*.log
 .atl/
+/odd/

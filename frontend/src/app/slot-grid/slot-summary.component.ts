@@ -36,7 +36,13 @@ import { GridSlot, SLOT_STATE_LABELS, missingPlayersLabel } from './slot-grid.mo
         </p>
       </div>
       <div class="slot-summary__actions">
+        @if (slot().state === 'pending' && canReplacePending()) {
+          <button class="slot-summary__cta" type="button" (click)="replacePending.emit()">
+            Reservar como grupo completo
+          </button>
+        } @else {
         <a class="slot-summary__cta" routerLink="/ingresar">{{ ctaLabel() }}</a>
+        }
         <button
           type="button"
           class="slot-summary__close"
@@ -55,6 +61,8 @@ export class SlotSummaryComponent {
   readonly courtName = input.required<string>();
   readonly dateLabel = input.required<string>();
   readonly closed = output<void>();
+  readonly replacePending = output<void>();
+  readonly canReplacePending = input(false);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
