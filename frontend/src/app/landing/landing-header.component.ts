@@ -27,7 +27,7 @@ import { MatchNotice } from '../matches/match-api.model';
           <a class="nav-link" routerLink="/partidos" routerLinkActive="is-active"
             >Buscar partidos</a
           >
-          <a class="nav-link" routerLink="/mis-reservas" routerLinkActive="is-active">Mis reservas</a>
+          <a class="nav-link" routerLink="/mis-reservas" routerLinkActive="is-active">Mis partidos</a>
           <a class="nav-link" routerLink="/clubes" routerLinkActive="is-active">Clubes</a>
         </div>
         <div class="nav-dropdown">
@@ -60,7 +60,7 @@ import { MatchNotice } from '../matches/match-api.model';
                 >Buscar partidos</a
               >
               <a routerLink="/mis-reservas" routerLinkActive="is-active" (click)="closeMenu()"
-                >Mis reservas</a
+                >Mis partidos</a
               >
               <a routerLink="/clubes" routerLinkActive="is-active" (click)="closeMenu()"
                 >Clubes</a

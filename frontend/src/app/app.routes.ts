@@ -43,7 +43,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./reservations/my-reservations.page').then((page) => page.MyReservationsPage),
     canActivate: [authGuard],
-    title: 'Mis reservas | PádelMatch',
+    title: 'Mis partidos | PádelMatch',
   },
   // Las pantallas de administración se cargan bajo demanda para aliviar la carga inicial del jugador.
   {

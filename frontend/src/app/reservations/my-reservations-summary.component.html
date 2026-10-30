@@ -1,0 +1,31 @@
+<aside class="my-aside" aria-label="Resumen">
+  @if (next(); as nextItem) {
+    <section class="next-card" aria-labelledby="next-title">
+      <div class="next-card__top"><span>PRÓXIMO TURNO</span><span aria-hidden="true">◷</span></div>
+      <h2 id="next-title">{{ nextItem.complex.name }}</h2>
+      <p>{{ nextItem.court.name }}</p>
+      <div class="next-card__rule"></div>
+      <p class="next-card__date">{{ nextDate() }}</p>
+      <strong>{{ nextTime() }}</strong>
+    </section>
+  } @else {
+    <section class="next-card next-card--empty" aria-labelledby="next-title">
+      <div class="next-card__top"><span>PRÓXIMO TURNO</span><span aria-hidden="true">◷</span></div>
+      <h2 id="next-title">Todavía sin turnos</h2>
+      <p>Acá vas a ver tu próxima reserva o partido.</p>
+      <a routerLink="/partidos">Buscar partidos <span aria-hidden="true">→</span></a>
+    </section>
+  }
+
+  <section class="summary-card" aria-labelledby="summary-title">
+    <div class="summary-card__heading">
+      <div><h2 id="summary-title">Resumen</h2><p>En esta página</p></div>
+      <span class="summary-card__icon" aria-hidden="true">▦</span>
+    </div>
+    <div class="summary-card__stats">
+      <div><strong>{{ reservations() }}</strong><span>Reservas</span></div>
+      <div><strong>{{ matches() }}</strong><span>Partidos</span></div>
+    </div>
+    <p class="summary-card__foot">{{ cancelled() }} cancelados · {{ loaded() }} elementos cargados</p>
+  </section>
+</aside>

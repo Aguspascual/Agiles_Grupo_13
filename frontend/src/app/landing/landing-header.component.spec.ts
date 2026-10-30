@@ -46,17 +46,17 @@ describe('LandingHeaderComponent con sesión HU-01', () => {
     expect(fixture.nativeElement.querySelector('.profile-menu')).toBeNull();
   });
 
-  it('enlaza Mis reservas a /mis-reservas en la barra y en el menú, sin apuntar a /ingresar', () => {
+  it('enlaza Mis partidos a /mis-reservas en la barra y en el menú, sin apuntar a /ingresar', () => {
     createHeader();
     const desktop = [...fixture.nativeElement.querySelectorAll('.desktop-nav-links a')] as HTMLAnchorElement[];
-    const link = desktop.find((anchor) => anchor.textContent?.trim() === 'Mis reservas');
+    const link = desktop.find((anchor) => anchor.textContent?.trim() === 'Mis partidos');
     expect(link?.getAttribute('href')).toBe('/mis-reservas');
-    expect(fixture.nativeElement.textContent).not.toContain('Mis partidos');
+    expect(fixture.nativeElement.textContent).toContain('Mis partidos');
 
     (fixture.nativeElement.querySelector('.nav-menu-trigger') as HTMLButtonElement).click();
     fixture.detectChanges();
     const menu = [...fixture.nativeElement.querySelectorAll('.nav-menu-panel a')] as HTMLAnchorElement[];
-    expect(menu.find((anchor) => anchor.textContent?.trim() === 'Mis reservas')?.getAttribute('href')).toBe('/mis-reservas');
+    expect(menu.find((anchor) => anchor.textContent?.trim() === 'Mis partidos')?.getAttribute('href')).toBe('/mis-reservas');
   });
 
   it('muestra nombre, nivel e iniciales de la sesión autenticada', () => {

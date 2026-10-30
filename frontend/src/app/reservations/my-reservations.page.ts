@@ -7,6 +7,8 @@ import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
 import { ToastComponent } from '../shared/toast.component';
+import { MyReservationCardComponent } from './my-reservation-card.component';
+import { MyReservationsSummaryComponent } from './my-reservations-summary.component';
 import { MyReservationItem, MyReservationView, ReservationApiService } from './reservation-api.service';
 
 const PAGE_SIZE = 20;
@@ -18,10 +20,10 @@ const TABS: { view: MyReservationView; param: string; label: string }[] = [
 
 type ListStatus = 'loading' | 'ready' | 'error';
 
-/** HU-17: reservas y partidos del jugador, próximos y jugados, con cancelación de reservas propias (HU-14). */
+/** HU-17: consulta integrada de reservas propias y partidos desde la API autenticada. */
 @Component({
   selector: 'app-my-reservations-page',
-  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent],
+  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent],
   templateUrl: './my-reservations.page.html',
   styleUrl: './my-reservations.page.scss',
 })
@@ -43,6 +45,14 @@ export class MyReservationsPage implements OnInit {
   readonly saving = signal(false);
   readonly cancelTarget = signal<MyReservationItem | null>(null);
   readonly toastMessage = signal('');
+  readonly nextItem = computed(() =>
+    this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : null,
+  );
+  readonly nextDate = computed(() => this.nextItem() ? this.dateLabel(this.nextItem()!) : '');
+  readonly nextTime = computed(() => this.nextItem() ? this.timeLabel(this.nextItem()!) : '');
+  readonly reservationCount = computed(() => this.items().filter((item) => item.kind === 'reservation').length);
+  readonly matchCount = computed(() => this.items().filter((item) => item.kind === 'match').length);
+  readonly cancelledCount = computed(() => this.items().filter((item) => item.status === 'cancelled').length);
   readonly emptyMessage = computed(() =>
     this.view() === 'upcoming' ? 'Todavía no tenés reservas próximas.' : 'Todavía no jugaste ningún partido.',
   );
@@ -141,26 +151,6 @@ export class MyReservationsPage implements OnInit {
         else this.finishCancel('No pudimos cancelar la reserva. Intentá nuevamente.', false);
       },
     });
-  }
-
-  typeLabel(item: MyReservationItem): string {
-    return item.kind === 'match' ? 'Partido abierto' : 'Reserva';
-  }
-
-  statusLabel(item: MyReservationItem): string {
-    if (item.kind === 'reservation') return item.status === 'cancelled' ? 'Cancelada' : 'Reservada';
-    if (item.status === 'cancelled') return 'Cancelado';
-    if (item.match?.status === 'full') return 'Completo';
-    return `Buscando jugadores · faltan ${item.match?.missingPlayers ?? 0}`;
-  }
-
-  statusClass(item: MyReservationItem): string {
-    if (item.status === 'cancelled') return 'is-cancelled';
-    return item.kind === 'match' && item.match?.status === 'open' ? 'is-open' : 'is-ok';
-  }
-
-  roleLabel(item: MyReservationItem): string {
-    return item.role === 'organizer' ? 'Organizador' : 'Jugador';
   }
 
   dateLabel(item: MyReservationItem): string {
