@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -29,7 +29,7 @@ const CREATE_COURT = '__create-court__';
   templateUrl: './complex-overview.component.html',
   styleUrl: './complex-overview.component.scss',
 })
-export class ComplexOverviewComponent implements OnInit, OnChanges {
+export class ComplexOverviewComponent implements OnInit, OnChanges, OnDestroy {
   private readonly api = inject(ComplexApiService);
   private readonly courtApi = inject(CourtApiService);
   private readonly router = inject(Router);
@@ -59,6 +59,7 @@ export class ComplexOverviewComponent implements OnInit, OnChanges {
   courtOptions: SelectOption[] = [];
   private pendingNotice = '';
   private createdCourtId = '';
+  private courtCloseTimer: ReturnType<typeof setTimeout> | undefined;
 
   ngOnChanges(): void {
     this.courtOptions = [...this.courts.map((court) => ({ value: court.id, label: court.name })), { value: CREATE_COURT, label: 'Crear cancha', action: true }];
@@ -94,11 +95,21 @@ export class ComplexOverviewComponent implements OnInit, OnChanges {
     this.courtIdChange.emit(value);
   }
 
+  /** El cierre no depende del evento de animación: un temporizador garantiza que el modal siempre se libere. */
   closeCourtForm(): void {
-    if (!this.courtFormClosing()) this.courtFormClosing.set(true);
+    if (this.courtFormClosing()) return;
+    this.courtFormClosing.set(true);
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+    this.courtCloseTimer = setTimeout(() => this.finishCourtFormClose(), reduced ? 0 : 460);
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.courtCloseTimer);
   }
 
   finishCourtFormClose(): void {
+    clearTimeout(this.courtCloseTimer);
+    if (!this.courtFormOpen()) return;
     this.courtFormOpen.set(false);
     this.courtFormClosing.set(false);
     if (!this.createdCourtId) return;

@@ -132,8 +132,10 @@ describe('vista completa del complejo', () => {
     const request = http.expectOne('/api/v1/complexes/c1/courts');
     expect(request.request.method).toBe('POST');
     request.flush({ court: { id: 'k3', complexId: 'c1', name: 'Cancha 3', covered: true, imageDataUrl: null, features: [] } }, { status: 201, statusText: 'Created' });
-    fixture.componentInstance.finishCourtFormClose();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    fixture.detectChanges();
 
+    expect(root().querySelector('app-court-form-dialog')).toBeNull();
     expect(events).toEqual(['select:k3', 'Cancha agregada.', 'reload']);
   });
 });
