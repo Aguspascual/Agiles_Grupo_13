@@ -56,3 +56,67 @@
 .register-footer { display: flex; gap: 18px; margin-top: 18px; padding-top: 11px; border-top: 1px solid #d8e1db; color: #53675a; font-size: .78rem; }
 .register-footer strong { color: #131b2e; }
 
+/* Registro: una sola pantalla en 1920x1080 y en 800x600, sin scroll. */
+.register-page { color-scheme: light; min-height: 100vh; padding: clamp(10px, 2vh, 20px) clamp(16px, 3vw, 48px); display: grid; align-items: center; }
+.register-page .register-shell { width: 100%; max-width: 1320px; }
+.register-page .register-layout { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 28px); align-items: stretch; }
+.register-page .register-card { padding: clamp(14px, 2vh, 22px) clamp(16px, 1.8vw, 24px); box-shadow: 0 4px 14px #141c2a10; }
+.register-page .register-card h1 { margin-bottom: 10px; }
+.register-page .register-aside { grid-template-columns: 1fr; align-content: stretch; grid-template-rows: auto auto 1fr; gap: 10px; }
+.register-page .register-aside .side-panel { grid-column: auto; padding: clamp(14px, 2vh, 20px); border-color: #cfd9d3; box-shadow: 0 2px 8px #141c2a14; }
+.register-page .benefits { gap: clamp(10px, 1.8vh, 18px); }
+.register-page .photo-grid img { height: clamp(90px, 16vh, 150px); }
+.register-page .aside-quote { display: flex; align-items: center; }
+.register-page .register-footer { margin-top: 10px; padding-top: 8px; }
+.register-page .field input:-webkit-autofill,
+.register-page .field input:-webkit-autofill:hover,
+.register-page .field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #131b2e;
+  caret-color: #131b2e;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+@media (min-width: 681px) and (max-width: 1030px) {
+  .register-page { padding: 8px 14px; }
+  .register-page .register-layout { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 12px; }
+  .register-page .register-header { gap: 12px; padding-bottom: 6px; margin-bottom: 8px; }
+  .register-page .register-brand { gap: 8px; }
+  .register-page .register-brand .brand-mark { width: 36px; height: 36px; border-radius: 10px; }
+  .register-page .register-brand strong { font-size: 1.05rem; }
+  .register-page .register-brand small { font-size: .56rem; }
+  .register-page .header-login { font-size: .78rem; }
+  .register-page .header-login a { padding: 6px 10px; }
+  .register-page .register-card { padding: 10px 12px; border-radius: 14px; }
+  .register-page .register-card h1 { margin-bottom: 6px; font-size: 1.15rem; }
+  .register-page .register-card .field label { margin-bottom: 2px; font-size: .72rem; }
+  .register-page .register-card .field input:not([type='radio']):not([type='checkbox']) { min-height: 32px; padding: 5px 9px; font-size: .78rem; }
+  .register-page .personal-grid { gap: 6px 8px; margin-bottom: 4px; }
+  .register-page .password-meter { margin-top: 3px; padding: 3px 8px; font-size: .62rem; gap: 2px; }
+  .register-page .form-section { margin-bottom: 5px; }
+  .register-page .section-title { margin-bottom: 4px; font-size: .8rem; }
+  .register-page .section-title > span { width: 18px; height: 18px; font-size: .6rem; }
+  .register-page .choice-list { gap: 4px; }
+  .register-page .choice-chip span { min-height: 26px; padding: 3px 8px; font-size: .7rem; }
+  .register-page .level-picker { margin: 0 0 5px; gap: 3px; }
+  .register-page .level-select-control select { min-height: 32px; padding: 4px 32px 4px 9px; font-size: .74rem; }
+  .register-page .choice-label { margin-bottom: 4px; font-size: .72rem; }
+  .register-page .fair-play { padding: 6px 8px; margin-bottom: 6px; }
+  .register-page .fair-play label { font-size: .68rem; line-height: 1.25; }
+  .register-page .register-card .primary-button { min-height: 34px; font-size: .8rem; }
+  .register-page .register-aside .side-panel { padding: 10px 12px; border-radius: 14px; }
+  .register-page .side-panel h2 { margin-bottom: 8px; font-size: .95rem; }
+  .register-page .benefits { gap: 8px; }
+  .register-page .benefits li { gap: 9px; }
+  .register-page .benefits li > span { width: 30px; height: 30px; border-radius: 9px; font-size: .8rem; }
+  .register-page .benefits strong { font-size: .78rem; }
+  .register-page .benefits p { margin-top: 1px; font-size: .68rem; line-height: 1.3; }
+  .register-page .photo-grid { gap: 6px; }
+  .register-page .photo-grid img { height: clamp(60px, 13vh, 90px); border-radius: 10px; }
+  .register-page .aside-quote { padding: 9px 11px; border-radius: 12px; font-size: .74rem; line-height: 1.3; }
+  .register-page .register-footer { display: none; }
+}
+
+@media (min-width: 681px) and (max-height: 700px) {
+  .register-page .register-footer { display: none; }
+}
