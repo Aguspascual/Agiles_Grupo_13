@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { AvailabilityPreviewStore } from '../availability/availability-preview.store';
 import { ComplexSlotsPage } from './complex-slots.page';
 import { CLOCK } from './slot-grid.service';
 
@@ -70,29 +69,6 @@ describe('HU-05: página de turnos del complejo', () => {
     const pastLabels = [...root.querySelectorAll('.slot-cell.is-past')].map((cell) => cell.tagName);
     expect(pastLabels.length).toBeGreaterThan(0);
     expect(pastLabels.every((tag) => tag === 'DIV')).toBe(true);
-    fixture.destroy();
-  });
-
-  it('usa los horarios guardados en HU-04 y respeta sus bloqueos', async () => {
-    // Lo que guarda la pantalla de HU-04 queda en localStorage y la grilla lo lee al cargar.
-    const availability = new AvailabilityPreviewStore();
-    availability.saveRules('court-gonnet-1', [
-      {
-        weekday: 4,
-        enabled: true,
-        durationMinutes: 60,
-        intervals: [{ id: 'tarde', opensAt: '17:00', closesAt: '20:00' }],
-      },
-    ]);
-    availability.toggleBlocked('court-gonnet-1:2026-10-22:18:00');
-
-    const { fixture } = await render('complex-gonnet', '2026-10-22');
-    const court = fixture.componentInstance
-      .grid()!
-      .courts.find((item) => item.id === 'court-gonnet-1')!;
-
-    expect(court.slots.map((slot) => slot.startsAt)).toEqual(['17:00', '18:00', '19:00']);
-    expect(court.slots[1].state).toBe('blocked');
     fixture.destroy();
   });
 

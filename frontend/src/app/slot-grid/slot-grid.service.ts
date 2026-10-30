@@ -1,6 +1,6 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { AvailabilityPreviewStore } from '../availability/availability-preview.store';
+import { generateAvailabilitySlots } from '../availability/availability-generator';
 import { BookingPreviewStore } from '../bookings/booking-preview.store';
 import { ComplexPreviewStore } from '../complexes/complex-preview.store';
 import { buildDayGrid } from './slot-grid.builder';
@@ -24,7 +24,6 @@ export type DayGridResult = { status: 'ok'; grid: DayGrid } | { status: 'not-fou
 @Injectable({ providedIn: 'root' })
 export class SlotGridService {
   private readonly complexes = inject(ComplexPreviewStore);
-  private readonly availability = inject(AvailabilityPreviewStore);
   private readonly bookings = inject(BookingPreviewStore);
   private readonly now = inject(CLOCK);
 
@@ -37,8 +36,7 @@ export class SlotGridService {
       courts: DEMO_COURTS.filter((court) => court.complexId === complex.id).map(({ id, name, covered }) => ({ id, name, covered })),
       date,
       now: this.now(),
-      slotsFor: (courtId, day) =>
-        this.availability.slotsWithFallback(courtId, day, demoScheduleFor(courtId)),
+      slotsFor: (courtId, day) => generateAvailabilitySlots(courtId, demoScheduleFor(courtId), day, new Set()),
       bookingFor: (slot) => this.bookings.bookingFor(slot),
     });
     return of({ status: 'ok', grid });
