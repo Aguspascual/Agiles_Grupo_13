@@ -56,7 +56,7 @@ El backend (TDD-0009 v3) ahora emite `PENDING_MATCH` con `pendingMatch {missingP
 
 - Pruebas de `slot-grid/` en verde (`NODE_OPTIONS=--no-experimental-webstorage`) y `npm run build` sin errores nuevos (los avisos de presupuesto ya existían).
 - Suite completa: en esta máquina fallan por el entorno (`localStorage`, `TestBed` ya instanciado) las specs de `app`, `auth`, `landing`, `complexes`, `club-directory`; ya fallaban en `Desarrollo` antes de este cambio y no son de la grilla.
-- Verificación de punta a punta contra el backend de la PR #50: ver el cuerpo de la PR del frontend.
+- Verificación de punta a punta (rama local temporal con el backend de la PR #50, PostgreSQL descartable): un partido abierto de A se ve como «Partido abierto · Faltan 3 jugadores · nivel 5ta»; con B y C queda «falta 1»; al sumarse D pasa a «Reservado» y deja de traer `pendingMatch`; reservas manual y web se ven «Reservado»; reservar sobre un turno pendiente responde `409`; la agenda del encargado sigue con `RESERVED` y su detalle de anotados. La grilla se renderizó en un navegador real contra ese backend; los CTA del resumen se verificaron con specs, no con clics manuales.
 
 ### Límites
 
