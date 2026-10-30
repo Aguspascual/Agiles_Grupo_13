@@ -55,3 +55,18 @@ debe consumir UUID reales de complejos/canchas, adaptar los estados API en mayú
 `occupiedIntervals` junto a las celdas `RESERVED`. Los IDs sintéticos de demostración y
 los estados `pending`/`class` no forman parte de este endpoint. No se modificaron Angular
 ni los contratos compartidos.
+
+## Listado público de complejos (TDD-0014)
+
+Se agregó `GET /api/v1/public/complexes` para que un jugador sin sesión llegue a la
+grilla: sin JWT, sin query (cualquier parámetro devuelve `400`), `Cache-Control: no-store`,
+solo `id`, `name`, `address` y `zone` de complejos activos, ordenados por `name, id`, y
+`{"complexes":[]}` cuando no hay ninguno. `GET /api/v1/complexes` sigue protegido.
+
+- Implementación: `slots.PostgresRepository.ListComplexes`, `slots.Service.ListHandler` y la
+  ruta pública en `cmd/api/routes.go`.
+- Pruebas: `slots/service_test.go` (orden, `[]`, query, error de repositorio) y
+  `cmd/api/public_complexes_http_test.go` (PostgreSQL real: excluye bajas, cuatro campos,
+  `400` con query y `401` en el listado administrativo).
+- Verificación: `go test -count=1 ./...` y `go vet ./...` con una base descartable
+  `padelmatch_test`. La Red inicial fue un fallo de compilación (`ListHandler` indefinido).

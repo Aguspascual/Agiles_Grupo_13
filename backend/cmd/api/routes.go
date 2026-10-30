@@ -30,6 +30,8 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	availabilityService := slots.NewServiceWithClock(slots.NewPostgresRepository(db), clock)
 	// Public availability is the most specific complex route and must bypass auth.
 	mux.Handle("GET /api/v1/complexes/{complexId}/slots", availabilityService.Handler())
+	// The player-facing club directory is public: it exposes only id, name, address and zone (TDD-0014).
+	mux.Handle("GET /api/v1/public/complexes", availabilityService.ListHandler())
 	complexService := complexes.NewService(complexes.NewPostgresRepository(db))
 	protectedComplexes := auth.RequireUser(secret, auth.NewPostgresRepository(db), complexService.Handler())
 	mux.Handle("/api/v1/complexes", protectedComplexes)

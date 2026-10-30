@@ -16,6 +16,24 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 	return &PostgresRepository{db: db}
 }
 
+// ListComplexes returns active complexes with the same public fields as Complex.
+func (r *PostgresRepository) ListComplexes(ctx context.Context) ([]Complex, error) {
+	rows, err := r.db.Query(ctx, `SELECT id::text,name,address,zone FROM complexes WHERE deleted_at IS NULL ORDER BY name,id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	complexes := []Complex{}
+	for rows.Next() {
+		var item Complex
+		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone); err != nil {
+			return nil, err
+		}
+		complexes = append(complexes, item)
+	}
+	return complexes, rows.Err()
+}
+
 func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID string, dayStart, dayEnd time.Time, weekday int) (Snapshot, error) {
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
