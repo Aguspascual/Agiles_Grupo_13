@@ -1,35 +1,35 @@
 <main class="admin-shell">
-  <app-complex-admin-sidebar
-    [showRoleSimulation]="true"
-    [role]="role()"
-    [managers]="managers"
-    [managerId]="managerId()"
-    (roleChange)="role.set($event)"
-    (managerChange)="managerId.set($event)"
-  />
+  <app-complex-admin-sidebar [showRoleSimulation]="false" />
 
-  <section class="workspace">
+  <section class="workspace" aria-labelledby="complex-title">
     <header class="topbar">
-      <h1>Complejos</h1>
-      <button class="primary-button new-complex-button" type="button" [disabled]="role() !== 'admin'" (click)="openCreate()">
-        <span aria-hidden="true">＋</span> Nuevo complejo
-      </button>
+      <h1 id="complex-title">Complejos</h1>
+      @if (isAdmin()) {
+        <button class="primary-button new-complex-button" type="button" (click)="openCreate()">
+          <span aria-hidden="true">＋</span> Nuevo complejo
+        </button>
+      }
     </header>
 
-    @if (complexes().length) {
+    @if (pageError()) { <div class="page-error" role="alert">{{ pageError() }} <button type="button" (click)="load()">Reintentar</button></div> }
+    @if (loading()) {
+      <section class="loading-state" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><p>Cargando complejos…</p></section>
+    } @else if (visibleComplexes().length) {
       <section class="complex-grid" aria-label="Complejos"><h2 class="visually-hidden">Complejos disponibles</h2>
-        @for (complex of complexes(); track complex.id) {
-          <app-complex-card [complex]="complex" [managers]="managers" [canManage]="true" (edit)="openEdit($event)" (remove)="deleteTarget.set($event)" />
+        @for (complex of visibleComplexes(); track complex.id) {
+          <app-complex-card [complex]="complex" [managers]="managers()" [canManage]="true" [canDelete]="isAdmin()" (edit)="openEdit($event)" (remove)="deleteTarget.set($event)" />
         }
       </section>
-    } @else { <section class="empty-state"><span aria-hidden="true">⌂</span><h2>No hay complejos asignados</h2><p>Esta persona no tiene complejos asignados en la vista de prueba.</p></section> }
-
+    } @else if (!pageError()) {
+      <section class="empty-state"><span aria-hidden="true">⌂</span><h2>No hay complejos disponibles</h2><p>Los complejos asignados a tu cuenta aparecerán en esta sección.</p></section>
+    }
   </section>
 
-  @if (formOpen()) { <app-complex-form-dialog [complex]="editing()" [managers]="managers" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" /> }
-
+  @if (formOpen()) {
+    <app-complex-form-dialog [complex]="editing()" [managers]="managers()" [managersReadOnly]="!isAdmin()" [errorMessage]="formError()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
+  }
   @if (deleteTarget(); as target) {
-    <app-confirm-dialog [title]="'¿Dar de baja ' + target.name + '?'" confirmLabel="Confirmar baja" (cancel)="deleteTarget.set(null)" (confirm)="confirmDelete()" />
+    <app-confirm-dialog [title]="'¿Dar de baja ' + target.name + '?'" message="El complejo dejará de aparecer en la lista activa." confirmLabel="Confirmar baja" (cancel)="deleteTarget.set(null)" (confirm)="confirmDelete()" />
   }
 </main>
 <app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

@@ -12,6 +12,8 @@ import { ComplexDraft, ComplexRecord, ManagerOption } from './complex.model';
 export class ComplexFormComponent implements OnChanges {
   @Input() complex: ComplexRecord | null = null;
   @Input() managers: ManagerOption[] = [];
+  @Input() managersReadOnly = false;
+  @Input() errorMessage = '';
   @Output() save = new EventEmitter<ComplexDraft>();
   @Output() cancel = new EventEmitter<void>();
 

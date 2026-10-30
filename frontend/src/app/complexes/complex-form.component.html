@@ -12,12 +12,14 @@
   </div>
 
   <fieldset class="manager-picker">
-    <legend>Encargados <span>Podés elegir más de uno</span></legend>
+    <legend>Encargados <span>{{ managersReadOnly ? 'Solo administración puede modificar asignaciones' : 'Podés elegir más de uno' }}</span></legend>
     @for (manager of managers; track manager.id) {
-      <label class="manager-option"><input type="checkbox" [checked]="isSelected(manager.id)" (change)="toggleManager(manager.id, $any($event.target).checked)" /><span><strong>{{ manager.name }}</strong><small>{{ manager.email }}</small></span></label>
+      <label class="manager-option"><input type="checkbox" [checked]="isSelected(manager.id)" [disabled]="managersReadOnly" (change)="toggleManager(manager.id, $any($event.target).checked)" /><span><strong>{{ manager.name }}</strong><small>{{ manager.email }}</small></span></label>
     }
+    @if (!managers.length && managersReadOnly) { <p class="manager-readonly-note">Se conservarán los encargados actuales del complejo.</p> }
     @if (form.controls.managerIds.touched && form.controls.managerIds.invalid) { <small class="field-error">Asigná al menos un encargado.</small> }
   </fieldset>
 
+  @if (errorMessage) { <p class="form-error" role="alert">{{ errorMessage }}</p> }
   <footer class="form-actions"><button class="secondary-button" type="button" (click)="cancel.emit()">Cancelar</button><button class="primary-button" type="submit">{{ complex ? 'Guardar cambios' : 'Crear complejo' }}</button></footer>
 </form>

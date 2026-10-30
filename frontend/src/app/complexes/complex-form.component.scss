@@ -28,6 +28,9 @@
 .manager-option span { display: grid; gap: 2px; }
 .manager-option strong { color: #29364a; font-size: .86rem; }
 .manager-option small { color: #687469; font-size: .75rem; }
+.manager-option input:disabled { cursor: not-allowed; }
+.manager-readonly-note, .form-error { grid-column: 1 / -1; margin: 0; color: #687469; font-size: .8rem; }
+.form-error { padding: 10px 12px; border-radius: 8px; background: #fff2f1; color: #a12828; }
 .form-actions { display: flex; justify-content: end; gap: 10px; margin-top: 2px; }
 .form-actions button { min-height: 40px; padding: 0 15px; border-radius: 9px; font: inherit; font-size: .84rem; font-weight: 800; }
 .form-actions .primary-button { width: auto; }

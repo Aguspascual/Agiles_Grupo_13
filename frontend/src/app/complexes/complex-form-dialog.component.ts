@@ -12,6 +12,8 @@ import { ComplexDraft, ComplexRecord, ManagerOption } from './complex.model';
 export class ComplexFormDialogComponent {
   @Input() complex: ComplexRecord | null = null;
   @Input() managers: ManagerOption[] = [];
+  @Input() managersReadOnly = false;
+  @Input() errorMessage = '';
   @Input() closing = false;
   @Output() save = new EventEmitter<ComplexDraft>();
   @Output() close = new EventEmitter<void>();

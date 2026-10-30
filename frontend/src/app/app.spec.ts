@@ -101,7 +101,7 @@ describe('HU-01: registro e inicio de sesión', () => {
     expect(root.textContent).not.toContain('Formulario listo para conectar');
   });
 
-  it('inicia sesión mediante la API y vuelve al inicio, sin abrir administración', async () => {
+  it('inicia sesión como jugador mediante la API y vuelve al inicio', async () => {
     const { root, fixture } = await open('/ingresar');
     fill(root, 'email', 'jugadora@example.com');
     fill(root, 'password', 'claveSegura123');
@@ -113,6 +113,10 @@ describe('HU-01: registro e inicio de sesión', () => {
       user: { id: 'u1', name: 'Jugadora', email: 'jugadora@example.com', zone: 'Gonnet', level: '7ma' },
       token: 'jwt-test',
     });
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/complexes').flush(
+      { error: 'sin permisos para gestionar complejos' },
+      { status: 403, statusText: 'Forbidden' },
+    );
     await fixture.whenStable();
     fixture.detectChanges();
     expect(localStorage.getItem(AuthTokenStore.storageKey)).toBe('jwt-test');
