@@ -151,6 +151,92 @@ describe('HU-07: agenda del complejo', () => {
     expect(text()).not.toContain('Se avisará al jugador.');
   });
 
+  const pendingMatch = (missingPlayers: number, names: string[]) => ({
+    id: 'm1',
+    status: missingPlayers === 0 ? 'full' : 'open',
+    targetLevel: '5ta',
+    missingPlayers,
+    players: names.map((name, index) => ({
+      name,
+      level: index === 0 ? '5ta' : '6ta',
+      ...(index === 0 ? { position: 'Drive' } : {}),
+      organizer: index === 0,
+    })),
+  });
+
+  function openMatchBody(match: ReturnType<typeof pendingMatch>, index = 0) {
+    const body = agendaBody();
+    body.courts[0].reservations[index] = {
+      ...reservation(body.courts[0].reservations[index].id, 'open_match', match.players[0].name, '18:00', '19:30', true),
+      pendingMatch: match,
+    } as never;
+    return body;
+  }
+
+  it('muestra en la celda del partido abierto el organizador y cuántos faltan', async () => {
+    await render(openMatchBody(pendingMatch(2, ['Ana Pérez', 'Luis Gómez'])));
+    const open = cell('18:00 a 19:30')!;
+    expect(open.textContent).toContain('Ana Pérez');
+    expect(open.textContent).toContain('Partido abierto');
+    expect(open.querySelector('.cell-missing')?.textContent?.trim()).toBe('Faltan 2');
+    expect(open.querySelector('.cell-phone')).toBeNull();
+  });
+
+  it('muestra "Falta 1" y "Completo" según los lugares libres', async () => {
+    await render(openMatchBody(pendingMatch(1, ['Ana Pérez', 'Luis Gómez', 'Eva Díaz'])));
+    expect(cell('18:00 a 19:30')!.querySelector('.cell-missing')?.textContent?.trim()).toBe('Falta 1');
+    fixture.destroy();
+    TestBed.resetTestingModule();
+
+    await render(openMatchBody(pendingMatch(0, ['Ana Pérez', 'Luis Gómez', 'Eva Díaz', 'Dan Ruiz'])));
+    expect(cell('18:00 a 19:30')!.querySelector('.cell-missing')?.textContent?.trim()).toBe('Completo');
+  });
+
+  it('lista los anotados en el panel con nivel, posición y marca de organizador', async () => {
+    await render(openMatchBody(pendingMatch(2, ['Ana Pérez', 'Luis Gómez'])));
+    await click(cell('18:00 a 19:30'));
+    const panel = root().querySelector('.agenda-panel')!;
+    expect(panel.textContent).toContain('Anotados (2 de 4)');
+    expect(panel.textContent).toContain('Nivel buscado: 5ta');
+    const items = [...panel.querySelectorAll('.match-players li')];
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toContain('Ana Pérez');
+    expect(items[0].textContent).toContain('5ta');
+    expect(items[0].textContent).toContain('Drive');
+    expect(items[0].textContent).toContain('Organizador');
+    expect(items[1].textContent).toContain('Luis Gómez');
+    expect(items[1].textContent).toContain('6ta');
+    expect(items[1].textContent).not.toContain('Organizador');
+    expect(panel.querySelector('.missing-tag')?.textContent?.trim()).toBe('Faltan 2');
+  });
+
+  it('muestra el resumen compacto del partido en las reservas fuera de la grilla', async () => {
+    await render(openMatchBody(pendingMatch(2, ['Marta Díaz', 'Pablo Sosa']), 2));
+    const section = root().querySelector('.agenda-offgrid')!;
+    expect(section.querySelector('.agenda-offgrid__match')?.textContent).toContain('Faltan 2');
+    expect(section.querySelector('.agenda-offgrid__match')?.textContent).toContain('Marta Díaz, Pablo Sosa');
+  });
+
+  it('informa cuántos anotados hay al cancelar y aclara que no se les avisa', async () => {
+    await render(openMatchBody(pendingMatch(1, ['Ana Pérez', 'Luis Gómez', 'Eva Díaz'])));
+    await click(cell('18:00 a 19:30'));
+    await click(button('Cancelar reserva'));
+    const message = root().querySelector('.confirm-card')?.textContent ?? '';
+    expect(message).toContain('El partido tiene 3 jugadores anotados.');
+    expect(message).toContain('Se cancelará y se liberará el turno; por ahora no se les avisa.');
+    expect(message).not.toContain('Se avisará');
+  });
+
+  it('deja intactas las reservas web y manual: sin lista de anotados ni faltantes', async () => {
+    await render(openMatchBody(pendingMatch(2, ['Ana Pérez', 'Luis Gómez']), 2));
+    const web = cell('18:00 a 19:30')!;
+    expect(web.querySelector('.cell-missing')).toBeNull();
+    expect(web.querySelector('.cell-phone')?.textContent).toContain('221-r-web');
+    await click(web);
+    expect(root().querySelector('.match-players')).toBeNull();
+    expect(root().querySelector('.agenda-panel')?.textContent).not.toContain('Anotados');
+  });
+
   it('atenúa los turnos pasados y no deja elegirlos', async () => {
     await render();
     const past = cell('16:30 a 18:00')!;

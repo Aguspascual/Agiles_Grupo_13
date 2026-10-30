@@ -82,6 +82,28 @@
                         originLabel(reservation.origin)
                       }}</span>
                     </p>
+                    @if (reservation.pendingMatch; as match) {
+                      <section class="match-players" [attr.aria-label]="signedUpLabel(match)">
+                        <h3>
+                          {{ signedUpLabel(match) }}
+                          <span class="missing-tag" [class.is-full]="match.missingPlayers === 0">{{ missingLabel(match) }}</span>
+                        </h3>
+                        <p>Nivel buscado: {{ match.targetLevel }}</p>
+                        <ul>
+                          @for (player of match.players; track $index) {
+                            <li>
+                              <strong>{{ player.name }}</strong> · {{ player.level }}
+                              @if (player.position) {
+                                <span> · {{ player.position }}</span>
+                              }
+                              @if (player.organizer) {
+                                <span class="organizer-tag">Organizador</span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      </section>
+                    }
                   }
                 </div>
                 <div class="agenda-panel__actions">
@@ -121,6 +143,11 @@
                       <span [class]="'origin-chip is-' + item.reservation.origin">{{
                         originLabel(item.reservation.origin)
                       }}</span>
+                      @if (item.reservation.pendingMatch; as match) {
+                        <span class="agenda-offgrid__match"
+                          ><strong>{{ missingLabel(match) }}</strong> · {{ playerNames(match) }}</span
+                        >
+                      }
                       @if (item.reservation.cancellable) {
                         <button
                           type="button"
@@ -152,7 +179,11 @@
     @case ('reserved') {
       @if (reservationFor(slot); as reservation) {
         <span class="cell-title">{{ reservation.contact.name }}</span>
-        <span class="cell-phone">{{ phoneLabel(reservation.contact.phone) }}</span>
+        @if (reservation.pendingMatch; as match) {
+          <span class="cell-missing" [class.is-full]="match.missingPlayers === 0">{{ missingLabel(match) }}</span>
+        } @else {
+          <span class="cell-phone">{{ phoneLabel(reservation.contact.phone) }}</span>
+        }
         <span [class]="'origin-chip is-' + reservation.origin">{{
           originLabel(reservation.origin)
         }}</span>

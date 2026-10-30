@@ -22,6 +22,25 @@ export interface AgendaSlot {
   reservationId?: string;
 }
 
+export type PendingMatchStatus = 'open' | 'full';
+
+/** Jugador anotado a un partido abierto: sin id, correo ni teléfono. */
+export interface PendingMatchPlayer {
+  name: string;
+  level: string;
+  position?: string;
+  organizer: boolean;
+}
+
+export interface PendingMatch {
+  id: string;
+  status: PendingMatchStatus;
+  targetLevel: string;
+  /** Lugares libres, de 0 a 3. */
+  missingPlayers: number;
+  players: PendingMatchPlayer[];
+}
+
 export interface AgendaReservation {
   id: string;
   origin: ReservationOrigin;
@@ -32,6 +51,8 @@ export interface AgendaReservation {
   contact: { name: string; phone: string };
   /** Lo calcula el servidor: la reserva vigente todavía no terminó. */
   cancellable: boolean;
+  /** Solo en reservas `open_match` que tienen partido (TDD-0015 v2). */
+  pendingMatch?: PendingMatch;
 }
 
 export interface AgendaCourt {
@@ -44,7 +65,7 @@ export interface AgendaCourt {
 
 /**
  * Respuesta de `GET /api/v1/complexes/{complexId}/agenda?date=AAAA-MM-DD` (TDD-0015).
- * `pendingMatch` (partidos pendientes) todavía no existe: depende de HU-09/10/11.
+ * Las reservas `open_match` traen `pendingMatch` con los anotados y los lugares que faltan (v2).
  */
 export interface Agenda {
   complex: AgendaComplex;
@@ -189,7 +210,7 @@ function parseReservation(value: unknown): AgendaReservation {
   ) {
     throw new Error('Datos de reserva inválidos');
   }
-  return {
+  const parsed: AgendaReservation = {
     id: value['id'] as string,
     origin: value['origin'] as ReservationOrigin,
     startsAt: value['startsAt'] as string,
@@ -199,6 +220,45 @@ function parseReservation(value: unknown): AgendaReservation {
     contact: { name: value['contact']['name'], phone: value['contact']['phone'] },
     cancellable: value['cancellable'],
   };
+  if (value['pendingMatch'] !== undefined) parsed.pendingMatch = parsePendingMatch(value['pendingMatch']);
+  return parsed;
+}
+
+function parsePendingMatch(value: unknown): PendingMatch {
+  if (
+    !isRecord(value) ||
+    typeof value['id'] !== 'string' ||
+    (value['status'] !== 'open' && value['status'] !== 'full') ||
+    typeof value['targetLevel'] !== 'string' ||
+    !Number.isInteger(value['missingPlayers']) ||
+    (value['missingPlayers'] as number) < 0 ||
+    (value['missingPlayers'] as number) > 3 ||
+    !Array.isArray(value['players'])
+  ) {
+    throw new Error('Datos de partido inválidos');
+  }
+  return {
+    id: value['id'],
+    status: value['status'],
+    targetLevel: value['targetLevel'],
+    missingPlayers: value['missingPlayers'] as number,
+    players: value['players'].map(parsePendingMatchPlayer),
+  };
+}
+
+function parsePendingMatchPlayer(value: unknown): PendingMatchPlayer {
+  if (
+    !isRecord(value) ||
+    typeof value['name'] !== 'string' ||
+    typeof value['level'] !== 'string' ||
+    typeof value['organizer'] !== 'boolean' ||
+    (value['position'] !== undefined && typeof value['position'] !== 'string')
+  ) {
+    throw new Error('Datos de jugador inválidos');
+  }
+  const player: PendingMatchPlayer = { name: value['name'], level: value['level'], organizer: value['organizer'] };
+  if (typeof value['position'] === 'string') player.position = value['position'];
+  return player;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

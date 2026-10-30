@@ -14,6 +14,7 @@ import { GridCourt, GridSlot, SlotState } from '../slot-grid/slot-grid.model';
 import { CLOCK } from '../slot-grid/slot-grid.service';
 import { Agenda, AgendaApiService, AgendaCourt, AgendaReservation, AgendaSlotStatus, ReservationOrigin } from './agenda-api.service';
 import { ManualContact, ManualReservationDialogComponent } from './manual-reservation-dialog.component';
+import { cancelOpenMatchNotice, missingLabel, playerNames, signedUpLabel } from './pending-match-labels';
 
 /** Misma ventana que la API: hoy y los 13 días siguientes. */
 export const AGENDA_WINDOW_DAYS = 14;
@@ -246,7 +247,7 @@ export class AgendaPage implements OnDestroy {
 
   cancelMessage(reservation: AgendaReservation): string {
     const base = `${reservation.contact.name} · ${reservation.startsAt} a ${reservation.endsAt}.`;
-    if (reservation.origin === 'open_match') return `${base} El partido abierto se cancelará.`;
+    if (reservation.origin === 'open_match') return `${base} ${cancelOpenMatchNotice(reservation.pendingMatch)}`;
     return reservation.origin === 'web' ? `${base} Se avisará al jugador.` : base;
   }
 
@@ -366,6 +367,9 @@ export class AgendaPage implements OnDestroy {
     return toDateKey(offset >= AGENDA_WINDOW_DAYS ? addDays(today, AGENDA_WINDOW_DAYS - 1) : date);
   }
 
+  readonly missingLabel = missingLabel;
+  readonly signedUpLabel = signedUpLabel;
+  readonly playerNames = playerNames;
   readonly permissionError = PERMISSION_ERROR;
   readonly connectionError = CONNECTION_ERROR;
 }
