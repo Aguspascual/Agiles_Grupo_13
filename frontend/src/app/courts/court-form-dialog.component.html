@@ -15,7 +15,7 @@
     </h2>
     <app-court-form
       [court]="court"
-      [disabled]="closing"
+      [disabled]="closing || saving"
       (save)="save.emit($event)"
       (cancel)="close.emit()"
     />

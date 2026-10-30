@@ -219,3 +219,18 @@ h1 {
     transition-duration: 0.01ms !important;
   }
 }
+.status-message {
+  margin: 0;
+  color: #69766c;
+  font-size: 0.85rem;
+}
+.missing-complex button {
+  margin-top: 14px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #006c49;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}

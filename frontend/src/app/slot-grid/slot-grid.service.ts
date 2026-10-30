@@ -3,9 +3,8 @@ import { Observable, of } from 'rxjs';
 import { AvailabilityPreviewStore } from '../availability/availability-preview.store';
 import { BookingPreviewStore } from '../bookings/booking-preview.store';
 import { ComplexPreviewStore } from '../complexes/complex-preview.store';
-import { CourtPreviewStore } from '../courts/court-preview.store';
 import { buildDayGrid } from './slot-grid.builder';
-import { demoScheduleFor } from './demo-schedule';
+import { DEMO_COURTS, demoScheduleFor } from './demo-schedule';
 import { DayGrid } from './slot-grid.model';
 
 /** Reloj inyectable para poder probar turnos pasados. */
@@ -25,7 +24,6 @@ export type DayGridResult = { status: 'ok'; grid: DayGrid } | { status: 'not-fou
 @Injectable({ providedIn: 'root' })
 export class SlotGridService {
   private readonly complexes = inject(ComplexPreviewStore);
-  private readonly courts = inject(CourtPreviewStore);
   private readonly availability = inject(AvailabilityPreviewStore);
   private readonly bookings = inject(BookingPreviewStore);
   private readonly now = inject(CLOCK);
@@ -36,9 +34,7 @@ export class SlotGridService {
 
     const grid = buildDayGrid({
       complex: { id: complex.id, name: complex.name, address: complex.address, zone: complex.zone },
-      courts: this.courts
-        .forComplex(complex.id)
-        .map(({ id, name, covered }) => ({ id, name, covered })),
+      courts: DEMO_COURTS.filter((court) => court.complexId === complex.id).map(({ id, name, covered }) => ({ id, name, covered })),
       date,
       now: this.now(),
       slotsFor: (courtId, day) =>

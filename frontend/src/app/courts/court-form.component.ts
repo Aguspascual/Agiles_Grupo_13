@@ -30,11 +30,9 @@ export class CourtFormComponent implements OnChanges {
     imageDataUrl: new FormControl<string | null>(null),
     features: new FormControl<CourtFeatureId[]>([], { nonNullable: true }),
   });
-  submitted = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['court']) {
-      this.submitted = false;
       this.imageError = '';
       this.form.reset({
         name: this.court?.name ?? '',
@@ -90,11 +88,10 @@ export class CourtFormComponent implements OnChanges {
   }
 
   submit(): void {
-    if (this.disabled || this.submitted) return;
+    if (this.disabled) return;
     this.form.controls.name.setValue(this.form.controls.name.value.trim());
     this.form.markAllAsTouched();
     if (!this.form.valid) return;
-    this.submitted = true;
     this.save.emit(this.form.getRawValue());
   }
 

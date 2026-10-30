@@ -12,10 +12,8 @@ export interface CourtRecord {
   complexId: string;
   name: string;
   covered: boolean;
-  hasFutureReservations: boolean;
   imageDataUrl: string | null;
   features: CourtFeatureId[];
 }
 
-export type CourtDraft = Pick<CourtRecord, 'name' | 'covered'> &
-  Partial<Pick<CourtRecord, 'imageDataUrl' | 'features'>>;
+export type CourtDraft = Omit<CourtRecord, 'id' | 'complexId'>;

@@ -38,6 +38,8 @@ describe('HU-03: formulario de canchas', () => {
     fixture.detectChanges();
     const form = fixture.nativeElement.querySelector('form');
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
     expect(save).toHaveBeenCalledTimes(1);
@@ -47,6 +49,11 @@ describe('HU-03: formulario de canchas', () => {
       imageDataUrl: null,
       features: [],
     });
+
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(save).toHaveBeenCalledTimes(2);
     fixture.destroy();
   });
 
@@ -111,7 +118,6 @@ describe('HU-03: formulario de canchas', () => {
       complexId: 'complex-gonnet',
       name: 'Cancha 1',
       covered: true,
-      hasFutureReservations: false,
       imageDataUrl: 'data:image/webp;base64,dGVzdA==',
       features: ['lighting', 'acrylicSurface'] as CourtFeatureId[],
     });

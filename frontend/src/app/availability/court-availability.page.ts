@@ -1,11 +1,12 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { ComplexAdminSidebarComponent } from '../complexes/complex-admin-sidebar.component';
+import { ComplexApiService } from '../complexes/complex-api.service';
 import { ComplexPreviewStore } from '../complexes/complex-preview.store';
-import { DemoRole } from '../complexes/complex.model';
-import { CourtPreviewStore } from '../courts/court-preview.store';
+import { ComplexRecord, DemoRole } from '../complexes/complex.model';
+import { CourtApiService } from '../courts/court-api.service';
 import { ToastComponent } from '../shared/toast.component';
 import { AvailabilityCalendarComponent } from './availability-calendar.component';
 import { AvailabilityPreviewStore } from './availability-preview.store';
@@ -32,10 +33,11 @@ interface RouteIds {
   templateUrl: './court-availability.page.html',
   styleUrl: './court-availability.page.scss',
 })
-export class CourtAvailabilityPage implements OnDestroy {
+export class CourtAvailabilityPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly complexStore = inject(ComplexPreviewStore);
-  private readonly courtStore = inject(CourtPreviewStore);
+  private readonly complexApi = inject(ComplexApiService);
+  private readonly courtApi = inject(CourtApiService);
   private readonly availabilityStore = inject(AvailabilityPreviewStore);
   private readonly scheduleRevision = signal(0);
   private readonly routeIds = toSignal(
@@ -55,13 +57,14 @@ export class CourtAvailabilityPage implements OnDestroy {
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly currentComplexId = computed(() => this.routeIds().complexId);
+  private readonly apiComplexes = signal<ComplexRecord[]>([]);
   readonly complex = computed(
-    () => this.complexStore.complexes().find((item) => item.id === this.currentComplexId()) ?? null,
+    () => this.apiComplexes().find((item) => item.id === this.currentComplexId()) ?? null,
   );
+  readonly courts = this.courtApi.courts;
   readonly court = computed(
-    () => this.courtStore.courts().find((item) => item.id === this.routeIds().courtId) ?? null,
+    () => this.courts().find((item) => item.id === this.routeIds().courtId) ?? null,
   );
-  readonly courts = computed(() => this.courtStore.forComplex(this.currentComplexId()));
   readonly rules = computed(() => {
     this.scheduleRevision();
     const court = this.court();
@@ -79,6 +82,12 @@ export class CourtAvailabilityPage implements OnDestroy {
   readonly role = signal<DemoRole>('admin');
   readonly managerId = signal(this.managers[0].id);
   readonly toastMessage = signal('');
+
+  ngOnInit(): void {
+    const complexId = this.currentComplexId();
+    this.complexApi.list().subscribe({ next: (complexes) => this.apiComplexes.set(complexes), error: () => undefined });
+    this.courtApi.load(complexId).subscribe({ error: () => undefined });
+  }
 
   previousDay(): void {
     if (this.previousDayDisabled()) return;

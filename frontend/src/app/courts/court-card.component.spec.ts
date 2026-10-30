@@ -11,7 +11,7 @@ describe('HU-04: acceso a horarios desde la tarjeta de cancha', () => {
     const fixture = TestBed.createComponent(CourtCardComponent);
     fixture.componentRef.setInput('court', {
       id: 'court-gonnet-1', complexId: 'complex-gonnet', name: 'Cancha 1', covered: true,
-      hasFutureReservations: false, imageDataUrl: null, features: [],
+      imageDataUrl: null, features: [],
     });
     fixture.detectChanges();
     return fixture;
