@@ -37,10 +37,10 @@
         <section class="detail-section roster-section" aria-labelledby="roster-title">
           <div class="section-heading"><div><h3 id="roster-title">Ficha de jugadores</h3><p>Categoría y lado de juego declarados</p></div><span class="open-spots">{{ freeSpots }} {{ freeSpots === 1 ? 'lugar disponible' : 'lugares disponibles' }}</span></div>
           <div class="roster-grid">
-            @for (player of match.players; track player.initials; let index = $index) {
+            @for (player of match.players; track player.initials) {
               <article class="roster-card" [class.roster-card--current-user]="isCurrentPlayer(player.name)">
                 <span class="roster-avatar" [class]="'roster-avatar tone-' + player.tone">{{ player.initials }}</span>
-                <div class="roster-card__head"><b>{{ player.name }}</b>@if (isCurrentPlayer(player.name)) { <small>Vos</small> } @else if (index === 0) { <small>Organizador</small> }</div>
+                <div class="roster-card__head"><b>{{ player.name }}</b>@if (isCurrentPlayer(player.name)) { <small>Vos</small> } @else if (player.organizer) { <small>Organizador</small> }</div>
                 <dl><div><dt>Posición</dt><dd>{{ player.position ?? 'No declarada' }}</dd></div><div><dt>Categoría</dt><dd>{{ player.level }}</dd></div></dl>
               </article>
             } @empty {
@@ -61,6 +61,13 @@
           <div class="feature-list">@for (feature of match.features; track feature) { <span><i aria-hidden="true">✓</i>{{ feature }}</span> }</div>
           @if (alreadyJoined) {
             <p class="already-joined" role="status">✓ Ya estás inscripto en este partido</p>
+            @if (canLeave) {
+              <button #leaveButton class="leave-match-button" type="button" [disabled]="leaving" (click)="requestLeave()">
+                {{ leaving ? 'Procesando…' : 'Bajarme del partido' }}
+              </button>
+            } @else {
+              <p class="leave-unavailable" role="note">La baja cierra 2 horas antes del partido.</p>
+            }
           } @else {
             <button #joinButton class="join-match-button" type="button" (click)="requestJoin()" [disabled]="freeSpots === 0">Unirme al partido</button>
           }
@@ -82,6 +89,24 @@
           <div class="join-confirm-actions">
             <button class="join-confirm-cancel" type="button" (click)="cancelJoin()">Cancelar</button>
             <button #confirmJoinButton class="join-confirm-submit" type="button" (click)="confirmJoin()">Sí, unirme</button>
+          </div>
+        </section>
+      </div>
+    }
+    @if (leaveConfirmationOpen) {
+      <div class="join-confirm-backdrop" (click)="cancelLeave()">
+        <section class="join-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="leave-confirm-title" (click)="$event.stopPropagation()">
+          <span class="join-confirm-icon leave-confirm-icon" aria-hidden="true">!</span>
+          <h3 id="leave-confirm-title">¿Querés bajarte del partido?</h3>
+          <p>{{ match.club }} · {{ match.day }} a las {{ match.time }}</p>
+          @if (match.players.length === 1) {
+            <p>Sos el último jugador. El partido se eliminará y el turno quedará libre.</p>
+          } @else {
+            <p>Tu lugar quedará disponible para otro jugador.</p>
+          }
+          <div class="join-confirm-actions">
+            <button class="join-confirm-cancel" type="button" (click)="cancelLeave()">Seguir anotado</button>
+            <button #confirmLeaveButton class="leave-confirm-submit" type="button" [disabled]="leaving" (click)="confirmLeave()">Sí, bajarme</button>
           </div>
         </section>
       </div>

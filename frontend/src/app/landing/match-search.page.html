@@ -130,7 +130,7 @@
         ><span>Club específico</span
         ><select name="club" [(ngModel)]="selectedClub">
           <option>Todos los clubes de La Plata</option>
-          @for (match of matches; track match.club) {
+          @for (match of matches(); track match.club) {
             <option [value]="match.club">{{ match.club }}</option>
           }
         </select></label
@@ -144,15 +144,15 @@
     </aside>
 
     <div class="search-results">
-      @if (loadingMatches) {
+      @if (loadingMatches()) {
         <div class="search-empty" role="status"><h3>Cargando partidos…</h3></div>
-      } @else if (matchesError) {
+      } @else if (matchesError()) {
         <div class="search-empty" role="alert">
           <h3>No pudimos cargar los partidos</h3>
-          <p>{{ matchesError }}</p>
+          <p>{{ matchesError() }}</p>
           <button type="button" (click)="loadMatches()">Reintentar</button>
         </div>
-      } @else if (!matches.length) {
+      } @else if (!matches().length) {
         <div class="search-empty search-empty--no-matches" role="status">
           <span aria-hidden="true">⌕</span>
           <h3>Todavía no hay partidos abiertos</h3>
@@ -194,8 +194,8 @@
   </section>
   <app-landing-footer />
 </main>
-  @if (selectedMatch; as match) {
-    <app-match-detail-dialog [match]="match" (close)="closeDetails()" (join)="joinMatch($event)" />
+  @if (selectedMatch(); as match) {
+    <app-match-detail-dialog [match]="match" [leaving]="leavingMatchId() === match.id" (close)="closeDetails()" (join)="joinMatch($event)" (leave)="leaveMatch($event)" />
   }
   @if (createDialogOpen) {
     <app-create-match-dialog
@@ -204,4 +204,4 @@
       (fullMatchCreated)="refreshAfterFullMatch()"
     />
   }
-  <app-toast [message]="toastMessage" (dismiss)="toastMessage = ''" />
+  <app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

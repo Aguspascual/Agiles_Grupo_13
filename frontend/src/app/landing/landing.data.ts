@@ -4,6 +4,7 @@ export interface PlayerPreview {
   level: string;
   tone: string;
   position?: 'Drive' | 'Revés' | 'Indistinto';
+  organizer?: boolean;
 }
 
 export interface MatchPreview {

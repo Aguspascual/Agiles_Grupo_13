@@ -21,6 +21,11 @@ app-match-detail-dialog {
   .close-button:focus-visible { outline: 3px solid #43c593; outline-offset: 2px; }
   .join-match-button { width: 100%; min-height: 44px; margin-top: 16px; border: 0; border-radius: 10px; background: #07865f; color: #fff; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; transition: background .16s ease, transform .16s ease; }
   .already-joined { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 16px 0 0; border: 1px solid #bce8d2; border-radius: 10px; background: #effaf4; color: #087a59; font-size: .78rem; font-weight: 800; }
+  .leave-match-button { width: 100%; min-height: 42px; margin-top: 9px; border: 1px solid #f0c9cd; border-radius: 10px; background: #fff; color: #a72d3a; font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; transition: background .16s ease, transform .16s ease; }
+  .leave-match-button:hover:not(:disabled) { transform: translateY(-1px); background: #fff2f3; }
+  .leave-match-button:focus-visible { outline: 3px solid #43c593; outline-offset: 3px; }
+  .leave-match-button:disabled, .leave-confirm-submit:disabled { cursor: progress; opacity: .6; }
+  .leave-unavailable { margin: 9px 0 0; color: #7a6370; font-size: .68rem; text-align: center; }
   .roster-card--current-user { outline: 2px solid #72d3a9; outline-offset: -2px; }
   .join-match-button:hover:not(:disabled) { transform: translateY(-1px); background: #066d4e; }
   .join-match-button:focus-visible { outline: 3px solid #43c593; outline-offset: 3px; }
@@ -34,6 +39,8 @@ app-match-detail-dialog {
   .join-confirm-actions button { min-height: 42px; padding: 0 17px; border-radius: 9px; font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; }
   .join-confirm-cancel { border: 1px solid #dce4df; background: #fff; color: #50605a; }
   .join-confirm-submit { border: 1px solid #07865f; background: #07865f; color: #fff; }
+  .leave-confirm-icon { background: #fff0f1; color: #a72d3a; }
+  .leave-confirm-submit { border: 1px solid #b83c48; background: #b83c48; color: #fff; }
   .join-confirm-actions button:focus-visible { outline: 3px solid #43c593; outline-offset: 3px; }
   .match-detail-body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; display: grid; grid-template-columns: minmax(0,1.8fr) minmax(240px,.8fr); align-items: start; gap: 18px; padding: 18px 22px 22px; }
   .match-detail-body::-webkit-scrollbar { display: none; }
@@ -96,5 +103,5 @@ app-match-detail-dialog {
   .match-detail-dialog.is-closing { animation: detail-drop-out .22s ease both; }
   @media (max-width: 760px) { .match-detail-backdrop { padding: 10px; } .match-detail-dialog { width: 100%; height: calc(100vh - 20px); height: calc(100dvh - 20px); max-height: 900px; border-radius: 17px; } .match-detail-header { align-items: flex-start; flex-wrap: wrap; min-height: 0; padding: 12px 50px 10px 14px; } .match-detail-icon { width: 34px; height: 34px; flex-basis: 34px; } .match-detail-heading { align-items: flex-start; gap: 9px; } .match-detail-meta { display: grid; gap: 4px; font-size: .62rem; } .player-count { margin-left: 43px; padding: 8px 10px; } .match-detail-body { grid-template-columns: 1fr; gap: 11px; padding: 11px 12px 16px; } .match-detail-main { gap: 11px; } .detail-section, .price-card { padding: 13px; } .venue-card { display: grid; grid-template-columns: 110px 1fr; align-items: center; } .venue-card img { height: 84px; } .roster-grid { gap: 6px; } }
   @media (max-width: 420px) { .court-diagram { padding: 10px 8px; border-width: 6px; } .court-slots { gap: 7px 7%; } .court-player { min-height: 58px; gap: 5px; padding: 6px; } .court-avatar, .roster-avatar { width: 27px; height: 27px; flex-basis: 27px; font-size: .5rem; } .court-player-copy b { font-size: .59rem; } .court-player-copy small { font-size: .51rem; } .roster-card { grid-template-columns: 29px minmax(0,1fr); gap: 0 6px; padding: 8px 6px; } .roster-card dl { gap: 5px; flex-wrap: wrap; } .roster-card dt, .roster-card dd { font-size: .49rem; } }
-  @media (prefers-reduced-motion: reduce) { .match-detail-backdrop, .match-detail-dialog, .join-confirm-backdrop, .join-confirm-dialog { animation: none; } .join-match-button { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .match-detail-backdrop, .match-detail-dialog, .join-confirm-backdrop, .join-confirm-dialog { animation: none; } .join-match-button, .leave-match-button { transition: none; } }
 }

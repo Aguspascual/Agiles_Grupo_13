@@ -11,11 +11,16 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
   @Input({ required: true }) match!: MatchPreview;
   @Output() close = new EventEmitter<void>();
   @Output() join = new EventEmitter<MatchPreview>();
+  @Output() leave = new EventEmitter<MatchPreview>();
+  @Input() leaving = false;
   @ViewChild('closeButton') private closeButton?: ElementRef<HTMLButtonElement>;
   @ViewChild('joinButton') private joinButton?: ElementRef<HTMLButtonElement>;
   @ViewChild('confirmJoinButton') private confirmJoinButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('leaveButton') private leaveButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('confirmLeaveButton') private confirmLeaveButton?: ElementRef<HTMLButtonElement>;
   closing = false;
   confirmationOpen = false;
+  leaveConfirmationOpen = false;
   private closeTimer?: ReturnType<typeof setTimeout>;
 
   ngAfterViewInit(): void {
@@ -27,6 +32,11 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (this.confirmationOpen) {
       this.confirmationOpen = false;
       setTimeout(() => this.joinButton?.nativeElement.focus());
+      return;
+    }
+    if (this.leaveConfirmationOpen) {
+      this.leaveConfirmationOpen = false;
+      setTimeout(() => this.leaveButton?.nativeElement.focus());
       return;
     }
     this.requestClose();
@@ -58,6 +68,21 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     this.requestClose();
   }
 
+  requestLeave(): void {
+    this.leaveConfirmationOpen = true;
+    setTimeout(() => this.confirmLeaveButton?.nativeElement.focus());
+  }
+
+  cancelLeave(): void {
+    this.leaveConfirmationOpen = false;
+    setTimeout(() => this.leaveButton?.nativeElement.focus());
+  }
+
+  confirmLeave(): void {
+    this.leaveConfirmationOpen = false;
+    this.leave.emit(this.match);
+  }
+
   ngOnDestroy(): void {
     if (this.closeTimer) clearTimeout(this.closeTimer);
   }
@@ -87,6 +112,14 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
 
   get alreadyJoined(): boolean {
     return this.match.players.some((player) => this.isCurrentPlayer(player.name));
+  }
+
+  get canLeave(): boolean {
+    if (!this.match.date) return false;
+    const time = this.match.time.match(/(\d{1,2}:\d{2})/u)?.[1];
+    if (!time) return false;
+    const startsAt = new Date(`${this.match.date}T${time}:00-03:00`).getTime();
+    return Number.isFinite(startsAt) && startsAt - Date.now() >= 2 * 60 * 60 * 1000;
   }
 
   get levelWarning(): string {

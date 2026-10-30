@@ -21,6 +21,11 @@ h2 span { color: #7d8797; font-weight: 500; }
 .my-card__cancel:hover:not(:disabled) { background: #fff4f4; }
 .my-card__cancel:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
 .my-card__cancel:disabled { opacity: .55; cursor: not-allowed; }
+.my-card__leave { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 1px solid #f0c9cd; border-radius: 9px; background: #fff; color: #a72d3a; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
+.my-card__leave:hover:not(:disabled) { background: #fff2f3; }
+.my-card__leave:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
+.my-card__leave:disabled { opacity: .55; cursor: not-allowed; }
+.my-card__leave-expired { color: #7a6370; font-size: .72rem; }
 @media (max-width: 760px) {
   .my-card__topline { padding: 15px 16px 0; }
   .my-card__body { gap: 12px; padding: 14px 16px 16px; }

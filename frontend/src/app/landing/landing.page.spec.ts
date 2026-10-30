@@ -166,7 +166,7 @@ describe('HU-00: landing pública', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(root.textContent).toContain('Te sumaste al partido en Test club 0.');
-    expect(fixture.componentInstance.matches[0].openSpots).toBe(1);
+    expect(fixture.componentInstance.matches()[0].openSpots).toBe(1);
     fixture.destroy();
   });
 

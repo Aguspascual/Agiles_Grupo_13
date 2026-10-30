@@ -40,4 +40,11 @@
       Cancelar reserva
     </button>
   }
+  @if (canLeave()) {
+    <button type="button" class="my-card__leave" [disabled]="saving()" (click)="leave.emit(item())">
+      Bajarme del partido
+    </button>
+  } @else if (isLeaveExpired()) {
+    <span class="my-card__leave-expired" role="note">Baja cerrada (menos de 2 h)</span>
+  }
 </div>

@@ -7,6 +7,7 @@ import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
 import { ToastComponent } from '../shared/toast.component';
+import { MatchApiService } from '../matches/match-api.service';
 import { MyReservationCardComponent } from './my-reservation-card.component';
 import { MyReservationsSummaryComponent } from './my-reservations-summary.component';
 import { MyReservationItem, MyReservationView, ReservationApiService } from './reservation-api.service';
@@ -29,6 +30,7 @@ type ListStatus = 'loading' | 'ready' | 'error';
 })
 export class MyReservationsPage implements OnInit {
   private readonly api = inject(ReservationApiService);
+  private readonly matchApi = inject(MatchApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -44,6 +46,7 @@ export class MyReservationsPage implements OnInit {
   readonly loadingMore = signal(false);
   readonly saving = signal(false);
   readonly cancelTarget = signal<MyReservationItem | null>(null);
+  readonly leaveTarget = signal<MyReservationItem | null>(null);
   readonly toastMessage = signal('');
   readonly nextItem = computed(() =>
     this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : null,
@@ -153,6 +156,31 @@ export class MyReservationsPage implements OnInit {
     });
   }
 
+  requestLeave(item: MyReservationItem): void {
+    if (this.saving() || item.kind !== 'match' || item.status !== 'reserved') return;
+    if (new Date(item.startsAt).getTime() - Date.now() < 2 * 60 * 60 * 1000) return;
+    this.leaveTarget.set(item);
+  }
+
+  confirmLeave(): void {
+    const target = this.leaveTarget();
+    if (!target || this.saving()) return;
+    this.saving.set(true);
+    this.matchApi.leave(target.id).subscribe({
+      next: (result) => this.finishLeave(
+        result.deleted ? 'Te bajaste del partido. El partido se eliminó y el turno quedó libre.' : 'Te bajaste del partido. Tu lugar quedó disponible.',
+        true,
+      ),
+      error: (error: unknown) => {
+        const status = error instanceof HttpErrorResponse ? error.status : -1;
+        if (status === 409) this.finishLeave('No podés bajarte: la baja cerró 2 horas antes o el partido cambió.', true);
+        else if (status === 404) this.finishLeave('El partido ya no está disponible.', true);
+        else if (status === 0) this.finishLeave('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.', false);
+        else this.finishLeave('No pudimos procesar la baja. Intentá otra vez.', false);
+      },
+    });
+  }
+
   dateLabel(item: MyReservationItem): string {
     const label = format(item, { weekday: 'long', day: 'numeric', month: 'long' }, item.startsAt);
     return label.charAt(0).toLocaleUpperCase('es-AR') + label.slice(1);
@@ -168,6 +196,13 @@ export class MyReservationsPage implements OnInit {
   private finishCancel(message: string, reload: boolean): void {
     this.saving.set(false);
     this.cancelTarget.set(null);
+    this.showToast(message);
+    if (reload) this.load();
+  }
+
+  private finishLeave(message: string, reload: boolean): void {
+    this.saving.set(false);
+    this.leaveTarget.set(null);
     this.showToast(message);
     if (reload) this.load();
   }

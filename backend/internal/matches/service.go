@@ -137,7 +137,11 @@ func (s *Service) leave(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, err)
 		return
 	}
-	auth.WriteJSON(w, http.StatusOK, map[string]any{"match": result})
+	if result.Deleted {
+		auth.WriteJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+		return
+	}
+	auth.WriteJSON(w, http.StatusOK, map[string]any{"match": result.Match})
 }
 
 func requestHasBody(r *http.Request) bool {
@@ -191,8 +195,6 @@ func (s *Service) writeError(w http.ResponseWriter, err error) {
 		auth.WriteError(w, http.StatusBadRequest, "solicitud inválida")
 	case errors.Is(err, ErrDuplicate):
 		auth.WriteError(w, http.StatusConflict, "ya estás anotado en este partido")
-	case errors.Is(err, ErrOrganizer):
-		auth.WriteError(w, http.StatusConflict, "el organizador no puede bajarse; debe cancelar el partido")
 	case errors.Is(err, ErrTooLate):
 		auth.WriteError(w, http.StatusConflict, "ya no podés bajarte: faltan menos de 2 horas o el partido ya comenzó")
 	case errors.Is(err, ErrConflict):
