@@ -272,7 +272,16 @@ func TestHTTPManualReservationRaces(t *testing.T) {
 // Exercise the actual runner over pre-007 rows, including cancelled reservations and notices.
 func TestManualReservationMigrationPreservesWebData(t *testing.T) {
 	f := newManualFixture(t)
-	if _, err := f.db.Exec(f.ctx, `DROP TABLE reservation_notices; DROP TABLE reservations; DELETE FROM schema_migrations WHERE version='007_manual_reservations.sql'`); err != nil {
+	// Rebuild the pre-006 schema in this disposable fixture, including later dependents.
+	if _, err := f.db.Exec(f.ctx, `
+		DROP TABLE pending_match_notices, pending_match_players;
+		DROP TABLE pending_matches;
+		DROP TABLE reservation_notices, reservations;
+		DELETE FROM schema_migrations WHERE version IN (
+			'006_reservation_cancellation_notice.sql',
+			'007_manual_reservations.sql',
+			'008_pending_matches.sql'
+		)`); err != nil {
 		t.Fatal(err)
 	}
 	old, err := migrations.Files.ReadFile("005_reservations.sql")
