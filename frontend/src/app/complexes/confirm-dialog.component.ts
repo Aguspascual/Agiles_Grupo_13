@@ -10,6 +10,7 @@ export class ConfirmDialogComponent {
   @Input() title = '¿Confirmás esta acción?';
   @Input() message = '';
   @Input() confirmLabel = 'Confirmar';
+  @Input() cancelLabel = 'Cancelar';
   @Output() confirm = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
 }
