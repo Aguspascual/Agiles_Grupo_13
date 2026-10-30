@@ -23,7 +23,7 @@
                 <article class="court-player" [class.court-player--empty]="!slot.player">
                   @if (slot.player) {
                     <span class="court-avatar" [class]="'court-avatar tone-' + slot.player.tone">{{ slot.player.initials }}</span>
-                    <span class="court-player-copy"><b>{{ slot.player.name }}</b><small>{{ slot.position }} · Nivel {{ slot.player.level }}</small></span>
+                    <span class="court-player-copy"><b>{{ slot.player.name }} @if (slot.isCurrentUser) { <small>(Vos)</small> }</b><small>{{ slot.position }} · Nivel {{ slot.player.level }}</small></span>
                   } @else {
                     <span class="court-avatar court-avatar--empty" aria-hidden="true">+</span>
                     <span class="court-player-copy"><b>Tu lugar está acá</b><small>{{ slot.position }} · Pareja B</small></span>
@@ -38,9 +38,9 @@
           <div class="section-heading"><div><h3 id="roster-title">Ficha de jugadores</h3><p>Categoría y lado de juego declarados</p></div><span class="open-spots">{{ freeSpots }} {{ freeSpots === 1 ? 'lugar disponible' : 'lugares disponibles' }}</span></div>
           <div class="roster-grid">
             @for (player of match.players; track player.initials; let index = $index) {
-              <article class="roster-card">
+              <article class="roster-card" [class.roster-card--current-user]="isCurrentPlayer(player.name)">
                 <span class="roster-avatar" [class]="'roster-avatar tone-' + player.tone">{{ player.initials }}</span>
-                <div class="roster-card__head"><b>{{ player.name }}</b>@if (index === 0) { <small>Organizador</small> }</div>
+                <div class="roster-card__head"><b>{{ player.name }}</b>@if (isCurrentPlayer(player.name)) { <small>Vos</small> } @else if (index === 0) { <small>Organizador</small> }</div>
                 <dl><div><dt>Posición</dt><dd>{{ player.position ?? 'No declarada' }}</dd></div><div><dt>Categoría</dt><dd>{{ player.level }}</dd></div></dl>
               </article>
             } @empty {
@@ -59,7 +59,11 @@
           <p class="aside-fact"><b>Duración</b><span>{{ match.duration }}</span></p>
           <p class="aside-fact"><b>Complejo</b><span>{{ match.club }}</span></p>
           <div class="feature-list">@for (feature of match.features; track feature) { <span><i aria-hidden="true">✓</i>{{ feature }}</span> }</div>
-          <button #joinButton class="join-match-button" type="button" (click)="requestJoin()" [disabled]="freeSpots === 0">Unirme al partido</button>
+          @if (alreadyJoined) {
+            <p class="already-joined" role="status">✓ Ya estás inscripto en este partido</p>
+          } @else {
+            <button #joinButton class="join-match-button" type="button" (click)="requestJoin()" [disabled]="freeSpots === 0">Unirme al partido</button>
+          }
         </section>
         <section class="venue-card">
           <img [src]="match.image" [alt]="match.imageAlt" />
