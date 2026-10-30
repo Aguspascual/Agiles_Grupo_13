@@ -102,4 +102,21 @@ describe('HU-04: editor semanal con autoguardado', () => {
     expect(monday.controls.intervals.length).toBe(1);
     fixture.destroy();
   });
-});
+
+  it('acepta una franja nocturna (17:00 a 01:00) junto a una de la mañana y la emite', async () => {
+    const fixture = await renderForm();
+    const emitted = vi.fn();
+    fixture.componentInstance.rulesChange.subscribe(emitted);
+    const monday = fixture.componentInstance.form.controls.days.at(0);
+    monday.controls.intervals.at(0).controls.opensAt.setValue('08:00');
+    fixture.componentInstance.addInterval(0);
+    monday.controls.intervals.at(1).controls.opensAt.setValue('17:00');
+    monday.controls.intervals.at(1).controls.closesAt.setValue('01:00');
+
+    await vi.waitFor(() => expect(emitted).toHaveBeenCalled());
+    expect(monday.errors).toBeNull();
+    expect(fixture.componentInstance.validationMessage).toBe('');
+    const rules = emitted.mock.calls.at(-1)![0] as WeeklyScheduleRule[];
+    expect(rules[0].intervals.map((item) => `${item.opensAt}-${item.closesAt}`)).toEqual(['08:00-12:00', '17:00-01:00']);
+    fixture.destroy();
+  });});

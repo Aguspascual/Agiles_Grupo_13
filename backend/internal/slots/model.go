@@ -60,10 +60,13 @@ type Response struct {
 
 // CourtData is the read-only schedule snapshot used to produce the current grid.
 type CourtData struct {
-	ID       string
-	Name     string
-	Covered  bool
+	ID      string
+	Name    string
+	Covered bool
+	// Schedule is the schedule of the requested weekday; Previous is the one of the day before, whose overnight
+	// intervals continue into the first hours of the requested day.
 	Schedule *schedules.Day
+	Previous *schedules.Day
 }
 
 // OpenMatchInfo is set only for reservations of an open match that still has free places.
@@ -95,8 +98,16 @@ func projectCourt(court CourtData, reservations []ReservationData, day time.Time
 	result := Court{ID: court.ID, Name: court.Name, Covered: court.Covered, Slots: []Slot{}, OccupiedIntervals: []OccupiedInterval{}}
 	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, location)
 	nextDay := day.AddDate(0, 0, 1)
-	if court.Schedule != nil {
-		original := court.Schedule
+	// The previous day's overnight intervals continue into the first hours of this day.
+	sources := []struct {
+		day   *schedules.Day
+		shift int
+	}{{court.Schedule, 0}, {court.Previous, 24 * 60}}
+	for _, source := range sources {
+		if source.day == nil || (source.shift > 0 && !source.day.Enabled) {
+			continue
+		}
+		original := source.day
 		draft := schedules.Draft{Weekday: original.Weekday, Enabled: original.Enabled, DurationMinutes: original.DurationMinutes, Intervals: append([]schedules.Interval(nil), original.Intervals...)}
 		if draft.Intervals == nil {
 			draft.Intervals = []schedules.Interval{}
@@ -105,14 +116,20 @@ func projectCourt(court CourtData, reservations []ReservationData, day time.Time
 			return Court{}, err
 		}
 		for _, interval := range draft.Intervals {
-			open, okOpen := clockMinutes(interval.OpensAt)
-			close, okClose := clockMinutes(interval.ClosesAt)
-			if !okOpen || !okClose {
+			open, closing, ok := interval.Range()
+			if !ok {
 				return Court{}, schedules.ErrInvalid
 			}
-			for start := open; start+draft.DurationMinutes <= close; start += draft.DurationMinutes {
-				starts := time.Date(day.Year(), day.Month(), day.Day(), start/60, start%60, 0, 0, location)
-				endMinute := start + draft.DurationMinutes
+			for start := open; start+draft.DurationMinutes <= closing; start += draft.DurationMinutes {
+				minute := start - source.shift
+				if minute < 0 {
+					continue
+				}
+				if minute >= 24*60 {
+					break
+				}
+				starts := time.Date(day.Year(), day.Month(), day.Day(), minute/60, minute%60, 0, 0, location)
+				endMinute := minute + draft.DurationMinutes
 				ends := time.Date(day.Year(), day.Month(), day.Day(), endMinute/60, endMinute%60, 0, 0, location)
 				overlapping := 0
 				var lastOverlap ReservationData
@@ -167,15 +184,4 @@ func projectCourt(court CourtData, reservations []ReservationData, day time.Time
 		return result.OccupiedIntervals[i].OriginalEndsAt < result.OccupiedIntervals[j].OriginalEndsAt
 	})
 	return result, nil
-}
-
-func clockMinutes(value string) (int, bool) {
-	if len(value) != 5 || value[2] != ':' || value[0] < '0' || value[0] > '2' || value[1] < '0' || value[1] > '9' || value[3] < '0' || value[3] > '5' || value[4] < '0' || value[4] > '9' {
-		return 0, false
-	}
-	hour, minute := int(value[0]-'0')*10+int(value[1]-'0'), int(value[3]-'0')*10+int(value[4]-'0')
-	if hour > 23 {
-		return 0, false
-	}
-	return hour*60 + minute, true
 }

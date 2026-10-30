@@ -4,6 +4,16 @@ import {
   Weekday,
 } from './availability.model';
 
+const MINUTES_PER_DAY = 24 * 60;
+
+/** Minutos desde la apertura del día; si cierra antes de abrir, la franja termina al día siguiente. */
+export function intervalRange(interval: { opensAt: string; closesAt: string }): { start: number; end: number } | null {
+  const start = parseTime(interval.opensAt);
+  const end = parseTime(interval.closesAt);
+  if (start === null || end === null || start === end) return null;
+  return { start, end: end < start ? end + MINUTES_PER_DAY : end };
+}
+
 export function generateAvailabilitySlots(
   courtId: string,
   rules: WeeklyScheduleRule[],
@@ -19,37 +29,47 @@ export function generateAvailabilitySlots(
   if (!courtId || Number.isNaN(date.getTime())) return [];
   const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
   const weekday = localWeekday(localDate);
-  const rule = rules.find((candidate) => candidate.weekday === weekday && candidate.enabled);
-  if (!rule || ![60, 90].includes(rule.durationMinutes)) return [];
+  const previousWeekday = (weekday === 1 ? 7 : weekday - 1) as Weekday;
+  const usable = (candidate: WeeklyScheduleRule | undefined): candidate is WeeklyScheduleRule =>
+    !!candidate && candidate.enabled && [60, 90].includes(candidate.durationMinutes);
+  const today = rules.find((candidate) => candidate.weekday === weekday);
+  const previous = rules.find((candidate) => candidate.weekday === previousWeekday);
+  // Las franjas que cruzan la medianoche del día anterior siguen en las primeras horas de este día.
+  const sources = [
+    ...(usable(today) ? [{ rule: today, shift: 0 }] : []),
+    ...(usable(previous) ? [{ rule: previous, shift: MINUTES_PER_DAY }] : []),
+  ];
 
   const slots: AvailabilitySlot[] = [];
   const dateKey = formatLocalDate(localDate);
-  for (const interval of [...rule.intervals].sort((left, right) => left.opensAt.localeCompare(right.opensAt))) {
-    const openingMinute = parseTime(interval.opensAt);
-    const closingMinute = parseTime(interval.closesAt);
-    if (openingMinute === null || closingMinute === null || closingMinute <= openingMinute) continue;
-
-    for (
-      let startMinute = openingMinute;
-      startMinute + rule.durationMinutes <= closingMinute;
-      startMinute += rule.durationMinutes
-    ) {
-      const startsAt = formatTime(startMinute);
-      const endsAt = formatTime(startMinute + rule.durationMinutes);
-      const id = `${courtId}:${dateKey}:${startsAt}`;
-      slots.push({
-        id,
-        courtId,
-        date: dateKey,
-        startsAt,
-        endsAt,
-        status: blockedSlotIds.has(id) ? 'blocked' : 'available',
-      });
+  for (const source of sources) {
+    for (const interval of [...source.rule.intervals].sort((left, right) => left.opensAt.localeCompare(right.opensAt))) {
+      const range = intervalRange(interval);
+      if (!range) continue;
+      for (
+        let startMinute = range.start;
+        startMinute + source.rule.durationMinutes <= range.end;
+        startMinute += source.rule.durationMinutes
+      ) {
+        const minute = startMinute - source.shift;
+        if (minute < 0) continue;
+        if (minute >= MINUTES_PER_DAY) break;
+        const startsAt = formatTime(minute);
+        const endsAt = formatTime((minute + source.rule.durationMinutes) % MINUTES_PER_DAY);
+        const id = `${courtId}:${dateKey}:${startsAt}`;
+        slots.push({
+          id,
+          courtId,
+          date: dateKey,
+          startsAt,
+          endsAt,
+          status: blockedSlotIds.has(id) ? 'blocked' : 'available',
+        });
+      }
     }
   }
-  return slots;
+  return slots.sort((left, right) => left.startsAt.localeCompare(right.startsAt));
 }
-
 export function isValidWeeklySchedule(value: unknown): value is WeeklyScheduleRule[] {
   if (!Array.isArray(value) || value.length > 7) return false;
   const weekdays = new Set<number>();
@@ -82,9 +102,10 @@ export function isValidWeeklySchedule(value: unknown): value is WeeklyScheduleRu
       ) {
         return false;
       }
-      const start = minutesOfDay(interval.opensAt);
-      const end = minutesOfDay(interval.closesAt);
-      if (end <= start || end - start < rule.durationMinutes!) return false;
+      const range = intervalRange(interval);
+      if (!range) return false;
+      const { start, end } = range;
+      if (end - start < rule.durationMinutes!) return false;
       ranges.push({ start, end });
       ids.add(interval.id);
     }
@@ -95,6 +116,17 @@ export function isValidWeeklySchedule(value: unknown): value is WeeklyScheduleRu
     }
     weekdays.add(rule.weekday);
     return true;
+  }) && !overnightOverlapsNextDay(value as WeeklyScheduleRule[]);
+}
+
+/** Una franja que pasa de medianoche no puede pisar la apertura del día siguiente. */
+function overnightOverlapsNextDay(rules: WeeklyScheduleRule[]): boolean {
+  return rules.some((rule) => {
+    const spillEnd = Math.max(0, ...rule.intervals.map((interval) => (intervalRange(interval)?.end ?? 0) - MINUTES_PER_DAY));
+    if (!spillEnd) return false;
+    const next = rules.find((candidate) => candidate.weekday === (rule.weekday === 7 ? 1 : rule.weekday + 1));
+    const firstOpening = Math.min(MINUTES_PER_DAY, ...(next?.intervals ?? []).map((interval) => intervalRange(interval)?.start ?? MINUTES_PER_DAY));
+    return firstOpening < spillEnd;
   });
 }
 

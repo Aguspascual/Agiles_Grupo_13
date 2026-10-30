@@ -40,6 +40,30 @@ describe('HU-05: disposición de la grilla de turnos', () => {
     expect(placementFor(gridSlot('a', '08:15', '09:15'), layout!)).toEqual({ row: 2, span: 4 });
   });
 
+  it('no dibuja las horas sin turnos entre franjas', () => {
+    const slots = [
+      gridSlot('a', '08:00', '09:00'),
+      gridSlot('a', '09:00', '10:00'),
+      gridSlot('a', '17:00', '18:00'),
+      gridSlot('a', '18:00', '19:00'),
+    ];
+    const layout = layoutFor([{ id: 'a', name: 'Cancha 1', covered: true, slots }])!;
+
+    expect(layout.rowCount).toBe(8);
+    expect(layout.hourMarks.map((mark) => mark.label)).toEqual(['08:00', '09:00', '17:00', '18:00']);
+    expect(layout.hourMarks.map((mark) => mark.row)).toEqual([1, 3, 5, 7]);
+    expect(placementFor(slots[2], layout)).toEqual({ row: 5, span: 2 });
+    expect(placementFor(slots[3], layout)).toEqual({ row: 7, span: 2 });
+  });
+
+  it('ubica un turno que termina a las 00:00 al final del día', () => {
+    const slots = [gridSlot('a', '00:00', '01:00'), gridSlot('a', '22:00', '23:00'), gridSlot('a', '23:00', '00:00')];
+    const layout = layoutFor([{ id: 'a', name: 'Cancha 1', covered: true, slots }])!;
+
+    expect(layout.hourMarks.map((mark) => mark.label)).toEqual(['00:00', '22:00', '23:00']);
+    expect(placementFor(slots[2], layout)).toEqual({ row: 5, span: 2 });
+  });
+
   it('no arma filas cuando no hay turnos', () => {
     expect(layoutFor([{ id: 'a', name: 'Cancha 1', covered: true, slots: [] }])).toBeNull();
   });

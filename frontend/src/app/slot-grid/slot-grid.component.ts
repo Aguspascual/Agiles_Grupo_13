@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { minutesOfDay } from '../shared/local-date';
-import { GridLayout, layoutFor, placementFor } from './slot-grid.builder';
+import { GridLayout, isInsideSegment, layoutFor, placementFor, rowsBefore } from './slot-grid.builder';
 import {
   GridCourt,
   GridSlot,
@@ -94,9 +94,8 @@ export class SlotGridComponent {
   readonly nowOffset = computed<number | null>(() => {
     const layout = this.layout();
     const minute = this.nowMinute();
-    if (!layout || minute === null || minute < layout.startMinute || minute > layout.endMinute)
-      return null;
-    return HEADER_HEIGHT + (minute - layout.startMinute) * PX_PER_MINUTE;
+    if (!layout || minute === null || !isInsideSegment(layout, minute)) return null;
+    return HEADER_HEIGHT + rowsBefore(layout, minute) * this.rowHeight();
   });
 
   constructor() {
@@ -114,7 +113,7 @@ export class SlotGridComponent {
         this.nowOffset() ??
         (firstOpen === undefined
           ? null
-          : HEADER_HEIGHT + (firstOpen - layout.startMinute) * PX_PER_MINUTE);
+          : HEADER_HEIGHT + rowsBefore(layout, firstOpen) * this.rowHeight());
       element.scrollTop = target === null ? 0 : Math.max(0, target - HEADER_HEIGHT - 24);
     });
   }

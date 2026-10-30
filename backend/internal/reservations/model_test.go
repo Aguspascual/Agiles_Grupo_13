@@ -31,28 +31,6 @@ func TestOwnReservationsDateQuery(t *testing.T) {
 	}
 }
 
-func TestSlotWithinSchedule(t *testing.T) {
-	intervals := []Interval{{Open: "17:00", Close: "21:30"}}
-	for _, tc := range []struct {
-		name     string
-		start    string
-		duration int
-		want     bool
-	}{
-		{"first", "17:00", 90, true},
-		{"last", "20:00", 90, true},
-		{"unaligned", "17:30", 90, false},
-		{"outside", "21:30", 90, false},
-		{"malformed", "9:00", 90, false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := slotWithinSchedule(tc.start, tc.duration, intervals); got != tc.want {
-				t.Fatalf("slotWithinSchedule(%q) = %v, want %v", tc.start, got, tc.want)
-			}
-		})
-	}
-}
-
 func TestReservationInput(t *testing.T) {
 	location := time.FixedZone("Buenos Aires", -3*60*60)
 	now := time.Date(2026, 11, 3, 17, 0, 0, 0, location)

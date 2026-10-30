@@ -72,17 +72,3 @@ func minutes(value string) int {
 	}
 	return hour*60 + minute
 }
-
-func slotWithinSchedule(start string, duration int, intervals []Interval) bool {
-	value := minutes(start)
-	if value < 0 || (duration != 60 && duration != 90) {
-		return false
-	}
-	for _, i := range intervals {
-		open, close := minutes(i.Open), minutes(i.Close)
-		if open >= 0 && close > open && value >= open && value+duration <= close && (value-open)%duration == 0 {
-			return true
-		}
-	}
-	return false
-}

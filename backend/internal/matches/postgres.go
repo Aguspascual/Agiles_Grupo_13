@@ -3,10 +3,9 @@ package matches
 import (
 	"context"
 	"errors"
-	"strconv"
-	"strings"
 	"time"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/slotcheck"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -129,44 +128,11 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 	if err != nil {
 		return Match{}, err
 	}
-	weekday := int(start.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	var dayID string
-	var duration int
-	var enabled bool
-	err = tx.QueryRow(ctx, `SELECT id::text,enabled,duration_minutes FROM court_schedule_days WHERE court_id=$1::uuid AND weekday=$2`, courtID, weekday).
-		Scan(&dayID, &enabled, &duration)
-	if errors.Is(err, pgx.ErrNoRows) || (!enabled && err == nil) {
-		return Match{}, ErrConflict
-	}
+	duration, offered, err := slotcheck.Duration(ctx, tx, courtID, start)
 	if err != nil {
 		return Match{}, err
 	}
-	rows, err := tx.Query(ctx, `SELECT to_char(opens_at,'HH24:MI'),to_char(closes_at,'HH24:MI') FROM court_schedule_intervals WHERE schedule_day_id=$1::uuid`, dayID)
-	if err != nil {
-		return Match{}, err
-	}
-	validSlot := false
-	startMinutes := start.Hour()*60 + start.Minute()
-	for rows.Next() {
-		var opens, closes string
-		if err := rows.Scan(&opens, &closes); err != nil {
-			rows.Close()
-			return Match{}, err
-		}
-		openMinutes, closeMinutes := clockMinutes(opens), clockMinutes(closes)
-		if startMinutes >= openMinutes && startMinutes+duration <= closeMinutes && (startMinutes-openMinutes)%duration == 0 {
-			validSlot = true
-		}
-	}
-	if err := rows.Err(); err != nil {
-		rows.Close()
-		return Match{}, err
-	}
-	rows.Close()
-	if !validSlot || !start.After(now) {
+	if !offered || !start.After(now) {
 		return Match{}, ErrConflict
 	}
 	end := start.Add(time.Duration(duration) * time.Minute)
@@ -392,19 +358,6 @@ func (r *Repository) ReadNotice(ctx context.Context, actorID, noticeID string) e
 		return ErrNotFound
 	}
 	return nil
-}
-
-func clockMinutes(value string) int {
-	parts := strings.Split(value, ":")
-	if len(parts) != 2 || len(parts[0]) != 2 || len(parts[1]) != 2 {
-		return -1
-	}
-	hour, hourErr := strconv.Atoi(parts[0])
-	minute, minuteErr := strconv.Atoi(parts[1])
-	if hourErr != nil || minuteErr != nil || hour > 23 || minute > 59 {
-		return -1
-	}
-	return hour*60 + minute
 }
 
 func isUniqueViolation(err error) bool {

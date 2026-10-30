@@ -75,6 +75,7 @@
             }
 
             @if (selection(); as chosen) {
+              @if (chosen.reservation) {
               <section class="agenda-panel" aria-live="polite" [attr.aria-label]="'Turno elegido: ' + chosen.court.name">
                 <div class="agenda-panel__info">
                   <h2>{{ chosen.court.name }}</h2>
@@ -120,16 +121,13 @@
                     >
                       Cancelar reserva
                     </button>
-                  } @else {
-                    <button type="button" class="primary" [disabled]="saving()" (click)="openManual(chosen)">
-                      Registrar reserva
-                    </button>
                   }
                   <button type="button" class="close" aria-label="Cerrar resumen del turno" (click)="selectedSlotId.set(null)">
                     ×
                   </button>
                 </div>
               </section>
+              }
             }
 
             @if (offGrid().length) {

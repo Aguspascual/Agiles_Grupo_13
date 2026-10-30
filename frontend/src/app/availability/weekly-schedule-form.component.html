@@ -92,7 +92,7 @@
             @if (day.invalid && day.controls.enabled.value) {
               <small class="field-error" [id]="'schedule-error-' + day.controls.weekday.value" role="alert">
                 @if (day.errors?.['invalidTime']) { Ingresá horarios válidos. }
-                @else if (day.errors?.['closingBeforeOpening']) { El cierre debe ser posterior a la apertura. }
+                @else if (day.errors?.['closingBeforeOpening']) { El cierre no puede ser igual a la apertura. }
                 @else if (day.errors?.['slotDoesNotFit']) { El horario debe admitir al menos un turno completo. }
                 @else if (day.errors?.['overlappingIntervals']) { Las franjas no pueden superponerse. }
                 @else if (day.errors?.['missingInterval']) { Agregá una franja horaria para este día. }

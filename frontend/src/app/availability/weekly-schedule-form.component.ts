@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { debounceTime, Subscription } from 'rxjs';
 import { ScheduleInterval, WeeklyScheduleRule, Weekday } from './availability.model';
-import { isValidWeeklySchedule } from './availability-generator';
+import { intervalRange, isValidWeeklySchedule } from './availability-generator';
 
 type IntervalForm = FormGroup<{
   id: FormControl<string>;
@@ -121,7 +121,7 @@ export class WeeklyScheduleFormComponent implements OnDestroy {
       rule.enabled ? rule : { ...rule, intervals: [] },
     );
     if (!isValidWeeklySchedule(rules)) {
-      this.validationMessage = 'Revisá los horarios: las franjas no pueden superponerse y deben admitir un turno completo.';
+      this.validationMessage = 'Revisá los horarios: las franjas no pueden superponerse (tampoco con la parte que pasa de medianoche) y deben admitir un turno completo.';
       this.saveError.emit(this.validationMessage);
       return;
     }
@@ -174,12 +174,12 @@ function validateDay(control: AbstractControl): ValidationErrors | null {
 
   const ranges: { start: number; end: number }[] = [];
   for (const interval of intervals) {
-    const start = parseTime(interval.opensAt);
-    const end = parseTime(interval.closesAt);
-    if (start === null || end === null) return { invalidTime: true };
-    if (end <= start) return { closingBeforeOpening: true };
-    if (end - start < duration) return { slotDoesNotFit: true };
-    ranges.push({ start, end });
+    if (parseTime(interval.opensAt) === null || parseTime(interval.closesAt) === null) return { invalidTime: true };
+    // Si cierra antes de abrir, la franja termina al día siguiente (por ejemplo, 17:00 a 01:00).
+    const range = intervalRange(interval);
+    if (!range) return { closingBeforeOpening: true };
+    if (range.end - range.start < duration) return { slotDoesNotFit: true };
+    ranges.push(range);
   }
   ranges.sort((left, right) => left.start - right.start);
   for (let index = 1; index < ranges.length; index += 1) {
