@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthSessionService } from './auth-session.service';
 import { ComplexApiService } from '../complexes/complex-api.service';
 
@@ -25,6 +25,7 @@ export class LoginPage {
 
   constructor(
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly session: AuthSessionService,
     private readonly complexes: ComplexApiService,
   ) {}
@@ -41,8 +42,8 @@ export class LoginPage {
     this.session.login({ email, password }, remember).subscribe({
       next: () => {
         this.complexes.availableManagers().subscribe({
-          next: () => this.navigateAfterLogin('/admin/complejos'),
-          error: () => this.navigateAfterLogin('/'),
+          next: () => this.navigateAfterLogin(this.returnUrl() ?? '/admin/complejos'),
+          error: () => this.navigateAfterLogin(this.returnUrl() ?? '/'),
         });
       },
       error: (error: unknown) => {
@@ -50,6 +51,11 @@ export class LoginPage {
         this.errorMessage = this.loginError(error);
       },
     });
+  }
+
+  private returnUrl(): string | null {
+    const value = this.route.snapshot.queryParamMap.get('returnUrl');
+    return value?.startsWith('/') && !value.startsWith('//') ? value : null;
   }
 
   private navigateAfterLogin(path: string): void {

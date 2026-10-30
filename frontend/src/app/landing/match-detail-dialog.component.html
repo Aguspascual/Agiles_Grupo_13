@@ -53,7 +53,7 @@
       <aside class="match-detail-aside" aria-label="Información del turno">
         <section class="price-card">
           @if (freeSpots === 1) { <span class="last-spot">⚡ Último cupo disponible</span> } @else { <span class="last-spot">PARTIDO · {{ match.level }}</span> }
-          <p class="price-label">Costo por jugador</p><strong class="price">{{ match.price }} <small>ARS</small></strong>
+          @if (match.price) { <p class="price-label">Costo por jugador</p><strong class="price">{{ match.price }} <small>ARS</small></strong> }
           <div class="aside-divider"></div>
           <p class="aside-fact"><b>Nivel buscado</b><span>{{ match.level }}</span></p>
           <p class="aside-fact"><b>Duración</b><span>{{ match.duration }}</span></p>
@@ -74,6 +74,7 @@
           <span class="join-confirm-icon" aria-hidden="true">?</span>
           <h3 id="join-confirm-title">¿Querés unirte al partido?</h3>
           <p>{{ match.club }} · {{ match.day }} a las {{ match.time }}</p>
+          @if (levelWarning) { <p class="level-warning" role="note">{{ levelWarning }}</p> }
           <div class="join-confirm-actions">
             <button class="join-confirm-cancel" type="button" (click)="cancelJoin()">Cancelar</button>
             <button #confirmJoinButton class="join-confirm-submit" type="button" (click)="confirmJoin()">Sí, unirme</button>

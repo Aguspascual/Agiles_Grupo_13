@@ -1,0 +1,134 @@
+<div class="create-match-backdrop" (click)="close.emit()">
+  <section
+    class="create-match-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-match-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="create-match-dialog__header">
+      <span class="create-match-dialog__icon" aria-hidden="true">＋</span>
+      <div>
+        <span class="eyebrow">PÁDELMATCH · LA PLATA</span>
+        <h2 id="create-match-title">Crear nuevo partido</h2>
+      </div>
+      <button class="icon-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
+    </header>
+
+    <form (ngSubmit)="submit()">
+      <fieldset class="mode-picker">
+        <legend>¿Cómo querés jugar?</legend>
+        <button
+          class="mode-option"
+          [class.is-selected]="mode === 'complete'"
+          type="button"
+          [attr.aria-pressed]="mode === 'complete'"
+          (click)="mode = 'complete'"
+        >
+          <span class="mode-option__icon" aria-hidden="true">✓</span>
+          <span><b>Partido completo</b><small>Ya tengo a los cuatro jugadores</small></span>
+        </button>
+        <button
+          class="mode-option"
+          [class.is-selected]="mode === 'open'"
+          type="button"
+          [attr.aria-pressed]="mode === 'open'"
+          (click)="mode = 'open'"
+        >
+          <span class="mode-option__icon" aria-hidden="true">＋</span>
+          <span><b>Partido abierto</b><small>Busco jugadores para completar el grupo</small></span>
+        </button>
+      </fieldset>
+
+      @if (loadingOptions) {
+        <p class="form-state" role="status">Cargando complejos y canchas…</p>
+      } @else if (!complexes.length) {
+        <p class="form-state" role="status">No hay complejos con canchas disponibles.</p>
+      } @else {
+        <div class="form-grid">
+          <label>
+            <span>Complejo</span>
+            <select [ngModel]="complexId" (ngModelChange)="changeComplex($event)" name="complex" required>
+              @for (complex of complexes; track complex.id) {
+                <option [value]="complex.id">{{ complex.name }} · {{ complex.zone }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Cancha</span>
+            <select [ngModel]="courtId" (ngModelChange)="changeCourt($event)" name="court" required>
+              @for (court of selectedComplex?.courts ?? []; track court.id) {
+                <option [value]="court.id">{{ court.name }} · {{ court.covered ? 'Techada' : 'Aire libre' }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Fecha</span>
+            <input
+              type="date"
+              name="date"
+              [min]="minDate"
+              [max]="maxDate"
+              [ngModel]="date"
+              (ngModelChange)="changeDate($event)"
+              required
+            />
+          </label>
+          <label>
+            <span>Horario disponible</span>
+            <select [(ngModel)]="startsAt" name="startsAt" required [disabled]="loadingSlots">
+              <option value="">{{ loadingSlots ? 'Buscando horarios…' : 'Seleccioná un horario' }}</option>
+              @for (slot of availableSlots; track slot.id) {
+                <option [value]="slot.startsAt">{{ slot.startsAt }}–{{ slot.endsAt }}</option>
+              }
+            </select>
+            @if (!loadingSlots && !availableSlots.length) {
+              <small class="field-hint">No hay turnos libres para esa fecha.</small>
+            }
+          </label>
+          @if (mode === 'open') {
+            <label class="form-grid__wide">
+              <span>Nivel buscado</span>
+              <select [(ngModel)]="targetLevel" name="targetLevel" required>
+                @for (level of levels; track level) { <option [value]="level">{{ level }}</option> }
+              </select>
+            </label>
+          } @else {
+            <label class="form-grid__wide">
+              <span>Responsable de la reserva</span>
+              <input [value]="session.currentUser()?.name ?? ''" readonly aria-readonly="true" />
+            </label>
+            <label class="form-grid__wide">
+              <span>Teléfono de contacto</span>
+              <input
+                type="tel"
+                name="phone"
+                [(ngModel)]="phone"
+                placeholder="221 555-0123"
+                autocomplete="tel"
+                required
+              />
+              <small class="field-hint">Lo necesita el complejo para confirmar la reserva.</small>
+            </label>
+          }
+        </div>
+      }
+
+      @if (errorMessage) { <p class="form-error" role="alert">{{ errorMessage }}</p> }
+      @if (!session.currentUser()) {
+        <p class="form-state">Para registrar el partido, <a routerLink="/ingresar">iniciá sesión</a>.</p>
+      }
+
+      <footer class="create-match-dialog__actions">
+        <button class="button-secondary" type="button" (click)="close.emit()">Cancelar</button>
+        <button
+          class="button-primary"
+          type="submit"
+          [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !session.currentUser()"
+        >
+          {{ saving ? 'Guardando…' : mode === 'open' ? 'Publicar partido' : 'Confirmar y reservar' }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>

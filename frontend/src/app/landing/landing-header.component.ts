@@ -1,11 +1,14 @@
 import { Component, ElementRef, HostListener, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
 import { AuthSessionService } from '../auth/auth-session.service';
+import { MatchApiService } from '../matches/match-api.service';
+import { MatchNotice } from '../matches/match-api.model';
 
 @Component({
   selector: 'app-landing-header',
-  imports: [RouterLink, RouterLinkActive, ConfirmDialogComponent],
+  imports: [DatePipe, RouterLink, RouterLinkActive, ConfirmDialogComponent],
   template: `
     <header class="site-header">
       <a class="brand" routerLink="/" aria-label="PádelMatch, inicio">
@@ -62,10 +65,16 @@ import { AuthSessionService } from '../auth/auth-session.service';
               <a routerLink="/clubes" routerLinkActive="is-active" (click)="closeMenu()"
                 >Clubes</a
               >
-              <a class="nav-menu-panel__create" routerLink="/partidos" (click)="closeMenu()"
+              <a class="nav-menu-panel__create" routerLink="/partidos" [queryParams]="{ crear: 1 }" (click)="closeMenu()"
                 >Crear partido</a
               >
               @if (session.currentUser()) {
+                <button class="nav-menu-panel__account" type="button" (click)="toggleNotices(); closeMenu()">
+                  Notificaciones
+                  @if (notices.length) {
+                    · {{ notices.length }}
+                  }
+                </button>
                 <a class="nav-menu-panel__account" routerLink="/perfil" (click)="closeMenu()"
                   >Mi perfil</a
                 >
@@ -89,14 +98,42 @@ import { AuthSessionService } from '../auth/auth-session.service';
         </div>
       </nav>
       <div class="header-actions">
-        <a class="create-match-link" routerLink="/partidos"
+        <a class="create-match-link" routerLink="/partidos" [queryParams]="{ crear: 1 }"
           ><span aria-hidden="true">+</span> Crear partido</a
         >
-        <a class="notification-link" routerLink="/ingresar" aria-label="Notificaciones"
-          ><svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-            <path d="M10 21h4" /></svg
-        ></a>
+        @if (session.currentUser()) {
+          <div class="notification-menu">
+            <button class="notification-link" type="button" aria-label="Notificaciones"
+              [attr.aria-expanded]="noticesOpen" (click)="toggleNotices()">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M10 21h4" />
+              </svg>
+              @if (notices.length) { <i>{{ notices.length }}</i> }
+            </button>
+            @if (noticesOpen) {
+              <section class="notification-panel" aria-label="Notificaciones recientes">
+                <b>Notificaciones</b>
+                @if (loadingNotices) { <p>Cargando…</p> }
+                @for (notice of notices; track notice.id) {
+                  <button type="button" class="notification-item" (click)="dismissNotice(notice)">
+                    <strong>Partido completo</strong>
+                    <span>{{ notice.complex }} · {{ notice.startsAt | date:'EEE d MMM, HH:mm' }}</span>
+                    <small>El grupo ya tiene cuatro jugadores. Tocá para marcar como leído.</small>
+                  </button>
+                } @empty {
+                  @if (!loadingNotices) { <p>No tenés notificaciones nuevas.</p> }
+                }
+              </section>
+            }
+          </div>
+        } @else {
+          <a class="notification-link" routerLink="/ingresar" aria-label="Ingresar para ver notificaciones">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" />
+            </svg>
+          </a>
+        }
         @if (session.currentUser(); as user) {
           <div class="profile-menu">
             <button
@@ -133,16 +170,58 @@ import { AuthSessionService } from '../auth/auth-session.service';
         (confirm)="logout()"
       />
     }
+    @if (noticeBanner; as message) {
+      <div class="notification-banner" role="status">
+        <span>{{ message }}</span>
+        <button type="button" aria-label="Marcar aviso como leído" (click)="dismissNotice(notices[0])">×</button>
+      </div>
+    }
   `,
   styleUrl: './landing-header.component.scss',
 })
 export class LandingHeaderComponent {
   readonly session = inject(AuthSessionService);
+  private readonly matchApi = inject(MatchApiService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly router = inject(Router);
   menuOpen = false;
   profileOpen = false;
   logoutOpen = false;
+  noticesOpen = false;
+  notices: MatchNotice[] = [];
+  noticeBanner = '';
+  loadingNotices = false;
+
+  toggleNotices(): void {
+    this.noticesOpen = !this.noticesOpen;
+    if (this.noticesOpen) this.loadNotices();
+  }
+
+  dismissNotice(notice?: MatchNotice): void {
+    if (!notice) return;
+    this.matchApi.markNoticeRead(notice.id).subscribe({
+      next: () => {
+        this.notices = this.notices.filter((item) => item.id !== notice.id);
+        this.noticeBanner = this.notices.length ? this.noticeText(this.notices[0]) : '';
+      },
+    });
+  }
+
+  private loadNotices(): void {
+    this.loadingNotices = true;
+    this.matchApi.unreadNotices().subscribe({
+      next: (items) => {
+        this.notices = items;
+        this.noticeBanner = items.length ? this.noticeText(items[0]) : '';
+        this.loadingNotices = false;
+      },
+      error: () => { this.loadingNotices = false; },
+    });
+  }
+
+  private noticeText(notice: MatchNotice): string {
+    return `Tu partido en ${notice.complex} ya tiene cuatro jugadores.`;
+  }
 
   get initials(): string {
     return (
@@ -159,6 +238,7 @@ export class LandingHeaderComponent {
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
     this.profileOpen = false;
+    if (this.menuOpen && this.session.currentUser()) this.loadNotices();
   }
 
   toggleProfile(): void {
@@ -187,12 +267,14 @@ export class LandingHeaderComponent {
     const target = event.target as Element;
     if (!this.host.nativeElement.contains(target)) this.menuOpen = false;
     if (!target.closest?.('.profile-menu')) this.profileOpen = false;
+    if (!target.closest?.('.notification-menu')) this.noticesOpen = false;
   }
 
   @HostListener('document:keydown.escape')
   closeOnEscape(): void {
     this.menuOpen = false;
     this.profileOpen = false;
+    this.noticesOpen = false;
     this.logoutOpen = false;
   }
 }

@@ -8,6 +8,7 @@ export interface PlayerPreview {
 
 export interface MatchPreview {
   id: string;
+  date?: string;
   day: string;
   time: string;
   duration: string;

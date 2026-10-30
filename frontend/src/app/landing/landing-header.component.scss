@@ -71,11 +71,16 @@
   font-weight: 500;
 }
 .notification-link {
+  position: relative;
   width: 25px;
   height: 25px;
   display: grid;
   place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #506070;
+  cursor: pointer;
 }
 .notification-link:hover {
   color: #07865f;
@@ -89,6 +94,19 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.notification-link i { position: absolute; top: -5px; right: -6px; min-width: 15px; height: 15px; display: grid; place-items: center; padding: 0 3px; border-radius: 99px; background: #07865f; color: #fff; font-size: .48rem; font-style: normal; font-weight: 800; }
+.notification-menu { position: relative; }
+.notification-panel { position: absolute; z-index: 8; top: calc(100% + 12px); right: -25px; width: min(330px, calc(100vw - 24px)); display: grid; gap: 8px; padding: 14px; border: 1px solid #e1e9e4; border-radius: 14px; background: #fff; box-shadow: 0 16px 42px rgb(22 37 28 / 18%); animation: profile-menu-in 140ms ease-out both; }
+.notification-panel > b { color: #1d2b24; font-size: .82rem; }
+.notification-panel > p { margin: 0; color: #708078; font-size: .76rem; }
+.notification-item { display: grid; gap: 4px; padding: 10px; border: 0; border-radius: 9px; background: #f1faf5; color: #34453c; text-align: left; cursor: pointer; }
+.notification-item:hover { background: #e5f5ec; }
+.notification-item strong { color: #087a59; font-size: .75rem; }
+.notification-item span { font-size: .72rem; font-weight: 700; }
+.notification-item small { color: #68796f; font-size: .65rem; line-height: 1.4; }
+.notification-banner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 16px; background: #e6f8ee; color: #086d4d; font-size: .78rem; font-weight: 750; }
+.notification-banner button { width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 1.2rem; cursor: pointer; }
+.notification-banner button:hover { background: #d0f0de; }
 .profile-link {
   display: inline-flex;
   align-items: center;
@@ -169,7 +187,7 @@
   .profile-link, .create-match-link, .notification-link { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  nav a, .profile-dropdown, .nav-menu-panel {
+  nav a, .profile-dropdown, .nav-menu-panel, .notification-panel {
     transition: none;
     animation: none;
   }

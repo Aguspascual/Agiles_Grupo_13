@@ -175,7 +175,7 @@
       >
     </div>
     <div class="create-banner__actions">
-      <a routerLink="/partidos" class="create-banner__primary"
+      <a routerLink="/partidos" [queryParams]="{ crear: 1 }" class="create-banner__primary"
         ><span aria-hidden="true">⊕</span> Crear un nuevo partido</a
       ><a routerLink="/partidos" class="create-banner__secondary">Ver calendario completo</a>
     </div>
