@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { catchError, of, switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthSessionService } from '../auth/auth-session.service';
@@ -51,12 +52,12 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   ];
   selectedZones: string[] = [];
   selectedLevels: string[] = [];
-  selectedDay = 'Hoy';
+  selectedDay = 'Todos';
   dayFilterEnabled = false;
-  selectedTimes = ['Noche (18:00 - 00:00)'];
+  selectedTimes: string[] = [];
   selectedFeatures: string[] = [];
   selectedClub = 'Todos los clubes de La Plata';
-  onlyOpen = true;
+  onlyOpen = false;
   filtersOpen = false;
   loadingMatches = true;
   matchesError = '';
@@ -139,29 +140,16 @@ export class MatchSearchPage implements OnInit, OnDestroy {
           },
         });
       }
-      const zone = this.zones.find(
-        (item) => item.toLowerCase() === String(params['zona'] ?? '').toLowerCase(),
-      );
-      const level = this.levels.find(
-        (item) => item.toLowerCase() === String(params['nivel'] ?? '').toLowerCase(),
-      );
-      if (zone) this.selectedZones = [zone];
-      if (level) this.selectedLevels = [level];
-      const club = this.matches.find(
-        (item) => item.club.toLowerCase() === String(params['club'] ?? '').toLowerCase(),
-      );
-      if (club) this.selectedClub = club.club;
-      if (params['fecha']) {
-        this.selectedDay = String(params['fecha']).startsWith('Mañana') ? 'Mañana' : 'Hoy';
-        this.dayFilterEnabled = true;
-      }
     });
   }
 
   loadMatches(): void {
     this.loadingMatches = true;
     this.matchesError = '';
-    this.api.list().subscribe({
+    this.session.restore().pipe(
+      catchError(() => of(null)),
+      switchMap(() => this.api.list()),
+    ).subscribe({
       next: (matches) => {
         this.matches.splice(0, this.matches.length, ...matches);
         this.loadingMatches = false;
@@ -192,7 +180,6 @@ export class MatchSearchPage implements OnInit, OnDestroy {
 
   get activeFiltersCount(): number {
     return (
-      Number(this.onlyOpen) +
       this.selectedZones.length +
       this.selectedLevels.length +
       Number(this.dayFilterEnabled) +
@@ -266,6 +253,6 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     this.selectedTimes = [];
     this.selectedFeatures = [];
     this.selectedClub = 'Todos los clubes de La Plata';
-    this.onlyOpen = true;
+    this.onlyOpen = false;
   }
 }
