@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import { AuthSessionService } from '../auth/auth-session.service';
+import { ApiMatch } from '../matches/match-api.model';
+import { PendingMatchMembershipCardComponent } from '../bookings/pending-match-membership-card.component';
 import { LandingPage } from './landing.page';
 import { PendingMatchMembershipStore } from '../bookings/pending-match-membership.store';
 import { MatchSearchPage } from './match-search.page';
@@ -12,12 +17,37 @@ function setDemoClock(hours: number, minutes: number): void {
   TestBed.inject(PendingMatchMembershipStore).now = () => new Date(new Date().setHours(hours, minutes, 0, 0));
 }
 
+// Explicit API fixtures replace the demo matches removed from MatchSearchPage.
+const apiMatches: ApiMatch[] = Array.from({ length: 7 }, (_, index) => ({
+  id: `match-${index}`, status: 'open', complexId: `complex-${index}`,
+  complex: `Test club ${index}`, address: 'Test address',
+  zone: index === 0 ? 'City Bell' : 'Gonnet', courtId: `court-${index}`,
+  court: 'Court 1', covered: true, lighting: true, date: '2026-11-02',
+  startsAt: '20:30', endsAt: '21:30', targetLevel: '5ta', missingPlayers: 2,
+  players: [
+    { name: 'Test organizer', level: '5ta', position: 'Drive', organizer: true },
+    { name: 'Test player', level: '5ta', position: 'Revés', organizer: false },
+  ],
+}));
+
+function flushMatches(): void {
+  TestBed.inject(HttpTestingController).expectOne('/api/v1/matches').flush({ matches: apiMatches });
+}
+
 describe('HU-00: landing pública', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LandingPage, MatchSearchPage, ClubDirectoryPage],
-      providers: [provideRouter(routes), provideHttpClient()],
+      imports: [LandingPage, MatchSearchPage, ClubDirectoryPage, PendingMatchMembershipCardComponent],
+      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('presenta el hero y las secciones principales de Home', () => {
@@ -54,8 +84,11 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('presenta filtros laterales y partidos en Home 2', () => {
+  it('presenta filtros laterales y partidos en Home 2', async () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
+    fixture.detectChanges();
+    flushMatches();
+    await fixture.whenStable();
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -77,7 +110,7 @@ describe('HU-00: landing pública', () => {
 
   it('simula bajarse de un partido completo y libera un lugar al confirmar', () => {
     setDemoClock(10, 0);
-    const fixture = TestBed.createComponent(MatchSearchPage);
+    const fixture = TestBed.createComponent(PendingMatchMembershipCardComponent);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -104,7 +137,7 @@ describe('HU-00: landing pública', () => {
 
   it('RN-03: con menos de 2 horas la baja queda deshabilitada y el título refleja el estado', () => {
     setDemoClock(19, 0);
-    const fixture = TestBed.createComponent(MatchSearchPage);
+    const fixture = TestBed.createComponent(PendingMatchMembershipCardComponent);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -114,10 +147,16 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('abre el detalle del partido y permite unirse sin enviar al login', () => {
+  it('abre el detalle y registra la participación autenticada mediante la API', async () => {
+    vi.spyOn(TestBed.inject(AuthSessionService), 'restore').mockReturnValue(of({
+      id: 'player-id', name: 'Test player', email: 'player@example.com', zone: 'Gonnet', level: '5ta',
+    }));
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+    flushMatches();
+    await fixture.whenStable();
+    fixture.detectChanges();
     const details = root.querySelector('[data-match-detail]') as HTMLButtonElement;
 
     expect(details).not.toBeNull();
@@ -125,14 +164,22 @@ describe('HU-00: landing pública', () => {
     details.click();
     fixture.detectChanges();
     const dialog = root.querySelector('[role="dialog"]');
-    expect(dialog?.textContent).toContain('Club Universitario Gonnet');
+    expect(dialog?.textContent).toContain('Test club 0');
     expect(dialog?.textContent).toContain('Drive');
 
     root.querySelector<HTMLButtonElement>('.join-match-button')?.click();
     fixture.detectChanges();
     root.querySelector<HTMLButtonElement>('.join-confirm-submit')?.click();
     fixture.detectChanges();
-    expect(root.textContent).toContain('Solicitud para unirte enviada');
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/matches/match-0/players');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toBeNull();
+    request.flush({ match: { ...apiMatches[0], missingPlayers: 1 } });
+    fixture.changeDetectorRef.markForCheck();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Te sumaste al partido en Test club 0.');
+    expect(fixture.componentInstance.matches[0].openSpots).toBe(1);
     fixture.destroy();
   });
 
@@ -144,8 +191,10 @@ describe('HU-00: landing pública', () => {
     fixture.destroy();
   });
 
-  it('filtra partidos locales por zona y permite limpiar los filtros', () => {
+  it('filtra partidos de la API por zona y permite limpiar los filtros', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
+    fixture.detectChanges();
+    flushMatches();
     fixture.componentInstance.selectedZones = ['City Bell'];
     expect(fixture.componentInstance.filteredMatches.length).toBe(1);
     expect(fixture.componentInstance.filteredMatches[0].zone).toBe('City Bell');
