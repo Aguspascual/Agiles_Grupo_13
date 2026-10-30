@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { PreviewNoticeComponent } from './preview-notice.component';
+import { AuthSessionService } from './auth-session.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink, PreviewNoticeComponent],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
@@ -16,34 +17,41 @@ export class LoginPage {
   });
 
   submitted = false;
-  ready = false;
-  transitioning = false;
+  requestInProgress = false;
+  errorMessage = '';
   passwordVisible = false;
   recoveryVisible = false;
 
-  constructor(private readonly router: Router) {
-    this.form.valueChanges.subscribe(() => (this.ready = false));
-  }
+  constructor(
+    private readonly router: Router,
+    private readonly session: AuthSessionService,
+  ) {}
 
   onSubmit(): void {
-    if (this.transitioning) return;
+    if (this.requestInProgress) return;
     this.submitted = true;
     this.form.markAllAsTouched();
-    if (this.form.valid) {
-      const reducedMotion =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reducedMotion) {
-        void this.router.navigateByUrl('/admin/complejos');
-        return;
-      }
-      this.transitioning = true;
-    }
+    if (this.form.invalid) return;
+
+    this.errorMessage = '';
+    this.requestInProgress = true;
+    const { email, password, remember } = this.form.getRawValue();
+    this.session.login({ email, password }, remember).subscribe({
+      next: () => {
+        this.requestInProgress = false;
+        void this.router.navigateByUrl('/');
+      },
+      error: (error: unknown) => {
+        this.requestInProgress = false;
+        this.errorMessage = this.loginError(error);
+      },
+    });
   }
 
-  finishTransition(event: AnimationEvent): void {
-    if (this.transitioning && event.animationName === 'login-exit') {
-      void this.router.navigateByUrl('/admin/complejos');
-    }
+  private loginError(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) return 'No se pudo iniciar sesión. Intentá nuevamente.';
+    if (error.status === 401) return 'El correo o la contraseña no son correctos.';
+    if (error.status === 0) return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
+    return 'No se pudo iniciar sesión. Intentá nuevamente.';
   }
 }

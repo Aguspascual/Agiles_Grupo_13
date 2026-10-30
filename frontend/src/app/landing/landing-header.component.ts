@@ -1,7 +1,7 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
-import { PlayerProfileStore } from '../profile/player-profile.store';
+import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-landing-header',
@@ -35,19 +35,24 @@ import { PlayerProfileStore } from '../profile/player-profile.store';
             <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
             <path d="M10 21h4" /></svg
         ></a>
-        <div class="profile-menu" (click)="$event.stopPropagation()">
-          <button class="profile-link" type="button" [attr.aria-expanded]="menuOpen" aria-haspopup="menu" aria-label="Abrir menú de usuario" (click)="menuOpen = !menuOpen">
-            <span class="profile-avatar">{{ initials }}</span>
-            <span class="profile-copy"><b>{{ profile.profile().nickname }}</b><small>Nivel {{ profile.profile().level }}</small></span>
-            <span class="profile-chevron" aria-hidden="true">⌄</span>
-          </button>
-          @if (menuOpen) {
-            <div class="profile-dropdown" role="menu">
-              <a routerLink="/perfil" role="menuitem" (click)="menuOpen = false">Mi perfil</a>
-              <button type="button" role="menuitem" (click)="menuOpen = false; logoutOpen = true">Cerrar sesión</button>
-            </div>
-          }
-        </div>
+        @if (session.currentUser(); as user) {
+          <div class="profile-menu" (click)="$event.stopPropagation()">
+            <button class="profile-link" type="button" [attr.aria-expanded]="menuOpen" aria-haspopup="menu" aria-label="Abrir menú de usuario" (click)="menuOpen = !menuOpen">
+              <span class="profile-avatar">{{ initials }}</span>
+              <span class="profile-copy"><b>{{ user.name }}</b><small>Nivel {{ user.level }}</small></span>
+              <span class="profile-chevron" aria-hidden="true">⌄</span>
+            </button>
+            @if (menuOpen) {
+              <div class="profile-dropdown" role="menu">
+                <a routerLink="/perfil" role="menuitem" (click)="menuOpen = false">Mi perfil</a>
+                <button type="button" role="menuitem" (click)="menuOpen = false; logoutOpen = true">Cerrar sesión</button>
+              </div>
+            }
+          </div>
+        } @else {
+          <a class="profile-link" routerLink="/ingresar">Ingresar</a>
+          <a class="create-match-link" routerLink="/registro">Registrarse</a>
+        }
       </div>
     </header>
     @if (logoutOpen) {
@@ -57,13 +62,13 @@ import { PlayerProfileStore } from '../profile/player-profile.store';
   styleUrl: './landing-header.component.scss',
 })
 export class LandingHeaderComponent {
-  readonly profile = inject(PlayerProfileStore);
+  readonly session = inject(AuthSessionService);
   private readonly router = inject(Router);
   menuOpen = false;
   logoutOpen = false;
 
   get initials(): string {
-    return this.profile.profile().nickname.split(/\s+/).map((part) => part[0] ?? '').join('').slice(0, 2).toUpperCase();
+    return this.session.currentUser()?.name.split(/\s+/).map((part) => part[0] ?? '').join('').slice(0, 2).toUpperCase() ?? '';
   }
 
   @HostListener('document:click')
@@ -77,6 +82,7 @@ export class LandingHeaderComponent {
 
   logout(): void {
     this.logoutOpen = false;
+    this.session.logout();
     void this.router.navigateByUrl('/ingresar');
   }
 }
