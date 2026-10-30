@@ -14,12 +14,15 @@ var (
 	ErrNotFound  = errors.New("match not found")
 	ErrConflict  = errors.New("match conflict")
 	ErrDuplicate = errors.New("player already joined")
+	ErrOrganizer = errors.New("organizer cannot leave the match")
+	ErrTooLate   = errors.New("the match leave window has closed")
 )
 
 const (
 	ListPath    = "/api/v1/matches"
 	CreatePath  = "/api/v1/complexes/{complexId}/courts/{courtId}/matches"
 	JoinPath    = "/api/v1/matches/{matchId}/players"
+	LeavePath   = "/api/v1/matches/{matchId}/players/me"
 	NoticesPath = "/api/v1/match-notices"
 	OptionsPath = "/api/v1/matches/options"
 )
