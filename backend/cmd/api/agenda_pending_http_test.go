@@ -139,7 +139,7 @@ func TestPublicSlotsJSONWithOpenMatch(t *testing.T) {
 	f.profile(t, ana, "Ana Pública", "5ta", "Drive")
 	f.insertMatch(t, ana, nil, "5ta", "open", "reserved", slotTime(t, f, "20:00"), slotTime(t, f, "21:00"))
 	data := string(expectManual(t, f.request("GET", fmt.Sprintf("/api/v1/complexes/%s/slots?date=%s", f.complexID, f.date), "", ""), 200))
-	for _, forbidden := range []string{"Ana Pública", "pendingMatch", "players", "missingPlayers", "targetLevel", "Private organizer", "reservationId"} {
+	for _, forbidden := range []string{"Ana Pública", "players", "targetLevel", "Private organizer", "reservationId", "userId"} {
 		if strings.Contains(data, forbidden) {
 			t.Fatalf("public response contains %s: %s", forbidden, data)
 		}

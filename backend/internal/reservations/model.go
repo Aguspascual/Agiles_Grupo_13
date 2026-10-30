@@ -12,6 +12,7 @@ var (
 	ErrConflict  = errors.New("reservation conflict")
 	ErrNotFound  = errors.New("resource not found")
 	ErrForbidden = errors.New("reservation forbidden")
+	ErrDuplicate = errors.New("duplicate invited player")
 )
 
 type Contact struct {

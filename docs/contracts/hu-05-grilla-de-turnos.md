@@ -3,7 +3,7 @@
 **Estado:** implementado por backend (`backend/internal/slots`) e integrado en el frontend (`SlotGridService`). Diferencias reales respecto de la propuesta original:
 
 - Cada turno trae `{id, startsAt, endsAt, status, isPast}`; `isPast` lo calcula el backend en hora de Buenos Aires. El turno no trae `courtId` ni `date`: el frontend los deriva de la cancha y del día pedido.
-- `status` es solo `AVAILABLE | RESERVED | BLOCKED`. `PENDING_MATCH` y `CLASS` (y `pendingMatch`) quedan pendientes de HU-09/HU-12; `BLOCKED` equivale a un día deshabilitado en HU-04.
+- `status` es `AVAILABLE | PENDING_MATCH | RESERVED | BLOCKED` (TDD-0009 v3). `PENDING_MATCH` ya se emite: el turno lo ocupa una sola reserva de partido abierto con lugares libres y todavía no empezó; trae `pendingMatch: {missingPlayers, level}` (solo en ese estado, sin nombres ni ids). Un partido completo, varias reservas superpuestas o un turno pasado se informan `RESERVED`. `CLASS` aún no se emite (no existe el concepto de clase en el backend). `BLOCKED` equivale a un día deshabilitado en HU-04.
 - Cada cancha agrega `occupiedIntervals[]`; el frontend lo ignora.
 - Ventana: desde hoy hasta hoy + 13 días (fuera de ella, `400`). La consulta acepta **solo** `date`; cualquier otro parámetro devuelve `400`. `404` si el complejo no existe o está dado de baja; `400` si el id no es UUID.
 - El listado de clubes para llegar a la grilla es `GET /api/v1/public/complexes` (TDD-0014).
@@ -53,7 +53,7 @@ GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD
 | `slots[].status` | enum | `AVAILABLE` (Libre), `PENDING_MATCH` (Partido abierto), `RESERVED` (Reservado), `CLASS` (Clase: el complejo reservó el turno para dar una clase) y `BLOCKED` (cerrado por el complejo; el jugador lo ve como "No disponible"). En el Sprint 3 se suma `AWAITING_PAYMENT` (seña). |
 | `slots[].pendingMatch` | objeto | Solo con `PENDING_MATCH`: `missingPlayers` (1 a 3) y `level` (categoría buscada, por ejemplo `"5ta"`). |
 
-Prioridad de estados: un turno **bloqueado** se informa como `BLOCKED` aunque tenga datos de reserva; después `CLASS`, `PENDING_MATCH` o `RESERVED`; si no hay nada, `AVAILABLE`.
+Prioridad de estados (implementada): `BLOCKED` solo si el turno no tiene reserva; si lo ocupa una reserva es `PENDING_MATCH` o `RESERVED`. Propuesta original, no vigente: un turno **bloqueado** se informa como `BLOCKED` aunque tenga datos de reserva; después `CLASS`, `PENDING_MATCH` o `RESERVED`; si no hay nada, `AVAILABLE`.
 
 **Privacidad:** este endpoint es público, así que **no** debe incluir nombre ni teléfono de quien reservó. Esos datos van en la agenda del encargado (HU-07), con un endpoint autenticado.
 

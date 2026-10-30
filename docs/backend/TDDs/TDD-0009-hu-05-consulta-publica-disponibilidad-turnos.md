@@ -1,7 +1,7 @@
 ---
 id: "0009"
-estado: "Aprobado e integrado en Desarrollo mediante PR #18"
-version: 2
+estado: "Borrador para aprobación humana (v3: partido abierto en la grilla); la v2 sigue aprobada e integrada mediante PR #18"
+version: 3
 autor: "Equipo backend"
 fecha: "2026-10-29"
 titulo: "Consulta pública de disponibilidad de turnos por complejo y fecha"
@@ -15,6 +15,79 @@ trello: "Pendiente de confirmar la tarjeta HU-05 backend"
 > **Versión 2 aprobada.** Pedro Moyano aprobó este TDD y fue integrado en Desarrollo
 > mediante la [PR #18](https://github.com/Aguspascual/Agiles_Grupo_13/pull/18). Esta
 > versión define el alcance autorizado para HU-05 backend.
+
+## Versión 3: partido abierto en la grilla pública (HU-05 y HU-09)
+
+> **Borrador para aprobación humana.** La aprobación ocurre en la revisión de la PR.
+> Esta versión **reemplaza solo la regla CA-10** (estados disponibles) y agrega
+> CA-16 a CA-19. El resto de la v2 no cambia.
+
+### Motivo
+
+HU-05 pide ver cada turno como Libre, Partido abierto, Reservado o Clase, con
+jugadores faltantes y nivel buscado en los partidos abiertos. HU-09 pide que el
+partido abierto aparezca en la grilla del complejo. Hoy una reserva con
+`origin='open_match'` ocupa el turno y se ve como `RESERVED`, sin faltantes ni nivel.
+
+### Criterios de aceptación adicionales
+
+- **CA-10 (reemplaza a la v2) — Estados:** `AVAILABLE`, `PENDING_MATCH`, `RESERVED` y
+  `BLOCKED`. No existe el estado de clase: no hay concepto de clase en el backend y
+  `CLASS` no se emite.
+- **CA-16 — Cuándo es `PENDING_MATCH`:** un turno es `PENDING_MATCH` solo si lo ocupa
+  **una sola** reserva vigente, de `origin='open_match'`, con
+  `pending_matches.status='open'` (quedan lugares libres), y el turno **no es pasado**
+  (`isPast=false`). Si el partido está completo (`full`), si se superponen varias
+  reservas, si el turno ya empezó o si la reserva no es de partido abierto, el turno
+  sigue `RESERVED`.
+- **CA-17 — Prioridad:** `BLOCKED` solo si no hay reserva (sin cambios). Un turno
+  ocupado por reserva es `PENDING_MATCH` (según CA-16) o `RESERVED`.
+- **CA-18 — Datos públicos:** un slot `PENDING_MATCH` suma
+  `pendingMatch: {missingPlayers, level}`. `missingPlayers = 4 − jugadores anotados`
+  (1 a 3) y `level = pending_matches.target_level`. No se exponen nombres, ids de
+  usuario ni id de partido. La clave solo aparece en slots `PENDING_MATCH`
+  (`omitempty`): el JSON de los demás estados no cambia.
+- **CA-19 — Sin efectos colaterales:** `occupiedIntervals` no cambia; la agenda del
+  encargado (`GET …/agenda`) sigue viendo `RESERVED` en su ocupación y conserva su
+  propio detalle de partido; reservar sobre un turno `PENDING_MATCH` sigue dando `409`
+  porque el turno está ocupado. No hay migraciones ni cambios en `reservations/`,
+  `matches/` o `agenda/`.
+
+### Contrato v3
+
+`GET /api/v1/complexes/{complexId}/slots?date=AAAA-MM-DD` (público; sin otros cambios):
+
+```json
+{ "id": "…:2026-11-02:20:00", "startsAt": "20:00", "endsAt": "21:30",
+  "status": "PENDING_MATCH", "isPast": false,
+  "pendingMatch": { "missingPlayers": 2, "level": "5ta" } }
+```
+
+### Diseño técnico
+
+- `model.go`: `Slot.PendingMatch *PendingMatch` (`omitempty`); `ReservationData` suma
+  `OpenMatch *OpenMatchInfo{Level, Missing}`. `ProjectCourt` calcula el estado de un
+  turno ocupado según CA-16; `OccupiedIntervals` no se toca.
+- `postgres.go`: la consulta de reservas hace
+  `LEFT JOIN pending_matches pm ON pm.reservation_id=r.id AND pm.status='open'` y
+  cuenta `pending_match_players`. Solo para `origin='open_match'` con partido abierto se
+  completa `OpenMatch`. Misma transacción `REPEATABLE READ` de solo lectura, sin locks.
+- La agenda arma su ocupación sin `OpenMatch`, por lo que no cambia.
+
+### Pruebas
+
+HTTP con PostgreSQL real: 1 anotado ⇒ `missingPlayers=3`; 3 anotados ⇒ 1; completo ⇒
+`RESERVED`; unirse/bajarse cambia `missingPlayers`; reservas `web` y `manual` ⇒
+`RESERVED`; reserva cancelada ⇒ `AVAILABLE`; turno pasado ⇒ `RESERVED`; dos reservas
+superpuestas ⇒ `RESERVED`; día deshabilitado sin reservas ⇒ `BLOCKED`; sin clave
+`pendingMatch` fuera de `PENDING_MATCH`; sin nombres ni ids; regresión de la agenda;
+`POST …/reservations` sobre un turno `PENDING_MATCH` ⇒ `409`. Unitarias de
+`ProjectCourt`.
+
+### Límites
+
+Sin estado «Clase», sin deep-link a un partido concreto, sin reemplazo de partido
+pendiente (HU-12).
 
 ## Contexto de negocio
 

@@ -8,6 +8,7 @@ import {
   output,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthSessionService } from '../auth/auth-session.service';
 import { GridSlot, SLOT_STATE_LABELS, missingPlayersLabel } from './slot-grid.model';
 
 /**
@@ -36,12 +37,14 @@ import { GridSlot, SLOT_STATE_LABELS, missingPlayersLabel } from './slot-grid.mo
         </p>
       </div>
       <div class="slot-summary__actions">
-        @if (slot().state === 'pending' && canReplacePending()) {
-          <button class="slot-summary__cta" type="button" (click)="replacePending.emit()">
-            Reservar como grupo completo
-          </button>
+        @if (!session.authenticated()) {
+          <a class="slot-summary__cta" routerLink="/ingresar">{{ ctaLabel() }}</a>
+        } @else if (slot().state === 'pending') {
+          <a class="slot-summary__cta" routerLink="/partidos">Ver partidos abiertos</a>
         } @else {
-        <a class="slot-summary__cta" routerLink="/ingresar">{{ ctaLabel() }}</a>
+          <a class="slot-summary__cta" routerLink="/partidos" [queryParams]="{ crear: 1 }">
+            Reservar este turno
+          </a>
         }
         <button
           type="button"
@@ -61,9 +64,8 @@ export class SlotSummaryComponent {
   readonly courtName = input.required<string>();
   readonly dateLabel = input.required<string>();
   readonly closed = output<void>();
-  readonly replacePending = output<void>();
-  readonly canReplacePending = input(false);
 
+  protected readonly session = inject(AuthSessionService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   constructor() {

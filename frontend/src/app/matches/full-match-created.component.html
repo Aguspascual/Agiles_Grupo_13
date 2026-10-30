@@ -1,0 +1,46 @@
+@if (view; as created) {
+  <section class="invite-success" aria-live="polite">
+    <div class="invite-success__summary">
+      <span class="invite-success__check" aria-hidden="true">✓</span>
+      <div>
+        <h3>{{ created.status === 'expired' || created.status === 'cancelled' ? 'El turno se liberó' : created.status === 'full' ? 'Los cuatro lugares están confirmados' : 'Turno reservado para tu grupo' }}</h3>
+        <p>{{ created.complex }} · {{ created.date }} · {{ created.startsAt }}–{{ created.endsAt }}</p>
+        @if (created.status === 'expired' || created.status === 'cancelled') {
+          <small>Faltaron confirmaciones antes del vencimiento y la cancha volvió a estar disponible.</small>
+        } @else if (created.status === 'full') {
+          <small>Ya está confirmada la reserva para el grupo completo.</small>
+        } @else {
+          <small>{{ acceptedInvitations }} de 3 invitados confirmaron. Vence a las {{ created.expiresAt | date:'HH:mm':'America/Argentina/Buenos_Aires' }}.</small>
+        }
+      </div>
+    </div>
+    <div class="invite-list">
+      @for (invite of created.invitations; track invite.id) {
+        <article class="invite-card">
+          <div class="invite-card__person">
+            <b>{{ invite.name }}</b>
+            <span>{{ invite.email || 'Enlace para compartir' }}</span>
+          </div>
+          <span class="invite-card__status" [class.is-accepted]="invite.status === 'accepted'">{{ statusLabel(invite.status) }}</span>
+          <div class="invite-card__actions">
+            @if (invite.email && invite.status === 'pending') {
+              <a class="button-secondary" [href]="emailUrl(invite)">Invitar por correo</a>
+            }
+            @if (invite.status === 'pending') {
+              <button class="button-secondary" type="button" (click)="copyInvitation(invite)">
+                {{ copiedInviteId === invite.id ? 'Copiado' : 'Copiar enlace' }}
+              </button>
+            }
+          </div>
+          @if (failedInviteId === invite.id) {
+            <input class="invite-card__fallback" readonly [value]="invitationUrl(invite)" aria-label="Enlace de invitación para {{ invite.name }}" />
+          }
+        </article>
+      }
+    </div>
+    @if (copyError) { <p class="form-error" role="alert">{{ copyError }}</p> }
+    <footer class="create-match-dialog__actions">
+      <button class="button-primary" type="button" (click)="close.emit()">Listo</button>
+    </footer>
+  </section>
+}

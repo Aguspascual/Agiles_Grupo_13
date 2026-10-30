@@ -22,12 +22,19 @@ type Complex struct {
 	Zone    string `json:"zone"`
 }
 
+// PendingMatch is the public summary of an open match: no names or identifiers.
+type PendingMatch struct {
+	MissingPlayers int    `json:"missingPlayers"`
+	Level          string `json:"level"`
+}
+
 type Slot struct {
-	ID       string `json:"id"`
-	StartsAt string `json:"startsAt"`
-	EndsAt   string `json:"endsAt"`
-	Status   string `json:"status"`
-	IsPast   bool   `json:"isPast"`
+	ID           string        `json:"id"`
+	StartsAt     string        `json:"startsAt"`
+	EndsAt       string        `json:"endsAt"`
+	Status       string        `json:"status"`
+	IsPast       bool          `json:"isPast"`
+	PendingMatch *PendingMatch `json:"pendingMatch,omitempty"`
 }
 
 type OccupiedInterval struct {
@@ -59,11 +66,18 @@ type CourtData struct {
 	Schedule *schedules.Day
 }
 
+// OpenMatchInfo is set only for reservations of an open match that still has free places.
+type OpenMatchInfo struct {
+	Level   string
+	Missing int
+}
+
 // ReservationData contains only persisted occupancy timestamps, never personal data.
 type ReservationData struct {
-	CourtID  string
-	StartsAt time.Time
-	EndsAt   time.Time
+	CourtID   string
+	StartsAt  time.Time
+	EndsAt    time.Time
+	OpenMatch *OpenMatchInfo
 }
 
 type Snapshot struct {
@@ -100,23 +114,30 @@ func projectCourt(court CourtData, reservations []ReservationData, day time.Time
 				starts := time.Date(day.Year(), day.Month(), day.Day(), start/60, start%60, 0, 0, location)
 				endMinute := start + draft.DurationMinutes
 				ends := time.Date(day.Year(), day.Month(), day.Day(), endMinute/60, endMinute%60, 0, 0, location)
-				occupied := false
+				overlapping := 0
+				var lastOverlap ReservationData
 				for _, reservation := range reservations {
 					if reservation.CourtID == court.ID && reservation.StartsAt.Before(ends) && reservation.EndsAt.After(starts) {
-						occupied = true
-						break
+						overlapping++
+						lastOverlap = reservation
 					}
 				}
+				isPast := !starts.After(now)
 				status := "AVAILABLE"
-				if occupied {
+				var pending *PendingMatch
+				if overlapping > 0 {
 					status = "RESERVED"
+					if overlapping == 1 && lastOverlap.OpenMatch != nil && !isPast {
+						status = "PENDING_MATCH"
+						pending = &PendingMatch{MissingPlayers: lastOverlap.OpenMatch.Missing, Level: lastOverlap.OpenMatch.Level}
+					}
 				} else if !draft.Enabled {
 					status = "BLOCKED"
 				}
 				clockStart := starts.In(location).Format("15:04")
 				clockEnd := ends.In(location).Format("15:04")
 				result.Slots = append(result.Slots, Slot{ID: court.ID + ":" + day.Format("2006-01-02") + ":" + clockStart,
-					StartsAt: clockStart, EndsAt: clockEnd, Status: status, IsPast: !starts.After(now)})
+					StartsAt: clockStart, EndsAt: clockEnd, Status: status, IsPast: isPast, PendingMatch: pending})
 			}
 		}
 	}

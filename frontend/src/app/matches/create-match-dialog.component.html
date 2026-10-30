@@ -15,6 +15,9 @@
       <button class="icon-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
     </header>
 
+    @if (createdFullMatch; as created) {
+      <app-full-match-created [match]="created" (close)="close.emit()" />
+    } @else {
     <form (ngSubmit)="submit()">
       <fieldset class="mode-picker">
         <legend>¿Cómo querés jugar?</legend>
@@ -110,6 +113,17 @@
               />
               <small class="field-hint">Lo necesita el complejo para confirmar la reserva.</small>
             </label>
+            <fieldset class="invite-fields form-grid__wide">
+              <legend>Invitá a tus tres amigos</legend>
+              @for (invite of invitees; track $index) {
+                <app-invitee-autocomplete
+                  [label]="'Jugador ' + ($index + 2) + ' · nombre o correo'"
+                  [inputId]="'invitee-' + $index"
+                  (selectionChange)="updateInvitee($index, $event)"
+                />
+              }
+              <small class="field-hint">La búsqueda empieza con 6 caracteres y muestra hasta 8 coincidencias. También podés invitar a alguien por enlace.</small>
+            </fieldset>
           }
         </div>
       }
@@ -126,9 +140,10 @@
           type="submit"
           [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !session.currentUser()"
         >
-          {{ saving ? 'Guardando…' : mode === 'open' ? 'Publicar partido' : 'Confirmar y reservar' }}
+          {{ saving ? 'Guardando…' : mode === 'open' ? 'Publicar partido' : 'Reservar e invitar' }}
         </button>
       </footer>
     </form>
+    }
   </section>
 </div>

@@ -1,11 +1,10 @@
-import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, map, startWith, switchMap } from 'rxjs';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
-import { isPendingReplacementWindowOpen } from '../bookings/booking.model';
 import {
   addDays,
   capitalize,
@@ -42,7 +41,7 @@ type PageState = DayGridResult | { status: 'loading' };
   styleUrl: './complex-slots.page.scss',
   host: { '(document:keydown.escape)': 'clearSelection()' },
 })
-export class ComplexSlotsPage implements OnDestroy {
+export class ComplexSlotsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(SlotGridService);
@@ -81,14 +80,7 @@ export class ComplexSlotsPage implements OnDestroy {
 
   readonly grid = computed(() => {
     const state = this.state();
-    if (state.status !== 'ok') return null;
-    const replaced = new Set(this.replacedSlotIds());
-    return { ...state.grid, courts: state.grid.courts.map((court) => ({
-      ...court,
-      slots: court.slots.map((slot) => replaced.has(slot.id)
-        ? { ...slot, state: 'reserved' as const, pendingMatch: undefined }
-        : slot),
-    })) };
+    return state.status === 'ok' ? state.grid : null;
   });
 
   readonly dateLabel = computed(() => {
@@ -114,10 +106,6 @@ export class ComplexSlotsPage implements OnDestroy {
   });
 
   readonly selectedSlotId = signal<string | null>(null);
-  readonly replacedSlotIds = signal<string[]>([]);
-  readonly replaceDialogOpen = signal(false);
-  readonly replacementNotice = signal('');
-  private replacementNoticeTimer?: ReturnType<typeof setTimeout>;
   readonly selection = computed(() => {
     const id = this.selectedSlotId();
     for (const court of this.grid()?.courts ?? []) {
@@ -125,13 +113,6 @@ export class ComplexSlotsPage implements OnDestroy {
       if (slot) return { slot, courtName: court.name };
     }
     return null;
-  });
-
-  readonly canReplacePending = computed(() => {
-    const slot = this.selection()?.slot;
-    if (!slot || slot.state !== 'pending' || slot.isPast) return false;
-    const startsAt = new Date(`${this.dateKey()}T${slot.startsAt}:00`);
-    return isPendingReplacementWindowOpen(startsAt, this.clock());
   });
 
   constructor() {
@@ -144,8 +125,6 @@ export class ComplexSlotsPage implements OnDestroy {
       this.complexId();
       this.dateKey();
       this.selectedSlotId.set(null);
-      this.replaceDialogOpen.set(false);
-      this.clearReplacementNotice();
     });
   }
 
@@ -154,51 +133,21 @@ export class ComplexSlotsPage implements OnDestroy {
   }
 
   selectSlot(slot: GridSlot): void {
-    this.replaceDialogOpen.set(false);
-    this.clearReplacementNotice();
     this.selectedSlotId.set(this.selectedSlotId() === slot.id ? null : slot.id);
   }
 
   clearSelection(): void {
     this.selectedSlotId.set(null);
-    this.replaceDialogOpen.set(false);
-    this.clearReplacementNotice();
-  }
-
-  requestPendingReplacement(): void {
-    if (this.canReplacePending()) this.replaceDialogOpen.set(true);
-  }
-
-  confirmPendingReplacement(): void {
-    const slot = this.selection()?.slot;
-    if (!slot || !this.canReplacePending()) return;
-    this.replacedSlotIds.update((ids) => [...ids, slot.id]);
-    this.replaceDialogOpen.set(false);
-    this.replacementNotice.set('Turno reservado para el grupo. El partido pendiente fue cancelado.');
-    clearTimeout(this.replacementNoticeTimer);
-    this.replacementNoticeTimer = setTimeout(() => this.clearReplacementNotice(), 4000);
   }
 
   changeDate(key: string): void {
     this.selectedSlotId.set(null);
-    this.replaceDialogOpen.set(false);
-    this.clearReplacementNotice();
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { fecha: key === this.todayKey ? null : key },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
-  }
-
-  ngOnDestroy(): void {
-    clearTimeout(this.replacementNoticeTimer);
-  }
-
-  private clearReplacementNotice(): void {
-    clearTimeout(this.replacementNoticeTimer);
-    this.replacementNoticeTimer = undefined;
-    this.replacementNotice.set('');
   }
 
   /** Acepta solo días entre hoy y el final de la ventana de reserva. */

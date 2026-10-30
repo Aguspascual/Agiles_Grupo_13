@@ -1,0 +1,13 @@
+:host { display: block; }
+.invitee-field { position: relative; display: grid; gap: 7px; color: #394840; font-size: .78rem; font-weight: 750; }
+.invitee-field__control { position: relative; }
+.invitee-field input { width: 100%; min-height: 44px; padding: 0 42px 0 13px; border: 1px solid #d9e3de; border-radius: 10px; background: #fff; color: #26342d; font: inherit; font-size: .85rem; }
+.invitee-field input:focus-visible { outline: 3px solid #35bd8b; outline-offset: 2px; }
+.field-hint { color: #78867e; font-size: .7rem; font-weight: 500; }
+.invitee-field__clear { position: absolute; top: 50%; right: 8px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 50%; background: #f1f5f3; color: #58665e; font-size: 1.1rem; cursor: pointer; }
+.field-hint { color: #78867e; font-size: .7rem; font-weight: 500; }
+.invitee-suggestions { position: absolute; z-index: 5; top: calc(100% + 4px); right: 0; left: 0; max-height: 190px; overflow-y: auto; margin: 0; padding: 5px; border: 1px solid #dce7e1; border-radius: 11px; background: #fff; box-shadow: 0 12px 28px rgb(21 49 36 / 16%); list-style: none; }
+.invitee-suggestions button { display: grid; width: 100%; gap: 3px; padding: 9px 10px; border: 0; border-radius: 7px; background: #fff; color: #27372f; text-align: left; cursor: pointer; }
+.invitee-suggestions button:hover, .invitee-suggestions button:focus-visible { outline: none; background: #edf8f2; }
+.invitee-suggestions b { font-size: .8rem; }
+.invitee-suggestions small { color: #748178; font-size: .7rem; font-weight: 500; }

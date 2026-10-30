@@ -36,6 +36,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | [0012: alta de reserva manual](TDD-0012-hu-15-alta-reserva-manual.md) | HU-15 | Borrador v1 para aprobación humana |
 | [0013: consulta de reservas y partidos propios, próximos y jugados](TDD-0013-hu-17-consulta-reservas-propias.md) | HU-17 | Borrador para aprobación humana (v2) |
 | [0014: listado público de complejos](TDD-0014-hu-05-listado-publico-complejos.md) | HU-05 | Aprobado v1 |
+| [0009: consulta pública de disponibilidad de turnos](TDD-0009-hu-05-consulta-publica-disponibilidad-turnos.md) | HU-05 / HU-09 | v2 aprobado; v3 (partido abierto en la grilla) borrador para aprobación humana |
 | [0010: cancelación de una reserva (jugador)](TDD-0010-hu-14-cancelacion-reserva.md) | HU-14 | Borrador v3 para aprobación humana |
 | [0015: consulta de la agenda del complejo](TDD-0015-hu-07-consulta-agenda-complejo.md) | HU-07 | Borrador v2 para aprobación humana |
 | [0016: cancelación de una reserva por el encargado](TDD-0016-hu-07-cancelacion-por-encargado.md) | HU-07 | Borrador v1 para aprobación humana |

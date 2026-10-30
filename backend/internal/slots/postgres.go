@@ -53,8 +53,12 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 	if err != nil {
 		return Snapshot{}, err
 	}
-	reservationRows, err := tx.Query(ctx, `SELECT r.court_id::text,r.starts_at,r.ends_at
+	reservationRows, err := tx.Query(ctx, `SELECT r.court_id::text,r.starts_at,r.ends_at,
+		CASE WHEN r.origin='open_match' AND pm.id IS NOT NULL THEN pm.target_level END,
+		CASE WHEN r.origin='open_match' AND pm.id IS NOT NULL
+			THEN 4-(SELECT count(*) FROM pending_match_players p WHERE p.match_id=pm.id) END
 		FROM reservations r JOIN courts c ON c.id=r.court_id
+		LEFT JOIN pending_matches pm ON pm.reservation_id=r.id AND pm.status='open'
 		WHERE c.complex_id=$1::uuid AND c.deleted_at IS NULL AND r.status='reserved'
 		AND r.starts_at < $3 AND r.ends_at > $2 ORDER BY r.starts_at,r.ends_at,r.court_id`, complexID, dayStart, dayEnd)
 	if err != nil {
@@ -62,9 +66,14 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 	}
 	for reservationRows.Next() {
 		var reservation ReservationData
-		if err := reservationRows.Scan(&reservation.CourtID, &reservation.StartsAt, &reservation.EndsAt); err != nil {
+		var level *string
+		var missing *int
+		if err := reservationRows.Scan(&reservation.CourtID, &reservation.StartsAt, &reservation.EndsAt, &level, &missing); err != nil {
 			reservationRows.Close()
 			return Snapshot{}, err
+		}
+		if level != nil && missing != nil && *missing >= 1 && *missing <= 3 {
+			reservation.OpenMatch = &OpenMatchInfo{Level: *level, Missing: *missing}
 		}
 		reservation.StartsAt = reservation.StartsAt.In(dayStart.Location())
 		reservation.EndsAt = reservation.EndsAt.In(dayStart.Location())
