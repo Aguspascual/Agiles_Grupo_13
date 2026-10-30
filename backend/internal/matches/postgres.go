@@ -257,8 +257,83 @@ func (r *Repository) Join(ctx context.Context, matchID, actorID string, now time
 	return r.Get(ctx, matchID, location)
 }
 
+func (r *Repository) Leave(ctx context.Context, matchID, actorID string, now time.Time, location *time.Location) (Match, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return Match{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	var status string
+	var startsAt time.Time
+	err = tx.QueryRow(ctx, `SELECT pm.status,r.starts_at
+		FROM pending_matches pm JOIN reservations r ON r.id=pm.reservation_id
+		WHERE pm.id=$1::uuid AND r.status='reserved' FOR UPDATE OF pm`, matchID).Scan(&status, &startsAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Match{}, ErrNotFound
+	}
+	if err != nil {
+		return Match{}, err
+	}
+
+	var enrolled, organizer bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid),
+		COALESCE((SELECT is_organizer FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid),false)`, matchID, actorID).
+		Scan(&enrolled, &organizer); err != nil {
+		return Match{}, err
+	}
+	if !enrolled {
+		if err := tx.Commit(ctx); err != nil {
+			return Match{}, err
+		}
+		return r.getExisting(ctx, matchID, location)
+	}
+	if organizer {
+		return Match{}, ErrOrganizer
+	}
+	if err := validateLeaveWindow(now, startsAt); err != nil {
+		return Match{}, err
+	}
+
+	deleted, err := tx.Exec(ctx, `DELETE FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid`, matchID, actorID)
+	if err != nil {
+		return Match{}, err
+	}
+	if deleted.RowsAffected() == 0 {
+		if err := tx.Commit(ctx); err != nil {
+			return Match{}, err
+		}
+		return r.getAt(ctx, matchID, now, location)
+	}
+	if status == "full" {
+		if _, err := tx.Exec(ctx, `UPDATE pending_matches SET status='open' WHERE id=$1::uuid`, matchID); err != nil {
+			return Match{}, err
+		}
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO pending_match_notices(match_id,user_id,kind)
+		SELECT match_id,user_id,'player_left' FROM pending_match_players
+		WHERE match_id=$1::uuid AND user_id<>$2::uuid`, matchID, actorID); err != nil {
+		return Match{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Match{}, err
+	}
+	return r.getAt(ctx, matchID, now, location)
+}
+
+func validateLeaveWindow(now, startsAt time.Time) error {
+	if !startsAt.After(now) || now.After(startsAt.Add(-2*time.Hour)) {
+		return ErrTooLate
+	}
+	return nil
+}
+
 func (r *Repository) Get(ctx context.Context, matchID string, location *time.Location) (Match, error) {
-	items, err := r.listByID(ctx, matchID, location)
+	return r.getAt(ctx, matchID, time.Now(), location)
+}
+
+func (r *Repository) getAt(ctx context.Context, matchID string, now time.Time, location *time.Location) (Match, error) {
+	items, err := r.List(ctx, ListFilters{MatchID: matchID}, now, location)
 	if err != nil {
 		return Match{}, err
 	}
@@ -268,20 +343,28 @@ func (r *Repository) Get(ctx context.Context, matchID string, location *time.Loc
 	return items[0], nil
 }
 
-func (r *Repository) listByID(ctx context.Context, matchID string, location *time.Location) ([]Match, error) {
-	return r.List(ctx, ListFilters{MatchID: matchID}, time.Now(), location)
+func (r *Repository) getExisting(ctx context.Context, matchID string, location *time.Location) (Match, error) {
+	items, err := r.List(ctx, ListFilters{MatchID: matchID}, time.Time{}, location)
+	if err != nil {
+		return Match{}, err
+	}
+	if len(items) == 0 {
+		return Match{}, ErrNotFound
+	}
+	return items[0], nil
 }
 
 type Notice struct {
 	ID        string    `json:"id"`
 	MatchID   string    `json:"matchId"`
+	Kind      string    `json:"kind"`
 	Complex   string    `json:"complex"`
 	StartsAt  time.Time `json:"startsAt"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 func (r *Repository) UnreadNotices(ctx context.Context, actorID string) ([]Notice, error) {
-	rows, err := r.db.Query(ctx, `SELECT n.id::text,pm.id::text,cx.name,r.starts_at,n.created_at
+	rows, err := r.db.Query(ctx, `SELECT n.id::text,pm.id::text,n.kind,cx.name,r.starts_at,n.created_at
 		FROM pending_match_notices n JOIN pending_matches pm ON pm.id=n.match_id
 		JOIN reservations r ON r.id=pm.reservation_id JOIN complexes cx ON cx.id=r.complex_id
 		WHERE n.user_id=$1::uuid AND n.read_at IS NULL ORDER BY n.created_at DESC LIMIT 20`, actorID)
@@ -292,7 +375,7 @@ func (r *Repository) UnreadNotices(ctx context.Context, actorID string) ([]Notic
 	items := make([]Notice, 0)
 	for rows.Next() {
 		var item Notice
-		if err := rows.Scan(&item.ID, &item.MatchID, &item.Complex, &item.StartsAt, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.MatchID, &item.Kind, &item.Complex, &item.StartsAt, &item.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, item)

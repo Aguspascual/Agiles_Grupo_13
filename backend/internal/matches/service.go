@@ -2,6 +2,7 @@ package matches
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"time"
 	_ "time/tzdata"
@@ -16,17 +17,25 @@ type Service struct {
 }
 
 func NewService(repository *Repository) (*Service, error) {
+	return NewServiceWithClock(repository, time.Now)
+}
+
+func NewServiceWithClock(repository *Repository, clock func() time.Time) (*Service, error) {
 	location, err := time.LoadLocation("America/Argentina/Buenos_Aires")
 	if err != nil {
 		return nil, err
 	}
-	return &Service{repository: repository, location: location, clock: time.Now}, nil
+	if clock == nil {
+		clock = time.Now
+	}
+	return &Service{repository: repository, location: location, clock: clock}, nil
 }
 
 func (s *Service) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST "+CreatePath, s.create)
 	mux.HandleFunc("POST "+JoinPath, s.join)
+	mux.HandleFunc("DELETE "+LeavePath, s.leave)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
 	mux.HandleFunc("POST "+NoticesPath+"/{noticeId}/read", s.readNotice)
 	return mux
@@ -111,6 +120,34 @@ func (s *Service) join(w http.ResponseWriter, r *http.Request) {
 	auth.WriteJSON(w, http.StatusOK, map[string]any{"match": result})
 }
 
+func (s *Service) leave(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	actor, ok := auth.UserIDFromContext(r.Context())
+	matchID := r.PathValue("matchId")
+	if !ok {
+		auth.WriteError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if !auth.ValidUUID(matchID) || r.URL.RawQuery != "" || requestHasBody(r) {
+		auth.WriteError(w, http.StatusBadRequest, "solicitud inválida")
+		return
+	}
+	result, err := s.repository.Leave(r.Context(), matchID, actor, s.clock(), s.location)
+	if err != nil {
+		s.writeError(w, err)
+		return
+	}
+	auth.WriteJSON(w, http.StatusOK, map[string]any{"match": result})
+}
+
+func requestHasBody(r *http.Request) bool {
+	if r.Body == nil || r.Body == http.NoBody {
+		return false
+	}
+	data, err := io.ReadAll(io.LimitReader(r.Body, 1))
+	return len(data) > 0 || err != nil
+}
+
 func (s *Service) listNotices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	actor, ok := auth.UserIDFromContext(r.Context())
@@ -154,6 +191,10 @@ func (s *Service) writeError(w http.ResponseWriter, err error) {
 		auth.WriteError(w, http.StatusBadRequest, "solicitud inválida")
 	case errors.Is(err, ErrDuplicate):
 		auth.WriteError(w, http.StatusConflict, "ya estás anotado en este partido")
+	case errors.Is(err, ErrOrganizer):
+		auth.WriteError(w, http.StatusConflict, "el organizador no puede bajarse; debe cancelar el partido")
+	case errors.Is(err, ErrTooLate):
+		auth.WriteError(w, http.StatusConflict, "ya no podés bajarte: faltan menos de 2 horas o el partido ya comenzó")
 	case errors.Is(err, ErrConflict):
 		auth.WriteError(w, http.StatusConflict, "el partido o el horario ya no está disponible")
 	case errors.Is(err, ErrNotFound):

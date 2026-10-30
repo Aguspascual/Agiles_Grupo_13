@@ -32,13 +32,14 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	availabilityService := slots.NewServiceWithClock(slots.NewPostgresRepository(db), clock)
 	// Public availability is the most specific complex route and must bypass auth.
 	mux.Handle("GET /api/v1/complexes/{complexId}/slots", availabilityService.Handler())
-	matchService, matchErr := matches.NewService(matches.NewRepository(db))
+	matchService, matchErr := matches.NewServiceWithClock(matches.NewRepository(db), clock)
 	if matchErr == nil {
 		mux.Handle("GET "+matches.ListPath, matchService.ListHandler())
 		mux.Handle("GET "+matches.OptionsPath, matchService.OptionsHandler())
 		protectedMatches := auth.RequireUser(secret, auth.NewPostgresRepository(db), matchService.Handler())
 		mux.Handle("POST "+matches.CreatePath, protectedMatches)
 		mux.Handle("POST "+matches.JoinPath, protectedMatches)
+		mux.Handle("DELETE "+matches.LeavePath, protectedMatches)
 		mux.Handle("GET "+matches.NoticesPath, protectedMatches)
 		mux.Handle("POST "+matches.NoticesPath+"/{noticeId}/read", protectedMatches)
 	} else {

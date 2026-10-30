@@ -134,3 +134,22 @@ manuales no aparecen y no se exponen contactos ni otros jugadores. No modifica
 `GET /api/v1/reservations?date=`, avisos ni cancelaciones.
 
 Detalle en [HU-17-implementacion](../docs/backend/HU-17-implementacion.md) y TDD-0013 (v2).
+
+## HU-13 - Baja de un partido pendiente
+
+`DELETE /api/v1/matches/{matchId}/players/me` requiere Bearer JWT y no acepta body ni query.
+El jugador puede salir hasta dos horas antes del inicio, inclusive (RN-03); el organizador
+debe cancelar el partido por HU-14. La operación elimina únicamente su inscripción. Si el
+partido estaba completo, vuelve a `open`, mientras que la reserva de cancha conserva su
+estado `reserved`. El organizador y el resto de los jugadores reciben un aviso interno
+`player_left`. La baja repetida de una persona ya no anotada responde 200 sin duplicar
+efectos; la transacción bloquea el partido y aplica la baja y los avisos de forma atómica.
+
+`GET /api/v1/match-notices` incluye `kind` (`match_completed` o `player_left`). La migración
+`009_match_leave_notices.sql` conserva los avisos existentes y permite nuevas notificaciones
+del mismo tipo cuando un partido vuelve a completarse tras una baja.
+
+Diseño: [TDD-0017](../docs/backend/TDDs/TDD-0017-hu-13-bajarse-de-partido-pendiente.md).
+Fases y validaciones: [implementación HU-13](HU-13-implementacion.md). La acción de frontend,
+cancelar como organizador, vencimiento automático y notificaciones por canales externos no
+forman parte de esta etapa.
