@@ -168,12 +168,12 @@ describe('registro de jugador HU-01', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
-      'Ya existe una cuenta con ese correo electrónico.',
+      'Ese correo ya tiene una cuenta.',
     );
     expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
     expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(true);
     expect(fixture.nativeElement.querySelector('.form-error')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Ya existe una cuenta con ese correo electrónico. Iniciá sesión');
+    expect(fixture.nativeElement.textContent).toContain('Este correo ya está registrado.');
 
     fixture.componentInstance.form.controls.email.setValue('otra@example.com');
     expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(false);

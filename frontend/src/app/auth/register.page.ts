@@ -168,7 +168,7 @@ export class RegisterPage {
   private registrationError(error: unknown): string {
     if (!(error instanceof HttpErrorResponse)) return 'No pudimos crear tu cuenta. Intentá nuevamente.';
     if (error.status === 400) return 'Revisá los datos del formulario e intentá nuevamente.';
-    if (error.status === 409) return 'Ya existe una cuenta con ese correo electrónico.';
+    if (error.status === 409) return 'Ese correo ya tiene una cuenta. Iniciá sesión.';
     if (error.status === 0) return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
     return 'No pudimos crear tu cuenta. Intentá nuevamente.';
   }

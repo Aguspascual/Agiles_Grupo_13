@@ -31,7 +31,7 @@
               } @else if ((submitted || form.controls.email.touched) && form.controls.email.hasError('email')) {
                 <p class="field-error">Ingresá un correo electrónico válido.</p>
               } @else if (form.controls.email.hasError('emailTaken')) {
-                <p class="field-error">Ya existe una cuenta con ese correo electrónico. Iniciá sesión o usá otro correo.</p>
+                <p class="field-error">Este correo ya está registrado.</p>
               }
             </div>
               <div class="field">
@@ -89,15 +89,22 @@
 
           <section class="form-section preferences-section" aria-labelledby="preferences-title">
             <h2 id="preferences-title" class="section-title"><span>3</span> Preferencias de juego</h2>
-            <div class="field-grid">
-              <div><p class="choice-label">Posición en la cancha</p><div class="choice-list compact" role="group" aria-label="Posición en la cancha">
-                @for (position of ['Drive', 'Revés', 'Indistinto']; track position) { <label class="choice-chip"><input type="radio" formControlName="position" [value]="position" /><span>{{ position }}</span></label> }
-              </div></div>
-              <div><p class="choice-label">Mano hábil</p><div class="choice-list compact" role="group" aria-label="Mano hábil">
-                @for (hand of ['Diestro', 'Zurdo']; track hand) { <label class="choice-chip"><input type="radio" formControlName="hand" [value]="hand" /><span>{{ hand }}</span></label> }
-              </div></div>
+            <div class="pref-stack">
+              <div class="pref-group">
+                <p class="choice-label">Posición en la cancha</p>
+                <div class="choice-list compact" role="group" aria-label="Posición en la cancha">
+                  @for (position of ['Drive', 'Revés', 'Indistinto']; track position) { <label class="choice-chip"><input type="radio" formControlName="position" [value]="position" /><span>{{ position }}</span></label> }
+                </div>
+                @if (submitted && form.controls.position.invalid) { <p class="field-error">Elegí tu posición.</p> }
+              </div>
+              <div class="pref-group">
+                <p class="choice-label">Mano hábil</p>
+                <div class="choice-list compact" role="group" aria-label="Mano hábil">
+                  @for (hand of ['Diestro', 'Zurdo']; track hand) { <label class="choice-chip"><input type="radio" formControlName="hand" [value]="hand" /><span>{{ hand }}</span></label> }
+                </div>
+                @if (submitted && form.controls.hand.invalid) { <p class="field-error">Elegí tu mano hábil.</p> }
+              </div>
             </div>
-            @if (submitted && (form.controls.position.invalid || form.controls.hand.invalid)) { <p class="field-error">Elegí tu posición en la cancha y tu mano hábil.</p> }
           </section>
 
           <div class="fair-play">

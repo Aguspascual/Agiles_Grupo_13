@@ -127,3 +127,10 @@
   .register-page .aside-quote { font-size: .78rem; }
 }
 .register-page .form-error { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #f0b4b4; border-left: 4px solid #b52929; border-radius: 9px; background: #fdecec; color: #8f1d1d; font-size: .84rem; font-weight: 700; line-height: 1.4; }
+
+.register-page .field-error { margin: 4px 0 0; font-size: .72rem; line-height: 1.3; font-weight: 600; white-space: nowrap; }
+.register-page .form-error { margin: 0 0 10px; padding: 6px 10px; border-left-width: 3px; font-size: .74rem; font-weight: 600; line-height: 1.3; }
+.register-page .pref-stack { display: grid; gap: 16px; }
+.register-page .pref-group { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid #e1e9e4; border-radius: 11px; background: #fafcfb; }
+.register-page .pref-group .choice-label { margin: 0; }
+.register-page .pref-group .field-error { margin-top: 2px; }
