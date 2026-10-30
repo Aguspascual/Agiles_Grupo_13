@@ -14,7 +14,7 @@
   min-width: 0;
   margin: 0 auto;
   padding: 17px clamp(18px, 3.4vw, 48px) 28px;
-  animation: availability-in 0.28s ease both;
+  animation: availability-in 0.28s ease backwards;
 }
 
 .page-header,
@@ -176,7 +176,13 @@ h1 {
   }
 }
 
-@media (max-width: 840px) {
+@media (max-width: 1000px) {
+  .availability-shell {
+    grid-template-columns: 188px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
   .availability-shell {
     grid-template-columns: minmax(0, 1fr);
   }

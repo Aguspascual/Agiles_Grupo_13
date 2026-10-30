@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ComplexCardComponent } from './complex-card.component';
@@ -19,6 +20,7 @@ import { ToastComponent } from '../shared/toast.component';
 })
 export class ComplexAdminPage implements OnInit, OnDestroy {
   private readonly api = inject(ComplexApiService);
+  private readonly router = inject(Router);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private pendingToast = '';
 
@@ -80,6 +82,10 @@ export class ComplexAdminPage implements OnInit, OnDestroy {
     this.formError.set('');
     this.formClosing.set(false);
     this.formOpen.set(true);
+  }
+
+  openComplex(complex: ComplexRecord): void {
+    void this.router.navigate(['/admin/complejos', complex.id]);
   }
 
   closeForm(): void {

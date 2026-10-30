@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
 import { concatMap, finalize, from, map } from 'rxjs';
 import { ComplexAdminSidebarComponent } from '../complexes/complex-admin-sidebar.component';
 import { ComplexApiService } from '../complexes/complex-api.service';
@@ -14,6 +13,7 @@ import { ScheduleApiService } from './schedule-api.service';
 import { WeeklyScheduleFormComponent } from './weekly-schedule-form.component';
 import { CourtPickerComponent } from './court-picker.component';
 import { WeeklyScheduleRule } from './availability.model';
+import { changedDays, loadMessage, saveMessage } from './schedule-utils';
 
 interface RouteIds {
   complexId: string;
@@ -158,56 +158,6 @@ export class CourtAvailabilityPage implements OnInit, OnDestroy {
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.toastMessage.set(message);
     this.toastTimer = setTimeout(() => this.toastMessage.set(''), 3500);
-  }
-}
-
-/** Días del formulario que difieren de lo guardado, con la `revision` vigente de cada uno. */
-function changedDays(current: WeeklyScheduleRule[], incoming: WeeklyScheduleRule[]): WeeklyScheduleRule[] {
-  const saved = new Map(current.map((rule) => [rule.weekday, rule]));
-  return incoming
-    .filter((rule) => {
-      const base = saved.get(rule.weekday);
-      return !base || signature(base) !== signature(rule);
-    })
-    .map((rule) => ({ ...rule, revision: saved.get(rule.weekday)?.revision }));
-}
-
-function signature(rule: WeeklyScheduleRule): string {
-  const intervals = rule.intervals
-    .map(({ opensAt, closesAt }) => `${opensAt}-${closesAt}`)
-    .sort();
-  return JSON.stringify([rule.enabled, rule.durationMinutes, intervals]);
-}
-
-function errorStatus(error: unknown): number {
-  return error instanceof HttpErrorResponse ? error.status : -1;
-}
-
-function errorText(error: unknown): string {
-  const body = error instanceof HttpErrorResponse ? (error.error as { error?: unknown } | null) : null;
-  return typeof body?.error === 'string' ? body.error : '';
-}
-
-function loadMessage(error: unknown): string {
-  switch (errorStatus(error)) {
-    case 403: return 'No tenés permisos sobre este complejo.';
-    case 0: return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
-    default: return 'No pudimos cargar los horarios. Intentá nuevamente.';
-  }
-}
-
-function saveMessage(error: unknown): string {
-  switch (errorStatus(error)) {
-    case 400: return 'Revisá los horarios.';
-    case 403: return 'No tenés permisos para esta acción.';
-    case 404: return 'La cancha ya no existe.';
-    case 409:
-      return errorText(error).includes('reservas')
-        ? 'El cambio afecta reservas futuras vigentes.'
-        : 'El horario cambió; actualizamos los datos.';
-    case 412: return 'El horario cambió; actualizamos los datos.';
-    case 0: return 'No pudimos conectar con el servicio. Revisá tu conexión e intentá nuevamente.';
-    default: return 'No pudimos guardar los horarios. Intentá nuevamente.';
   }
 }
 

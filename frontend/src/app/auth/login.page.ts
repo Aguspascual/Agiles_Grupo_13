@@ -3,11 +3,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthSessionService } from './auth-session.service';
+import { AuthFlashStore } from './auth-flash.store';
+import { ToastComponent } from '../shared/toast.component';
 import { ComplexApiService } from '../complexes/complex-api.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ToastComponent],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
@@ -22,13 +24,18 @@ export class LoginPage {
   errorMessage = '';
   passwordVisible = false;
   recoveryVisible = false;
+  toastMessage = '';
 
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly session: AuthSessionService,
     private readonly complexes: ComplexApiService,
-  ) {}
+    flash: AuthFlashStore,
+  ) {
+    this.toastMessage = flash.take();
+    if (this.toastMessage) setTimeout(() => (this.toastMessage = ''), 6000);
+  }
 
   onSubmit(): void {
     if (this.requestInProgress) return;

@@ -1,0 +1,15 @@
+<div class="select-root" [class.is-open]="open" (keydown)="onKeydown($event)">
+  <button class="select-trigger" type="button" aria-haspopup="listbox" [attr.aria-expanded]="open" [attr.aria-label]="label ? label + ': ' + selectedLabel : null" (click)="toggle()">
+    <span class="select-value">{{ selectedLabel }}</span>
+    <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
+  </button>
+  @if (open) {
+    <ul class="select-menu" role="listbox" [attr.aria-label]="label">
+      @for (option of options; track option.value) {
+        <li role="option" tabindex="-1" [class.is-selected]="option.value === value" [class.is-action]="option.action" [attr.aria-selected]="option.value === value" (click)="choose(option)" (keydown.enter)="choose(option)" (keydown.space)="choose(option); $event.preventDefault()">
+          @if (option.action) { <span class="option-plus" aria-hidden="true">+</span> }{{ option.label }}
+        </li>
+      }
+    </ul>
+  }
+</div>

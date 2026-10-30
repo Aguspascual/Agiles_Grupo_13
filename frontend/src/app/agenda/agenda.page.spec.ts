@@ -435,4 +435,20 @@ describe('HU-07: agenda del complejo', () => {
     await settle();
     expect(cell('18:00 a 19:30')).toBeTruthy();
   });
-});
+
+  it('al recargar otro día mantiene la pantalla y solo atenúa la grilla', async () => {
+    await render();
+    const page = fixture.componentInstance as unknown as { load(id: string, date: string, silent: boolean): void };
+
+    page.load('complex-1', '2026-10-22', false);
+    fixture.detectChanges();
+    expect(text()).not.toContain('Cargando agenda');
+    expect(cell('18:00 a 19:30')).toBeTruthy();
+    expect(root().querySelector('.agenda-board')?.classList.contains('is-refreshing')).toBe(true);
+
+    const req = http.expectOne((request) => request.url === AGENDA_URL);
+    expect(req.request.params.get('date')).toBe('2026-10-22');
+    req.flush(agendaBody());
+    await settle();
+    expect(root().querySelector('.agenda-board')?.classList.contains('is-refreshing')).toBe(false);
+  });});

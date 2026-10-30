@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { AuthTokenStore } from './auth-token.store';
 import { authInterceptor } from './auth.interceptor';
+import { AuthFlashStore } from './auth-flash.store';
 import { RegisterPage } from './register.page';
 
 describe('registro de jugador HU-01', () => {
@@ -39,7 +40,7 @@ describe('registro de jugador HU-01', () => {
       email: 'ana@example.com',
       password: 'password-123',
       confirmPassword: 'password-123',
-      zone: 'Gonnet',
+      zones: ['Gonnet'],
       level: '7ma',
       position: 'Drive',
       hand: 'Diestro',
@@ -48,14 +49,14 @@ describe('registro de jugador HU-01', () => {
     fixture.detectChanges();
   }
 
-  it('requiere una zona y conserva disponible el nivel inicial', () => {
-    expect(fixture.componentInstance.form.controls.zone.value).toBe('');
-    expect(fixture.componentInstance.form.controls.zone.hasError('required')).toBe(true);
+  it('requiere al menos una zona y conserva disponible el nivel inicial', () => {
+    expect(fixture.componentInstance.form.controls.zones.value).toEqual([]);
+    expect(fixture.componentInstance.form.controls.zones.hasError('required')).toBe(true);
     expect(fixture.nativeElement.querySelector('#register-level')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('input[name="zone"]')).toHaveLength(7);
   });
 
-  it('permite elegir una zona y reemplaza la selección anterior', () => {
+  it('permite elegir varias zonas y quitar una sin perder las demás', () => {
     const zones = fixture.nativeElement.querySelectorAll(
       'input[name="zone"]',
     ) as NodeListOf<HTMLInputElement>;
@@ -63,19 +64,42 @@ describe('registro de jugador HU-01', () => {
     zones[1].click();
     zones[2].click();
     fixture.detectChanges();
+    expect(fixture.componentInstance.form.controls.zones.value).toEqual(['Gonnet', 'City Bell']);
 
-    expect(fixture.componentInstance.form.controls.zone.value).toBe('City Bell');
-    expect(zones[1].checked).toBe(false);
+    zones[1].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.form.controls.zones.value).toEqual(['City Bell']);
     expect(zones[2].checked).toBe(true);
   });
 
+  it('exige posición y mano hábil', () => {
+    fillValidForm();
+    fixture.componentInstance.form.patchValue({ position: '', hand: '' });
+    fixture.componentInstance.onSubmit();
+    expect(http.match('/api/v1/auth/register')).toHaveLength(0);
+    expect(fixture.componentInstance.form.controls.position.hasError('required')).toBe(true);
+    expect(fixture.componentInstance.form.controls.hand.hasError('required')).toBe(true);
+  });
+
+  it('elige el nivel desde el menú desplegable propio', () => {
+    const trigger = fixture.nativeElement.querySelector('#register-level') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.level-menu [role="option"]') as NodeListOf<HTMLElement>;
+    expect(options).toHaveLength(9);
+
+    options[3].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.form.controls.level.value).toBe('6ta');
+    expect(fixture.nativeElement.querySelector('.level-menu')).toBeNull();
+  });
   it('no envía el formulario si faltan datos o las contraseñas no coinciden', () => {
     fixture.componentInstance.form.patchValue({
       name: 'Ana',
       email: 'ana@example.com',
       password: 'password-123',
       confirmPassword: 'otra-password',
-      zone: 'Gonnet',
+      zones: ['Gonnet'],
       level: '7ma',
       fairPlay: true,
     });
@@ -84,9 +108,9 @@ describe('registro de jugador HU-01', () => {
     expect(fixture.componentInstance.form.hasError('passwordMismatch')).toBe(true);
   });
 
-  it('envía el DTO exacto, guarda el JWT y navega al inicio tras registrarse', async () => {
+  it('envía el DTO exacto, no inicia sesión y lleva al login con un aviso', async () => {
     const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     fillValidForm();
 
     fixture.componentInstance.onSubmit();
@@ -112,9 +136,10 @@ describe('registro de jugador HU-01', () => {
     }, { status: 201, statusText: 'Created' });
     await fixture.whenStable();
 
-    expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBe('registered-jwt');
+    expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
     expect(localStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith(['/ingresar'], {});
+    expect(TestBed.inject(AuthFlashStore).take()).toContain('Cuenta creada con éxito');
     expect(fixture.componentInstance.requestInProgress).toBe(false);
   });
 
@@ -143,9 +168,15 @@ describe('registro de jugador HU-01', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
-      'Ya existe una cuenta con ese correo electrónico.',
+      'Ese correo ya tiene una cuenta.',
     );
     expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
+    expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.form-error')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Este correo ya está registrado.');
+
+    fixture.componentInstance.form.controls.email.setValue('otra@example.com');
+    expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(false);
   });
 
   it('muestra un error recuperable para HTTP 500 y permite reintentar', () => {

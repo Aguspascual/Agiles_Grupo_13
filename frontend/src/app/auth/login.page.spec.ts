@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { authInterceptor } from './auth.interceptor';
+import { AuthFlashStore } from './auth-flash.store';
 import { AuthTokenStore } from './auth-token.store';
 import { LoginPage } from './login.page';
 
@@ -112,5 +113,16 @@ describe('login page con autenticación HTTP', () => {
       { error: 'fallo interno' },
       { status: 500, statusText: 'Server Error' },
     );
+  });
+
+  it('muestra el aviso de cuenta creada una sola vez al llegar desde el registro', () => {
+    TestBed.inject(AuthFlashStore).set('¡Cuenta creada con éxito! Ya podés iniciar sesión.');
+    const other = TestBed.createComponent(LoginPage);
+    other.detectChanges();
+    expect(other.nativeElement.querySelector('.toast')?.textContent).toContain('Cuenta creada con éxito');
+
+    const again = TestBed.createComponent(LoginPage);
+    again.detectChanges();
+    expect(again.nativeElement.querySelector('.toast')).toBeNull();
   });
 });

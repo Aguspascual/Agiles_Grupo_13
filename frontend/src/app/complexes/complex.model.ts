@@ -10,6 +10,7 @@ export interface ComplexRecord {
   address: string;
   zone: string;
   phone: string;
+  imageDataUrl: string | null;
   managerIds: string[];
   managers?: ManagerOption[];
 }

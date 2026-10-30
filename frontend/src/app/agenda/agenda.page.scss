@@ -10,8 +10,10 @@
   min-width: 0;
   margin: 0 auto;
   padding: 18px clamp(22px, 4vw, 58px) 24px;
-  animation: agenda-page-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: agenda-page-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
+.agenda-board .agenda-card { transition: opacity 0.15s ease; }
+.agenda-board.is-refreshing .agenda-card { opacity: 0.45; pointer-events: none; }
 .agenda-header {
   padding: 13px clamp(18px, 3vw, 30px);
   border: 1px solid var(--pm-admin-border);
@@ -37,6 +39,7 @@ h1 {
 }
 .agenda-board {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 22px;
 }
@@ -46,6 +49,11 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+.agenda-toolbar app-day-strip {
+  flex: 1 1 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 .agenda-toolbar h2 {
   margin: 0;
@@ -293,7 +301,12 @@ button:disabled {
     transform: none;
   }
 }
-@media (max-width: 840px) {
+@media (max-width: 1000px) {
+  .agenda-shell {
+    grid-template-columns: 188px minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
   .agenda-shell {
     grid-template-columns: 1fr;
   }

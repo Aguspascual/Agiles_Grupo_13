@@ -76,3 +76,5 @@
   .switch, .switch::after { transition: none; }
   .editor-panel { animation: none; }
 }
+
+input[type='time']::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; filter: brightness(0); }
