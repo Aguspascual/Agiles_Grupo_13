@@ -112,4 +112,59 @@ describe('AuthSessionService', () => {
     expect(session.currentUser()).toBeNull();
     expect(session.authenticated()).toBe(false);
   });
+
+  for (const status of [200, 401]) {
+    it(`conserva la sesión nueva si la restauración anterior devuelve ${status}`, () => {
+      tokens.save('old-token', false);
+      let restored: AuthUser | null | undefined;
+      session.restore().subscribe((value) => (restored = value));
+      const pending = http.expectOne('/api/v1/auth/me');
+      expect(pending.request.headers.get('Authorization')).toBe('Bearer old-token');
+
+      const newUser = { ...user, id: 'user-2', email: 'new@example.com' };
+      session.login({ email: newUser.email, password: 'valid-password' }, false).subscribe();
+      http.expectOne('/api/v1/auth/login').flush({ user: newUser, token: 'new-token' });
+
+      if (status === 200) pending.flush({ user });
+      else pending.flush({ error: 'expired' }, { status: 401, statusText: 'Unauthorized' });
+
+      expect(session.token).toBe('new-token');
+      expect(session.currentUser()).toEqual(newUser);
+      expect(restored).toEqual(newUser);
+      expect(session.authenticated()).toBe(true);
+      expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBe('new-token');
+    });
+  }
+
+  it('ignora un 401 de una petición protegida con el token anterior', () => {
+    session.accept({ user, token: 'old-token' }, true);
+    let requestError: unknown;
+    TestBed.inject(HttpClient).get('/api/v1/protected').subscribe({
+      error: (error: unknown) => (requestError = error),
+    });
+    const pending = http.expectOne('/api/v1/protected');
+    const newUser = { ...user, id: 'user-2', email: 'new@example.com' };
+    session.accept({ user: newUser, token: 'new-token' }, true);
+    pending.flush({ error: 'expired' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(requestError).toBeDefined();
+    expect(session.token).toBe('new-token');
+    expect(session.currentUser()).toEqual(newUser);
+    expect(localStorage.getItem(AuthTokenStore.storageKey)).toBe('new-token');
+  });
+
+  it('no restaura el usuario anterior después de cerrar sesión', () => {
+    tokens.save('old-token', false);
+    let restored: AuthUser | null | undefined;
+    session.restore().subscribe((value) => (restored = value));
+    const pending = http.expectOne('/api/v1/auth/me');
+    session.logout();
+    pending.flush({ user });
+
+    expect(session.token).toBeNull();
+    expect(session.currentUser()).toBeNull();
+    expect(restored).toBeNull();
+    expect(session.authenticated()).toBe(false);
+    expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
+  });
 });

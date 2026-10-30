@@ -19,6 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
+        tokenStore.token() === token &&
         isApiRequest &&
         !PUBLIC_AUTH_ENDPOINTS.has(request.url.split('?')[0])
       ) {

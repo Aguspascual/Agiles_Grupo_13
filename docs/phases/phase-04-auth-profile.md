@@ -76,3 +76,16 @@ Sin cambios.
 - El encabezado obtiene nombre, nivel e iniciales de `AuthSessionService.currentUser`; sin sesión ofrece Ingresar/Registrarse y no muestra el perfil ficticio de `PlayerProfileStore`. La confirmación de logout llama `AuthSessionService.logout()`, limpia la sesión local y navega a `/ingresar`. No se invalida el JWT en servidor porque no existe ese endpoint.
 - No se modificaron el formulario ni el store de perfil HU-08. La persistencia real de HU-08 con PostgreSQL continúa pendiente; `/perfil` conserva su comportamiento actual y la cuestión de proteger esa ruta sigue por coordinar.
 - La ruta de administración sin sesión sigue redirigiendo a `/ingresar`; pruebas del header: 3 aprobadas. Suite Angular: 115 aprobadas y las mismas 3 fallas preexistentes de HU-04; `npm run build` pasó.
+
+## Corrección de respuestas de sesión anteriores (PR #23)
+
+- Rama: `feature/front-hu01-corregir-sesion`, basada en la [PR #23](https://github.com/Aguspascual/Agiles_Grupo_13/pull/23).
+- `auth-session.service.ts` solo aplica el usuario o cierra sesión si sigue vigente el token que inició `/me`. Una respuesta anterior devuelve la identidad actual a sus suscriptores.
+- `auth.interceptor.ts` no elimina la sesión actual ante un `401` de otro token.
+- `auth-session.service.spec.ts` cubre respuestas anteriores `200` y `401` después de un login nuevo, un `401` protegido anterior y una restauración posterior al logout.
+- RED observado: las cuatro regresiones fallaron antes del arreglo; las seis pruebas existentes de sesión pasaron.
+- GREEN: las diez pruebas de sesión pasaron; `npm run build` y `git diff --check` pasaron.
+- Suite completa: 119 aprobadas y tres fallas HU-04. La base exacta de la PR (`b4dd3a0`) reprodujo las mismas tres fallas, con 115 aprobadas. No se corrigieron por quedar fuera de alcance.
+- Entorno de pruebas: copia temporal con Node 22 y `npm ci --ignore-scripts --legacy-peer-deps`, sin modificar el lockfile.
+- Verificación independiente: diez pruebas de sesión aprobadas en una copia temporal nueva; sin bloqueadores atribuibles al cambio.
+- Alcance limitado al frontend HU-01. Sin cambios en backend, dependencias, contratos HTTP, permisos de rutas ni perfil HU-08.

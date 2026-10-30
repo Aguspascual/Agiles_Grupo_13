@@ -33,7 +33,8 @@ export class AuthSessionService {
   }
 
   restore(): Observable<AuthUser | null> {
-    if (!this.tokens.token()) {
+    const token = this.tokens.token();
+    if (!token) {
       this.currentUser.set(null);
       return of(null);
     }
@@ -41,13 +42,14 @@ export class AuthSessionService {
     if (this.restoreRequest) return this.restoreRequest;
 
     const request = this.api.me().pipe(
-      tap((user) => {
-        this.currentUser.set(user);
+      map((user) => {
+        if (this.tokens.token() === token) this.currentUser.set(user);
+        return this.currentUser();
       }),
       catchError((error: unknown) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          this.logout();
-          return of(null);
+          if (this.tokens.token() === token) this.logout();
+          return of(this.currentUser());
         }
         return throwError(() => error);
       }),
