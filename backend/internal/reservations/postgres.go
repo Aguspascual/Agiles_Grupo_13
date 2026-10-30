@@ -26,9 +26,17 @@ type Reservation struct {
 	TimeZone string        `json:"timeZone"`
 }
 
-type Repository struct{ db *pgxpool.Pool }
+type Repository struct {
+	db  *pgxpool.Pool
+	now func() time.Time
+}
 
-func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
+func NewRepository(db *pgxpool.Pool) *Repository { return NewRepositoryWithClock(db, time.Now) }
+
+// NewRepositoryWithClock injects the server clock used by cancellation rules.
+func NewRepositoryWithClock(db *pgxpool.Pool, clock func() time.Time) *Repository {
+	return &Repository{db: db, now: clock}
+}
 
 func (r *Repository) ListOwn(ctx context.Context, actorID string, start, end time.Time, location *time.Location) ([]Reservation, error) {
 	rows, err := r.db.Query(ctx, `SELECT r.id::text, r.status, c.id::text, c.name, court.id::text, court.name, r.starts_at, r.ends_at

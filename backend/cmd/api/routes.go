@@ -49,7 +49,7 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		"DELETE " + schedules.BasePath + "/{weekday}"} {
 		mux.Handle(pattern, protectedSchedules)
 	}
-	reservationService, err := reservations.NewService(reservations.NewRepository(db))
+	reservationService, err := reservations.NewService(reservations.NewRepositoryWithClock(db, clock))
 	if err != nil {
 		mux.HandleFunc("POST "+reservations.ManualPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
@@ -60,6 +60,11 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		mux.HandleFunc("GET "+reservations.OwnPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar las reservas")
 		})
+		for _, path := range []string{reservations.OwnCancelPath, reservations.ManagerCancelPath} {
+			mux.HandleFunc("POST "+path, func(w http.ResponseWriter, _ *http.Request) {
+				auth.WriteError(w, http.StatusInternalServerError, "no se pudo cancelar la reserva")
+			})
+		}
 		mux.HandleFunc("GET "+reservations.NoticesPath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudieron consultar los avisos")
 		})
@@ -67,6 +72,8 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		protectedReservations := auth.RequireUser(secret, auth.NewPostgresRepository(db), reservationService.Handler())
 		mux.Handle("POST "+reservations.BasePath, protectedReservations)
 		mux.Handle("POST "+reservations.ManualPath, protectedReservations)
+		mux.Handle("POST "+reservations.OwnCancelPath, protectedReservations)
+		mux.Handle("POST "+reservations.ManagerCancelPath, protectedReservations)
 		mux.Handle("GET "+reservations.OwnPath, protectedReservations)
 		mux.Handle("GET "+reservations.NoticesPath, protectedReservations)
 	}
