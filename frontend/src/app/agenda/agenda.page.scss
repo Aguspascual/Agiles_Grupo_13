@@ -109,6 +109,55 @@ h1 {
   font-size: 0.72rem;
   font-weight: 600;
 }
+.cell-missing {
+  display: block;
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8a5300;
+}
+.cell-missing.is-full {
+  color: #1d6b3a;
+}
+.match-players {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f7f9f7;
+}
+.match-players h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+.match-players ul {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 0.86rem;
+  list-style: none;
+}
+.missing-tag,
+.organizer-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fdeccc;
+  color: #8a5300;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.missing-tag.is-full,
+.organizer-tag {
+  background: #dff5e6;
+  color: #1d6b3a;
+}
+.agenda-offgrid__match {
+  color: #59685d;
+}
 .origin-chip {
   display: inline-block;
   margin-top: 2px;

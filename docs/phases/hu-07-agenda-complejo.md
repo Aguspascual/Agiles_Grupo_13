@@ -47,7 +47,7 @@ agenda pueda elegir turnos reservados, y `ConfirmDialogComponent` recibe `cancel
 
 ## Límites de alcance
 
-- Partidos pendientes y anotados/faltantes: dependen de HU-09/10/11; el campo queda reservado, sin datos.
+- Cancelar un partido abierto no avisa a los anotados (HU-14, pendiente): el diálogo lo aclara.
 - Sin pantalla de jugador para cancelar hasta HU-17.
 - Avisos solo internos (sin email ni WhatsApp). Agenda de hoy a hoy+13.
 - Sin edición ni reprogramación de reservas, bloqueos puntuales ni cancelación de reservas ya terminadas.
@@ -73,3 +73,43 @@ las áreas tocadas pasan completas.
 - `ReservationOrigin` incorpora `open_match`; el parser lo acepta (teléfono vacío permitido) y sigue rechazando orígenes desconocidos.
 - La agenda muestra el chip "Partido abierto", el teléfono vacío como "—" y, al cancelar, "El partido abierto se cancelará." sin prometer avisos.
 - Sin cambios de backend. Siguen fuera de alcance los anotados y faltantes en la agenda y la cancelación de partidos con aviso a los anotados.
+
+## Mejora: partidos pendientes con anotados y faltantes (2026-10-30)
+
+Cierra el criterio de HU-07 "en los partidos pendientes veo quiénes están anotados y cuántos faltan". Depende del backend de
+[TDD-0015 v2](../backend/TDDs/TDD-0015-hu-07-consulta-agenda-complejo.md) (`pendingMatch` en cada reserva `open_match`).
+
+### Fases
+
+1. **Servicio** (`agenda/agenda-api.service.ts`): tipos `PendingMatch` y `PendingMatchPlayer`; `AgendaReservation.pendingMatch?`.
+   El parser lo valida de forma estricta cuando viene (`status` open/full, `targetLevel` texto, `missingPlayers` entero 0–3,
+   jugadores con `name`, `level`, `organizer` y `position` opcional) y lo ignora si no viene.
+2. **Etiquetas puras** (`agenda/pending-match-labels.ts`): "Faltan N" / "Falta 1" / "Completo", "Anotados (X de 4)", nombres y
+   el aviso del diálogo de cancelación.
+3. **Pantalla** (`agenda/agenda.page.*`):
+   - Celda de la grilla: organizador, chip "Partido abierto" y línea de faltantes (texto, no solo color). Si el partido no trae
+     datos, se conserva el teléfono vacío como "—".
+   - Panel del turno: sección "Anotados (X de 4)" con nivel buscado, y por jugador nombre, nivel, posición y marca "Organizador".
+   - "Reservas fuera de la grilla actual": resumen compacto con faltantes y nombres.
+   - Diálogo de cancelar: "El partido tiene N jugadores anotados. Se cancelará y se liberará el turno; por ahora no se les avisa."
+   - Reservas web y manual sin cambios. No se agregaron animaciones.
+
+### Validación
+
+- Vitest: `agenda-api.service.spec.ts` (con y sin `pendingMatch`, con y sin `position`, diez formas inválidas),
+  `pending-match-labels.spec.ts` y `agenda.page.spec.ts` (celda "Faltan 2", "Falta 1", "Completo"; panel con lista y organizador;
+  fuera de grilla; texto del diálogo; web/manual intactos). Archivos de `agenda/`: 55 pruebas correctas.
+- `npm run build` correcto (solo advertencias de presupuesto; la de `agenda.page.scss` ya existía por tamaño).
+- Falla previa ajena a esta mejora: con Node 25 los specs de `landing/`, `app.spec.ts`, `auth/login.page.spec.ts` y
+  `availability/weekly-schedule-form.component.spec.ts` fallan y contaminan a otros en la corrida completa. Con
+  `NODE_OPTIONS=--no-experimental-webstorage` y sin esos archivos, las otras 195 pruebas pasan.
+- Verificación de punta a punta contra el backend de la PR de `pendingMatch`: ver el cuerpo de la PR.
+
+### Archivos principales
+
+`agenda/agenda-api.service.ts`, `agenda/pending-match-labels.ts`, `agenda/agenda.page.{ts,html,scss}` y sus specs.
+
+### Límites de alcance
+
+Sin avisos a los anotados al cancelar (HU-14), sin baja de partidos (HU-13), sin editar ni mover anotados desde la agenda y sin
+teléfono ni contacto de los anotados. Solo frontend.
