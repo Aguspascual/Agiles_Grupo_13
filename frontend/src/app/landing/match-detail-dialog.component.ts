@@ -32,7 +32,7 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
 
   requestClose(): void {
     if (this.closing) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       this.close.emit();
       return;
     }
