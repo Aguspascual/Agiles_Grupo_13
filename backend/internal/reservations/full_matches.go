@@ -206,8 +206,8 @@ func (r *Repository) CreateFullMatch(ctx context.Context, complexID, courtID, ac
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO reservation_notices(user_id,reservation_id,kind,payload)
 		VALUES($1::uuid,$2::uuid,'reservation_confirmed',jsonb_build_object(
-		'id',$2::text,'status','reserved','complex',jsonb_build_object('id',$3::text,'name',$4),
-		'court',jsonb_build_object('id',$5::text,'name',$6),'date',$7,'startsAt',$8,'endsAt',$9,
+		'id',$2::text,'status','reserved','complex',jsonb_build_object('id',$3::text,'name',$4::text),
+		'court',jsonb_build_object('id',$5::text,'name',$6::text),'date',$7::text,'startsAt',$8::text,'endsAt',$9::text,
 		'timeZone','America/Argentina/Buenos_Aires'))`, actorID, reservationID, complexID, result.Complex, courtID, result.Court, result.Date, result.StartsAt, result.EndsAt); err != nil {
 		return FullMatch{}, err
 	}
