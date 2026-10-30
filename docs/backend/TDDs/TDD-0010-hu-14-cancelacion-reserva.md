@@ -1,9 +1,9 @@
 ---
 id: "0010"
-estado: "Borrador v2; RN-02 confirmada y restantes decisiones pendientes de aprobación"
-version: 2
+estado: "Borrador v3 para aprobación humana; la aprobación ocurre en la revisión de la PR"
+version: 3
 autor: "Equipo backend"
-fecha: "2026-10-29"
+fecha: "2026-10-30"
 titulo: "Cancelación de una reserva"
 hu: HU-14
 capa: backend
@@ -12,7 +12,9 @@ trello: "https://trello.com/c/kWBU1esU"
 
 # TDD-0010: Cancelación de una reserva
 
-> **Borrador v2 para revisión humana.** Pedro Moyano confirmó en su comentario de la
+> **Borrador v3 para aprobación humana (en la revisión de la PR).** La v3 corrige el orden de
+> locks (complejo → cancha → reserva) y exige reserva web con organizador real (`origin='web'`).
+> En la v2, Pedro Moyano confirmó en su comentario de la
 > [PR #19](https://github.com/Aguspascual/Agiles_Grupo_13/pull/19#issuecomment-6500389121)
 > que el límite inclusivo de cuatro horas es correcto según RN-02. Solicitó aclarar el
 > alcance de grupo completo, la agenda y los avisos a participantes. Esas precisiones se
@@ -60,9 +62,12 @@ participantes y los avisos correspondientes quedan fuera del alcance de HU-14 v1
 CA-02, el límite inclusivo de cuatro horas, fue confirmado por Pedro Moyano según RN-02.
 Las demás decisiones propuestas siguen pendientes de aprobación del equipo:
 
-- **CA-01 — Actor:** solo el organizador autenticado puede cancelar su reserva. No hay
-  excepciones para encargados ni administradores en v1. El actor se toma del JWT; no se
-  acepta `userId` en request, query o ruta.
+- **CA-01 — Actor:** solo el organizador autenticado puede cancelar su reserva, y solo si
+  es una reserva web (`origin='web'` con `organizer_id` real, CA-09 de TDD-0012). Las
+  reservas manuales no tienen organizador: por este endpoint responden `404`. Los
+  encargados y administradores cancelan por el endpoint propio de
+  [TDD-0016](TDD-0016-hu-07-cancelacion-por-encargado.md) (contrato C2). El actor se toma
+  del JWT; no se acepta `userId` en request, query o ruta.
 - **CA-02 — Plazo:** una reserva `reserved` puede cancelarse si `now <= starts_at - 4h`.
   Comparar instantes del reloj del servidor sin redondear; el límite exacto está incluido.
 - **CA-03 — Fuera de plazo:** si faltan menos de cuatro horas, responder `409 Conflict`
@@ -120,7 +125,9 @@ aprobada e implementada su extensión.
 
 ### Contrato HTTP
 
-- **Endpoint propuesto:** `POST /api/v1/reservations/{reservationId}/cancel`.
+- **Endpoint propuesto (contrato C3):** `POST /api/v1/reservations/{reservationId}/cancel`.
+  El consumo en pantalla ("Mis reservas") queda para HU-17; esta entrega solo agrega el
+  servicio HTTP del frontend.
 - **Autenticación:** `Authorization: Bearer <JWT>`.
 - **Path:** UUID de la reserva; solo el organizador autenticado puede usarlo.
 - **Request:** sin body ni query string.
@@ -158,18 +165,19 @@ repetición de una cancelación propia ya completada responde `200` aun si venci
 
 ### Transacción, bloqueos y concurrencia
 
-El alta existente de HU-06 bloquea la fila de cancha con `FOR UPDATE` antes de consultar
-reservas e insertar. La cancelación debe usar ese mismo lock para serializar cambios de
-ocupación en la cancha:
+Todo escritor de reservas toma los locks en el orden único
+`complejo FOR SHARE → cancha FOR UPDATE → reserva FOR UPDATE` (el alta de HU-06/HU-15 ya
+lo hace). La cancelación usa ese mismo orden para serializar cambios de ocupación, y
+comparte el núcleo `cancel(...)` con TDD-0016 (v2 de este TDD omitía el lock del complejo):
 
 1. Validar JWT y UUID; iniciar una transacción.
-2. Leer inicialmente el `court_id` de la reserva por UUID. Si no existe, responder
-   `404`. Esta lectura no cambia datos ni revela el recurso en la respuesta.
-3. Bloquear la cancha existente con `SELECT ... FOR UPDATE`, sin exigir que esté activa:
-   una baja lógica del recurso no debe impedir al organizador cancelar una reserva
-   histórica.
-4. Volver a leer/bloquear la reserva con `SELECT ... FOR UPDATE`; verificar que su
-   `organizer_id` coincide con el actor. Si no coincide, rollback y `404`.
+2. Leer inicialmente `complex_id` y `court_id` de la reserva por UUID, sin bloquear. Si
+   no existe, responder `404`. Esta lectura no cambia datos ni revela el recurso.
+3. Bloquear el complejo con `SELECT ... FOR SHARE` y luego la cancha con
+   `SELECT ... FOR UPDATE`, sin exigir que estén activos: una baja lógica del recurso no
+   debe impedir al organizador cancelar una reserva histórica.
+4. Volver a leer/bloquear la reserva con `SELECT ... FOR UPDATE`; verificar que
+   `origin='web'` y que su `organizer_id` coincide con el actor. Si no, rollback y `404`.
 5. Si ya está `cancelled`, no escribir nada y completar la transacción para devolver el
    resultado idempotente `200`; no insertar otro aviso.
 6. Si está `reserved`, capturar la hora del servidor después de obtener el lock. Comparar
@@ -296,6 +304,6 @@ y pruebas concurrentes PostgreSQL. Estimación: **1–2 jornadas backend desde l
 aprobación**, más revisión e integración. Puede entrar antes de la entrega si los puntos
 pendientes se cierran pronto. La integración visual queda aparte.
 
-Estado: **borrador v2 pendiente de aprobación humana**. RN-02 está confirmada por Pedro;
-CA-01 y CA-03 a CA-10 y la aprobación final del alcance documentado siguen pendientes.
-No implementar antes de cerrar las decisiones.
+Estado: **borrador v3 para aprobación humana**. RN-02 está confirmada por Pedro; CA-01 y
+CA-03 a CA-10 y el alcance documentado se aprueban en la revisión de la PR que lo
+implementa. Toda decisión ambigua se registró en "Pendiente o dependencias" de esa PR.
