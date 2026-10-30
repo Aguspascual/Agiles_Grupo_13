@@ -90,6 +90,25 @@ input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
 .login-page .side-card p { font-size: .87rem; line-height: 1.45; }
 .login-page .side-icon { width: 38px; height: 38px; font-size: 1.2rem; }
 
+.login-page .forgot-row { margin-top: 6px; text-align: right; }
+.login-page .social-row button { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.login-page .social-row svg { width: 16px; height: 16px; flex: none; }
+.login-page .social-row button:disabled { opacity: 1; cursor: not-allowed; }
+.login-page .social-google { background: #fff; color: #3c4043; border: 1px solid #dadce0; }
+.login-page .social-apple { background: #000; color: #fff; }
+.login-page .side-card { border-color: #cfd9d3; box-shadow: 0 2px 8px #141c2a14; }
+.login-page .side-card.soft-card { background: #d9f2e6; border-color: #a9dcc3; }
+
+.login-page { color-scheme: light; }
+.login-page .field input:-webkit-autofill,
+.login-page .field input:-webkit-autofill:hover,
+.login-page .field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #131b2e;
+  caret-color: #131b2e;
+  -webkit-box-shadow: 0 0 0 1000px #f0f2ff inset;
+  transition: background-color 9999s ease-out 0s;
+}
+.login-page .field input::selection { background: #10b98133; color: #131b2e; }
 /* Proyector 800x600: dos columnas compactas, sin scroll. */
 @media (min-width: 681px) and (max-width: 1030px) {
   .login-page { padding: 12px 16px; }
@@ -109,7 +128,8 @@ input[type='checkbox'] { accent-color: #006c49; width: 17px; height: 17px; }
   .login-page .check-row { margin: 0 0 8px; font-size: .8rem; }
   .login-page .primary-button { min-height: 38px; font-size: .9rem; }
   .login-page .divider { margin: 10px 0 8px; font-size: .68rem; }
-  .login-page .social-row button { min-height: 34px; font-size: .85rem; }
+  .login-page .social-row button { min-height: 32px; font-size: .82rem; }
+  .login-page .social-row svg { width: 14px; height: 14px; }
   .login-page .switch-page { margin-top: 10px; font-size: .82rem; }
   .login-page .login-aside { display: grid; grid-template-columns: 1fr; gap: 8px; }
   .login-page .login-aside .hero-photo { grid-column: auto; min-height: clamp(110px, 24vh, 170px); border-radius: 14px; }
