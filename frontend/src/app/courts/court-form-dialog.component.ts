@@ -25,6 +25,7 @@ export class CourtFormDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('panel', { static: true }) private panel!: ElementRef<HTMLElement>;
   @Input() court: CourtRecord | null = null;
   @Input() closing = false;
+  @Input() saving = false;
   @Output() save = new EventEmitter<CourtDraft>();
   @Output() close = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();

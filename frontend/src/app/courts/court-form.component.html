@@ -106,7 +106,7 @@
   <footer class="form-actions">
     <button class="secondary-button" type="button" [disabled]="disabled" (click)="cancel.emit()">
       Cancelar</button
-    ><button class="primary-button" type="submit" [disabled]="disabled || submitted">
+    ><button class="primary-button" type="submit" [disabled]="disabled">
       {{ court ? 'Guardar cambios' : 'Agregar cancha' }}
     </button>
   </footer>

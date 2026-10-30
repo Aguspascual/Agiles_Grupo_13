@@ -91,35 +91,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.court-status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #27744f;
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-.court-status > span {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border-radius: 50%;
-  background: #e7f7ed;
-  font-size: 0.8rem;
-}
-.court-status.reserved {
-  color: #96601e;
-}
-.court-status.reserved > span {
-  background: #fff4da;
-}
-.reservation-note {
-  margin: -6px 0 0;
-  color: #85622c;
-  font-size: 0.7rem;
-  line-height: 1.4;
-}
 .court-features {
   display: flex;
   flex-wrap: wrap;

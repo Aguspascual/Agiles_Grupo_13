@@ -10,13 +10,6 @@
     <span class="type-tag">{{ court.covered ? 'TECHADA' : 'DESCUBIERTA' }}</span
     ><span class="court-number">{{ court.name }}</span>
   </div>
-  <div class="court-status" [class.reserved]="court.hasFutureReservations">
-    <span aria-hidden="true">{{ court.hasFutureReservations ? '◷' : '✓' }}</span
-    >{{ court.hasFutureReservations ? 'Reserva futura asignada' : 'Disponible para turnos' }}
-  </div>
-  @if (court.hasFutureReservations) {
-    <p class="reservation-note">No se puede dar de baja mientras tenga reservas futuras.</p>
-  }
   @if (court.features.length) {
     <ul class="court-features" aria-label="Características de la cancha">
       @for (feature of features; track feature.id) {
@@ -54,7 +47,6 @@
           class="danger-action"
           data-action="remove"
           type="button"
-          [disabled]="court.hasFutureReservations"
           [attr.aria-label]="'Dar de baja ' + court.name"
           (click)="closeActions(); remove.emit(court)"
         >Dar de baja</button>
