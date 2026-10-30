@@ -12,12 +12,14 @@
     [routerLinkActiveOptions]="{ exact: true }"
     ><span aria-hidden="true">⌂</span> Complejos</a
   >
-  <a
-    class="nav-item courts-nav"
-    [routerLink]="['/admin/complejos', complexId, 'canchas']"
-    routerLinkActive="active"
-    ><span aria-hidden="true">▦</span> Canchas</a
-  >
+  @if (complexId) {
+    <a
+      class="nav-item courts-nav"
+      [routerLink]="['/admin/complejos', complexId, 'canchas']"
+      routerLinkActive="active"
+      ><span aria-hidden="true">▦</span> Canchas</a
+    >
+  }
   <div class="sidebar-footer">
     @if (showRoleSimulation) {
       <section class="role-switcher" aria-label="Simular permisos de usuario">

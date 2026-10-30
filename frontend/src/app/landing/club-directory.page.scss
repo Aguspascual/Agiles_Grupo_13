@@ -109,17 +109,6 @@
   height: 100%;
   object-fit: cover;
 }
-.directory-card__rating {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 6px 9px;
-  border-radius: 6px;
-  background: #fff;
-  color: #a65c18;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
 .directory-card__content {
   padding: 16px;
 }
@@ -153,24 +142,6 @@
   margin: 8px 0 14px;
   color: #778191;
   font-size: 0.75rem;
-}
-.directory-card__details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  padding: 12px 0;
-  border-top: 1px solid #f0f0f4;
-  color: #5b6574;
-  font-size: 0.68rem;
-}
-.directory-card__details span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.directory-card__details i {
-  color: #16855f;
-  font-style: normal;
 }
 .directory-card__content > a,
 .clubs-promo > a {
@@ -206,7 +177,8 @@
 .clubs-empty p {
   color: #7c8492;
 }
-.clubs-empty button {
+.clubs-empty button,
+.clubs-empty a {
   padding: 9px 12px;
   border: 0;
   border-radius: 6px;

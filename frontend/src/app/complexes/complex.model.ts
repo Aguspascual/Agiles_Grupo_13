@@ -14,5 +14,13 @@ export interface ComplexRecord {
   managers?: ManagerOption[];
 }
 
+/** Complejo del listado público (sin teléfono ni encargados). */
+export interface PublicComplex {
+  id: string;
+  name: string;
+  address: string;
+  zone: string;
+}
+
 export type ComplexDraft = Omit<ComplexRecord, 'id'>;
 export type DemoRole = 'admin' | 'manager';

@@ -193,8 +193,6 @@ export const RECOMMENDED_MATCHES = MATCHES.slice(0, 3);
 export const HOME_MATCHES = [MATCHES[4], MATCHES[2], MATCHES[0]];
 
 export interface ClubPreview {
-  /** Complejo cuya grilla de turnos abre "Explorar turnos" (HU-05). */
-  complexId: string;
   name: string;
   matchSearchName?: string;
   zone: string;
@@ -207,7 +205,6 @@ export interface ClubPreview {
 
 export const FEATURED_CLUBS: ClubPreview[] = [
   {
-    complexId: 'complex-cumbre',
     name: 'La Cumbre Pádel',
     matchSearchName: 'La Cumbre Pádel',
     zone: 'Calle 131 y 32 · San Carlos',
@@ -218,7 +215,6 @@ export const FEATURED_CLUBS: ClubPreview[] = [
     imagePosition: 'center',
   },
   {
-    complexId: 'complex-citybell',
     name: 'City Bell Padel Hub',
     matchSearchName: 'Pádel City Bell',
     zone: 'Camino Centenario 4462 · City Bell',
@@ -229,7 +225,6 @@ export const FEATURED_CLUBS: ClubPreview[] = [
     imagePosition: 'center 58%',
   },
   {
-    complexId: 'complex-estudiantes',
     name: 'Estudiantes de La Plata',
     matchSearchName: 'Estudiantes de La Plata',
     zone: 'Calle 53 y 7 · Casco Histórico',
