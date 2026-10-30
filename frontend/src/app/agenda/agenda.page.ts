@@ -5,6 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, map } from 'rxjs';
 import { ComplexAdminSidebarComponent } from '../complexes/complex-admin-sidebar.component';
+import { ComplexOverviewComponent } from '../complexes/complex-overview.component';
 import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
 import { addDays, capitalize, daysBetween, fromDateKey, startOfLocalDay, toDateKey } from '../shared/local-date';
 import { ToastComponent } from '../shared/toast.component';
@@ -53,6 +54,7 @@ interface OffGridReservation {
   imports: [
     RouterLink,
     ComplexAdminSidebarComponent,
+    ComplexOverviewComponent,
     DayStripComponent,
     SlotGridComponent,
     ManualReservationDialogComponent,
@@ -80,6 +82,9 @@ export class AgendaPage implements OnDestroy {
   readonly dateKey = toSignal(this.route.queryParamMap.pipe(map((params) => this.clampDate(params.get('fecha')))), {
     initialValue: this.clampDate(this.route.snapshot.queryParamMap.get('fecha')),
   });
+
+  /** En la vista completa del complejo se muestran sus datos y acciones sobre la agenda. */
+  readonly overview = this.route.snapshot.data?.['overview'] === true;
 
   readonly state = signal<PageState>({ status: 'loading' });
   readonly selectedSlotId = signal<string | null>(null);
@@ -198,6 +203,10 @@ export class AgendaPage implements OnDestroy {
       const name = this.agenda()?.complex.name;
       this.title.setTitle(name ? `Agenda de ${name} | PádelMatch` : 'Agenda | PádelMatch');
     });
+  }
+
+  notice(message: string): void {
+    this.showToast(message);
   }
 
   retry(): void {

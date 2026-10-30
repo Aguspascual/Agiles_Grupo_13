@@ -22,7 +22,7 @@
     } @else if (visibleComplexes().length) {
       <section class="complex-grid" aria-label="Complejos"><h2 class="visually-hidden">Complejos disponibles</h2>
         @for (complex of visibleComplexes(); track complex.id) {
-          <app-complex-card [complex]="complex" (open)="detailTarget.set($event)" />
+          <app-complex-card [complex]="complex" (open)="openComplex($event)" />
         }
       </section>
     } @else if (!pageError()) {
@@ -30,9 +30,6 @@
     }
   </section>
 
-  @if (detailTarget(); as detail) {
-    <app-complex-detail-dialog [complex]="detail" [managers]="managers()" [canDelete]="isAdmin()" (close)="detailTarget.set(null)" (edit)="editFromDetail($event)" (remove)="removeFromDetail($event)" />
-  }
   @if (formOpen()) {
     <app-complex-form-dialog [complex]="editing()" [managers]="managers()" [managersReadOnly]="!isAdmin()" [errorMessage]="formError()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
   }

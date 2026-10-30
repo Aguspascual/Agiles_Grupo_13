@@ -1,0 +1,63 @@
+<section class="overview" aria-labelledby="overview-title">
+  <div class="hero">
+    @if (complex()?.imageDataUrl; as image) {
+      <img class="hero-image" [src]="image" [alt]="'Imagen de ' + (complex()?.name ?? fallbackName)" />
+    } @else {
+      <span class="hero-mark" aria-hidden="true">⌂</span>
+    }
+    <span class="hero-shade" aria-hidden="true"></span>
+    <a class="back-link" routerLink="/admin/complejos"><span aria-hidden="true">←</span> Complejos</a>
+    <div class="hero-copy">
+      <h1 id="overview-title">{{ complex()?.name ?? fallbackName }}</h1>
+      @if (complex(); as current) { <span class="zone-chip">{{ current.zone }}</span> }
+    </div>
+  </div>
+
+  @if (complex(); as current) {
+    <div class="overview-body">
+      <dl class="facts">
+        <div><dt>Dirección</dt><dd>{{ current.address }}</dd></div>
+        <div><dt>Teléfono</dt><dd>{{ current.phone }}</dd></div>
+        <div class="facts-wide">
+          <dt>Encargados</dt>
+          <dd>@for (id of current.managerIds; track id) { <span class="manager-chip">{{ managerName(id) }}</span> } @empty { <span class="muted">Sin encargados asignados</span> }</dd>
+        </div>
+      </dl>
+      <div class="overview-actions">
+        <button class="action action-primary" type="button" (click)="openEdit()">Editar datos</button>
+        @if (isAdmin()) { <button class="action action-danger" type="button" (click)="deleteOpen.set(true)">Eliminar complejo</button> }
+      </div>
+    </div>
+  }
+
+  <div class="courts-bar">
+    <div class="courts-head">
+      <h2>Canchas</h2>
+      <a class="manage-link" [routerLink]="['/admin/complejos', complexId, 'canchas']">Administrar canchas</a>
+    </div>
+    @if (courts.length) {
+      <ul class="court-list">
+        @for (court of courts; track court.id) {
+          <li class="court-item">
+            <span class="court-name">{{ court.name }}</span>
+            <span class="court-kind">{{ court.covered ? 'Cubierta' : 'Descubierta' }}</span>
+            <a class="court-link" [routerLink]="['/admin/complejos', complexId, 'canchas', court.id, 'horarios']">Horarios</a>
+            <button class="court-close" type="button" (click)="courtTarget.set(court)">Cerrar cancha</button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="muted">Este complejo todavía no tiene canchas.</p>
+    }
+  </div>
+</section>
+
+@if (formOpen()) {
+  <app-complex-form-dialog [complex]="complex()" [managers]="managers()" [managersReadOnly]="!isAdmin()" [errorMessage]="formError()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
+}
+@if (deleteOpen()) {
+  <app-confirm-dialog [title]="'¿Dar de baja ' + (complex()?.name ?? 'el complejo') + '?'" message="El complejo dejará de aparecer en la lista activa." confirmLabel="Eliminar complejo" (cancel)="deleteOpen.set(false)" (confirm)="confirmDeleteComplex()" />
+}
+@if (courtTarget(); as court) {
+  <app-confirm-dialog [title]="'¿Cerrar ' + court.name + '?'" message="La cancha dejará de estar disponible. No se puede cerrar si tiene reservas futuras." confirmLabel="Cerrar cancha" cancelLabel="Volver" (cancel)="courtTarget.set(null)" (confirm)="confirmCloseCourt()" />
+}

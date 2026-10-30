@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ComplexCardComponent } from './complex-card.component';
-import { ComplexDetailDialogComponent } from './complex-detail-dialog.component';
 import { ComplexAdminSidebarComponent } from './complex-admin-sidebar.component';
 import { ComplexFormDialogComponent } from './complex-form-dialog.component';
 import { ConfirmDialogComponent } from './confirm-dialog.component';
@@ -14,12 +14,13 @@ import { ToastComponent } from '../shared/toast.component';
 @Component({
   selector: 'app-complex-admin-page',
   standalone: true,
-  imports: [ComplexAdminSidebarComponent, ComplexCardComponent, ComplexDetailDialogComponent, ComplexFormDialogComponent, ConfirmDialogComponent, ToastComponent],
+  imports: [ComplexAdminSidebarComponent, ComplexCardComponent, ComplexFormDialogComponent, ConfirmDialogComponent, ToastComponent],
   templateUrl: './complex-admin.page.html',
   styleUrl: './complex-admin.page.scss',
 })
 export class ComplexAdminPage implements OnInit, OnDestroy {
   private readonly api = inject(ComplexApiService);
+  private readonly router = inject(Router);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private pendingToast = '';
 
@@ -30,7 +31,6 @@ export class ComplexAdminPage implements OnInit, OnDestroy {
   readonly formOpen = signal(false);
   readonly formClosing = signal(false);
   readonly editing = signal<ComplexRecord | null>(null);
-  readonly detailTarget = signal<ComplexRecord | null>(null);
   readonly deleteTarget = signal<ComplexRecord | null>(null);
   readonly toastMessage = signal('');
   readonly loading = signal(true);
@@ -84,14 +84,8 @@ export class ComplexAdminPage implements OnInit, OnDestroy {
     this.formOpen.set(true);
   }
 
-  editFromDetail(complex: ComplexRecord): void {
-    this.detailTarget.set(null);
-    this.openEdit(complex);
-  }
-
-  removeFromDetail(complex: ComplexRecord): void {
-    this.detailTarget.set(null);
-    this.deleteTarget.set(complex);
+  openComplex(complex: ComplexRecord): void {
+    void this.router.navigate(['/admin/complejos', complex.id]);
   }
 
   closeForm(): void {

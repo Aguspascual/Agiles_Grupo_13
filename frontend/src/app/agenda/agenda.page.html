@@ -31,15 +31,19 @@
       }
       @default {
         @if (agenda(); as day) {
-          <header class="agenda-header">
-            <h1>Agenda</h1>
-            <p>
-              {{ day.complex.name }} <span aria-hidden="true">·</span> {{ day.complex.zone }}
-              @if (day.courts.length) {
-                <span aria-hidden="true">·</span> {{ courtSummary() }}
-              }
-            </p>
-          </header>
+          @if (overview) {
+            <app-complex-overview [complexId]="complexId()" [courts]="day.courts" [fallbackName]="day.complex.name" (courtsChanged)="retry()" (notify)="notice($event)" />
+          } @else {
+            <header class="agenda-header">
+              <h1>Agenda</h1>
+              <p>
+                {{ day.complex.name }} <span aria-hidden="true">·</span> {{ day.complex.zone }}
+                @if (day.courts.length) {
+                  <span aria-hidden="true">·</span> {{ courtSummary() }}
+                }
+              </p>
+            </header>
+          }
 
           <section class="agenda-board" aria-labelledby="agenda-date">
             <div class="agenda-toolbar">
