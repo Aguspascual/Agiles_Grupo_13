@@ -156,7 +156,12 @@ h1 {
     transform: translateY(0);
   }
 }
-@media (max-width: 840px) {
+@media (max-width: 1000px) {
+  .court-admin-shell {
+    grid-template-columns: 188px minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
   .court-admin-shell {
     grid-template-columns: minmax(0, 1fr);
   }

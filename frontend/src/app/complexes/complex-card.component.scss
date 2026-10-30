@@ -2,6 +2,7 @@
 .complex-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px #141c2a12; }
 .card-topline { display: flex; justify-content: space-between; align-items: center; }
 .court-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: #adedd3; color: #006c49; font-size: 1.35rem; }
+.complex-photo { width: 68px; height: 48px; border-radius: 10px; object-fit: cover; }
 .zone-tag { padding: 6px 10px; border-radius: 999px; background: #f1f5f2; color: #39445a; font-size: .72rem; font-weight: 800; }
 h3 { margin: 2px 0 0; color: #131b2e; font-size: 1.1rem; }
 .detail { display: flex; gap: 9px; margin: 0; color: #566357; font-size: .86rem; }
@@ -17,3 +18,23 @@ h3 { margin: 2px 0 0; color: #131b2e; font-size: 1.1rem; }
 @keyframes card-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .complex-card { animation: none; transition: none; } }
 @media (max-width: 480px) { .card-actions { flex-wrap: wrap; } .card-actions .court-action { flex-basis: 100%; margin-right: 0; text-align: center; } }
+
+/* Rediseño del panel admin: tarjeta compacta, acciones en grilla uniforme. */
+:host { display: block; container-type: inline-size; }
+.complex-card { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 4px 14px; padding: 18px; border-color: #dfe7e2; align-items: center; }
+.card-topline { display: contents; }
+.court-mark, .complex-photo { grid-column: 1; grid-row: 1 / span 3; width: 64px; height: 64px; border-radius: 14px; object-fit: cover; font-size: 1.6rem; }
+.zone-tag { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; background: #d9f2e6; color: #005236; }
+.complex-card h3 { grid-column: 2; grid-row: 1; margin: 0; font-size: 1.05rem; line-height: 1.25; }
+.complex-card .detail { grid-column: 2 / -1; font-size: .82rem; }
+.complex-card .detail:nth-of-type(1) { grid-row: 2; }
+.complex-card .detail:nth-of-type(2) { grid-row: 3; }
+.manager-list { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; padding-top: 12px; gap: 7px; }
+.card-actions { grid-column: 1 / -1; grid-row: 5; display: grid; grid-template-columns: 1fr 1fr; justify-content: stretch; gap: 8px; margin-top: 8px; }
+.card-actions button, .court-action { padding: 9px 10px; text-align: center; transition: background-color .15s ease, border-color .15s ease; }
+.card-actions .court-action { margin-right: 0; flex-basis: auto; }
+.card-actions .court-action:not(.agenda-action) { border-color: #006c49; background: #006c49; color: #fff; }
+.card-actions .court-action:not(.agenda-action):hover { background: #005236; }
+.card-actions button:hover, .card-actions .agenda-action:hover { background: #f0faf5; border-color: #9fd3b9; }
+.card-actions .danger-action:hover { background: #fdf1f1; border-color: #e3a3a3; }
+@container (min-width: 520px) { .card-actions { grid-template-columns: 1.3fr 1fr auto auto; } }

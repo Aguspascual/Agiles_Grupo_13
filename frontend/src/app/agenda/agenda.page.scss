@@ -37,6 +37,7 @@ h1 {
 }
 .agenda-board {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 22px;
 }
@@ -46,6 +47,11 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+.agenda-toolbar app-day-strip {
+  flex: 1 1 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 .agenda-toolbar h2 {
   margin: 0;
@@ -293,7 +299,12 @@ button:disabled {
     transform: none;
   }
 }
-@media (max-width: 840px) {
+@media (max-width: 1000px) {
+  .agenda-shell {
+    grid-template-columns: 188px minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
   .agenda-shell {
     grid-template-columns: 1fr;
   }

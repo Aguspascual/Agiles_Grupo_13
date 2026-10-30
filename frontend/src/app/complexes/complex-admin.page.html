@@ -3,12 +3,21 @@
 
   <section class="workspace" aria-labelledby="complex-title">
     <header class="topbar">
-      <h1 id="complex-title">Complejos</h1>
-      @if (isAdmin()) {
-        <button class="primary-button new-complex-button" type="button" (click)="openCreate()">
-          <span aria-hidden="true">＋</span> Nuevo complejo
-        </button>
-      }
+      <div class="topbar-copy">
+        <p class="topbar-eyebrow">Gestión</p>
+        <h1 id="complex-title">Complejos</h1>
+        <p class="topbar-sub">Administrá tus sedes, canchas y agenda desde un solo lugar.</p>
+      </div>
+      <div class="topbar-actions">
+        @if (!loading() && visibleComplexes().length) {
+          <span class="count-chip">{{ visibleComplexes().length }} {{ visibleComplexes().length === 1 ? 'complejo activo' : 'complejos activos' }}</span>
+        }
+        @if (isAdmin()) {
+          <button class="primary-button new-complex-button" type="button" (click)="openCreate()">
+            <span aria-hidden="true">+</span> Nuevo complejo
+          </button>
+        }
+      </div>
     </header>
 
     @if (pageError()) { <div class="page-error" role="alert">{{ pageError() }} <button type="button" (click)="load()">Reintentar</button></div> }

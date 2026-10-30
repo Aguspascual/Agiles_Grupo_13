@@ -52,9 +52,12 @@
 .nav-item span {
   font-size: 1.15rem;
 }
+.nav-item { transition: background-color 0.15s ease, color 0.15s ease; }
+.nav-item:hover { background: #f3f7f4; }
 .nav-item.active {
   background: #e8f8ef;
   color: #006c49;
+  box-shadow: inset 3px 0 0 #10b981;
 }
 .logout-link {
   width: calc(100% - 16px);
@@ -89,7 +92,16 @@
   gap: 10px;
   margin-top: auto;
 }
-@media (max-width: 840px) {
+@media (max-width: 1000px) {
+  .sidebar { padding: 18px 10px; gap: 6px; }
+  .brand { gap: 8px; margin-bottom: 22px; }
+  .brand img { width: 36px; height: 36px; }
+  .brand strong { font-size: 0.92rem; }
+  .brand small { font-size: 0.64rem; }
+  .nav-item { gap: 8px; padding: 10px; font-size: 0.84rem; }
+  .logout-link { width: 100%; margin: 4px 0 0; }
+}
+@media (max-width: 560px) {
   .sidebar {
     position: static;
     height: auto;
