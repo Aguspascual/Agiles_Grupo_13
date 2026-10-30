@@ -23,6 +23,29 @@ intervalos. Los cruces de medianoche se proyectan como fragmentos diarios semiab
 con los timestamps originales y visibles, sin modificar ni dividir filas. No se devuelven
 identificadores de reserva ni datos personales/de contacto. No se agregaron migraciones.
 
+## Partido abierto en la grilla (TDD-0009 v3)
+
+La grilla pública emite ahora `PENDING_MATCH`. Un turno lo es solo si lo ocupa **una sola**
+reserva vigente con `origin='open_match'` y `pending_matches.status='open'` y el turno no
+es pasado; en cualquier otro caso (partido completo, varias reservas superpuestas, turno
+pasado, reserva `web`/`manual`) sigue `RESERVED`. `BLOCKED` solo aparece sin reserva.
+
+- `slots.Slot` suma `pendingMatch {missingPlayers, level}` con `omitempty`: la clave solo
+  existe en slots `PENDING_MATCH` y no lleva nombres, ids de usuario ni id de partido.
+  `missingPlayers = 4 - jugadores anotados` y `level = pending_matches.target_level`.
+- `ReservationData.OpenMatch` lo completa `ReadAvailability` con un `LEFT JOIN` a
+  `pending_matches` y el conteo de `pending_match_players` dentro de la misma transacción
+  `REPEATABLE READ` de solo lectura, sin locks nuevos. `OccupiedIntervals` no cambia.
+- La agenda del encargado arma su ocupación sin `OpenMatch`: sigue viendo `RESERVED` y
+  conserva su propio detalle de partido. Reservar sobre un turno `PENDING_MATCH` sigue
+  dando `409`. Sin migraciones; no se tocaron `agenda/`, `matches/` ni `reservations/`.
+- Pruebas: `slots/open_match_test.go` (unitarias) y
+  `cmd/api/slots_open_match_http_test.go` (HTTP + PostgreSQL real: 1 y 3 anotados,
+  completo, unirse/bajarse, `web`/`manual`, cancelada, pasado, superpuestas, día
+  deshabilitado, privacidad y claves del JSON, regresión de agenda y `409`). Se ajustó
+  `TestPublicSlotsJSONWithOpenMatch`, que fijaba la ausencia de `pendingMatch`.
+- Límites: «Clase» sigue sin emitirse; sin deep-link a un partido concreto; el reemplazo de
+  un partido pendiente es HU-12.
 ## Pruebas y validación
 
 Validación realizada el 29/10/2026 con PostgreSQL 17 temporal en Docker, base
