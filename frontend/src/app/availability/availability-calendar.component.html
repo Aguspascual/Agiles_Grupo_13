@@ -15,16 +15,6 @@
                   <span class="status-dot" aria-hidden="true"></span>
                   {{ slot.status === 'blocked' ? 'Bloqueado' : 'Disponible' }}
                 </span>
-                <button
-                  type="button"
-                  [attr.aria-label]="
-                    (slot.status === 'blocked' ? 'Liberar' : 'Bloquear') +
-                    ' turno de ' + slot.startsAt + ', ' + day.label
-                  "
-                  (click)="toggle(slot)"
-                >
-                  {{ slot.status === 'blocked' ? 'Liberar' : 'Bloquear' }}
-                </button>
               </article>
             }
           </div>

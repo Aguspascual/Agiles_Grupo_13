@@ -12,6 +12,8 @@ export interface WeeklyScheduleRule {
   enabled: boolean;
   intervals: ScheduleInterval[];
   durationMinutes: 60 | 90;
+  /** Presente solo si el día existe en el backend; se envía como `If-Match`. */
+  revision?: string;
 }
 
 export interface AvailabilitySlot {

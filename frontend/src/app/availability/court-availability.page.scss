@@ -128,8 +128,6 @@ h1 {
 .date-navigation button:hover:not(:disabled) { background: #f1f7f3; border-color: #a6c5b1; }
 .date-navigation button:disabled { border-color: #d8e1dc; background: #fff; color: #809087; opacity: 0.75; cursor: not-allowed; }
 .date-navigation button:focus-visible { outline: 3px solid #76d8ad; outline-offset: 2px; }
-.storage-notice { color: #8d351f; font-size: 0.74rem; font-weight: 700; }
-
 .missing-state {
   display: grid;
   justify-items: center;
@@ -231,3 +229,5 @@ h1 {
     animation: none;
   }
 }
+
+.load-error { color: #8d351f; font-size: 0.8rem; font-weight: 700; }

@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { AvailabilitySlot } from './availability.model';
 
 interface AvailabilityDay {
@@ -15,12 +15,7 @@ interface AvailabilityDay {
 })
 export class AvailabilityCalendarComponent {
   readonly slots = input<AvailabilitySlot[]>([]);
-  readonly toggleBlocked = output<string>();
   readonly days = computed(() => groupSlotsByDate(this.slots()));
-
-  toggle(slot: AvailabilitySlot): void {
-    this.toggleBlocked.emit(slot.id);
-  }
 }
 
 function groupSlotsByDate(slots: AvailabilitySlot[]): AvailabilityDay[] {

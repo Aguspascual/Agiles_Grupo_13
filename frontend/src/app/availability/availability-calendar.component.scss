@@ -87,35 +87,6 @@
   background: #ba5b30;
 }
 
-.slot-card button {
-  justify-self: end;
-  min-height: 31px;
-  padding: 0 9px;
-  border: 1px solid #b9dec9;
-  border-radius: 7px;
-  background: #effaf3;
-  color: #006c49;
-  font: inherit;
-  font-size: 0.7rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.slot-card button:hover {
-  background: #dff4e7;
-}
-
-.is-blocked button {
-  border-color: #ead0c1;
-  background: #fff;
-  color: #8b411f;
-}
-
-.slot-card button:focus-visible {
-  outline: 3px solid #76d8ad;
-  outline-offset: 2px;
-}
-
 .empty-state {
   display: grid;
   justify-items: center;

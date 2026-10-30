@@ -31,7 +31,7 @@ describe('HU-04: agenda de disponibilidad', () => {
     ]);
 
     expect(fixture.nativeElement.querySelectorAll('.day-group')).toHaveLength(2);
-    expect(fixture.nativeElement.querySelector('.day-heading h3').textContent).toContain(
+    expect(fixture.nativeElement.querySelector('.day-group')?.getAttribute('aria-label')).toContain(
       ' de octubre',
     );
     expect(fixture.nativeElement.textContent).toContain('09:00');
@@ -40,24 +40,18 @@ describe('HU-04: agenda de disponibilidad', () => {
     fixture.destroy();
   });
 
-  it('shows blocked status and emits the slot id to release it', async () => {
-    const fixture = await render([slot({ status: 'blocked' })]);
-    const toggle = vi.fn();
-    fixture.componentInstance.toggleBlocked.subscribe(toggle);
-    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+  it('is read-only: shows the status without any block or release control', async () => {
+    const fixture = await render([slot()]);
 
-    expect(fixture.nativeElement.textContent).toContain('Bloqueado');
-    expect(button.getAttribute('aria-label')).toContain('Liberar turno');
-    button.click();
-
-    expect(toggle).toHaveBeenCalledWith('court-1:2026-10-12:09:00');
+    expect(fixture.nativeElement.textContent).toContain('Disponible');
+    expect(fixture.nativeElement.querySelector('button')).toBeNull();
     fixture.destroy();
   });
 
   it('shows an explicit empty state when no turns are generated', async () => {
     const fixture = await render([]);
 
-    expect(fixture.nativeElement.textContent).toContain('No hay turnos para mostrar');
+    expect(fixture.nativeElement.textContent).toContain('Sin turnos para esta fecha');
     expect(fixture.nativeElement.querySelectorAll('.day-group')).toHaveLength(0);
     fixture.destroy();
   });
