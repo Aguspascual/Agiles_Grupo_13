@@ -112,3 +112,12 @@ siguen fuera del alcance de esta entrega.
   migración `006_reservation_cancellation_notice.sql` solo ensancha el CHECK de los avisos.
 
 Detalle en [HU-14-implementacion](../docs/backend/HU-14-implementacion.md), TDD-0010 y TDD-0016.
+
+## HU-07 - Agenda del complejo
+
+`GET /api/v1/complexes/{complexId}/agenda?date=AAAA-MM-DD` (Bearer, solo administrador o encargado
+asignado) devuelve por cancha los turnos con `reservationId` y las reservas del día con origen,
+nombre y teléfono, `cancellable` y horas locales. Ventana hoy..hoy+13, único parámetro `date`.
+La grilla pública `/slots` no cambia. Los partidos pendientes quedan para HU-09/10/11.
+
+Detalle en [HU-07-implementacion](../docs/backend/HU-07-implementacion.md) y TDD-0015.
