@@ -56,7 +56,7 @@ describe('HU-01: registro e inicio de sesión', () => {
 
   it('redirige las rutas de administración a ingreso si no hay sesión válida', async () => {
     const { root } = await open('/admin/complejos');
-    expect(TestBed.inject(Router).url).toBe('/ingresar');
+    expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2Fadmin%2Fcomplejos');
     expect(root.querySelector('.login-page')).not.toBeNull();
   });
 
@@ -126,7 +126,7 @@ describe('HU-01: registro e inicio de sesión', () => {
       user: { id: 'u1', name: 'Jugadora', email: 'jugadora@example.com', zone: 'Gonnet', level: '7ma' },
       token: 'jwt-test',
     });
-    TestBed.inject(HttpTestingController).expectOne('/api/v1/complexes').flush(
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/complexes/available-managers').flush(
       { error: 'sin permisos para gestionar complejos' },
       { status: 403, statusText: 'Forbidden' },
     );

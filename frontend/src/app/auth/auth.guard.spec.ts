@@ -19,7 +19,7 @@ describe('authGuard', () => {
     expect(guardResult).toBeInstanceOf(UrlTree);
     const tree = guardResult as UrlTree;
 
-    expect(TestBed.inject(Router).serializeUrl(tree)).toBe('/ingresar');
+    expect(TestBed.inject(Router).serializeUrl(tree)).toBe('/ingresar?returnUrl=%2Fadmin%2Fcomplejos');
   });
 
   it('permite una ruta protegida si la sesión está validada', async () => {
