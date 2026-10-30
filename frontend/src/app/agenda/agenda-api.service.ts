@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 export type AgendaSlotStatus = 'AVAILABLE' | 'RESERVED' | 'BLOCKED';
-export type ReservationOrigin = 'web' | 'manual';
+export type ReservationOrigin = 'web' | 'manual' | 'open_match';
 
 export interface AgendaComplex {
   id: string;
@@ -65,6 +65,7 @@ export interface ReservationReceipt {
 }
 
 const COMPLEX_API = (complexId: string) => `/api/v1/complexes/${encodeURIComponent(complexId)}`;
+const ORIGINS = new Set<string>(['web', 'manual', 'open_match']);
 const SLOT_STATUSES = new Set<string>(['AVAILABLE', 'RESERVED', 'BLOCKED']);
 
 /**
@@ -180,7 +181,7 @@ function parseReservation(value: unknown): AgendaReservation {
   if (
     !isRecord(value) ||
     ['id', 'startsAt', 'endsAt', 'originalStartsAt', 'originalEndsAt'].some((key) => typeof value[key] !== 'string') ||
-    (value['origin'] !== 'web' && value['origin'] !== 'manual') ||
+    !ORIGINS.has(value['origin'] as string) ||
     !isRecord(value['contact']) ||
     typeof value['contact']['name'] !== 'string' ||
     typeof value['contact']['phone'] !== 'string' ||
@@ -190,7 +191,7 @@ function parseReservation(value: unknown): AgendaReservation {
   }
   return {
     id: value['id'] as string,
-    origin: value['origin'],
+    origin: value['origin'] as ReservationOrigin,
     startsAt: value['startsAt'] as string,
     endsAt: value['endsAt'] as string,
     originalStartsAt: value['originalStartsAt'] as string,
