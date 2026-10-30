@@ -34,6 +34,7 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("POST "+OwnCancelPath, s.cancelOwn)
 	mux.HandleFunc("POST "+ManagerCancelPath, s.cancelAsManager)
 	mux.HandleFunc("GET "+OwnPath, s.listOwn)
+	mux.HandleFunc("GET "+MyPath, s.listMine)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
 	return mux
 }
