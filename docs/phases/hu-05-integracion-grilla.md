@@ -28,10 +28,36 @@
 
 ## Límites de alcance
 
-- Sin partidos pendientes ni clases hasta HU-09/HU-12: el backend solo emite `AVAILABLE|RESERVED|BLOCKED`. El reemplazo de partido pendiente de la página (`replacedSlotIds`) queda sin alcanzar porque no llegan turnos `pending`.
+- **Partido abierto** y sus faltantes ya se ven (ver la sección siguiente). **Clase** sigue sin existir: el backend no tiene ese concepto y no emite `CLASS`. El reemplazo de un partido pendiente por un grupo completo es HU-12 (pendiente): se quitó el flujo demo local de la página de la grilla. Un deep-link desde la grilla a un partido concreto queda como mejora.
 - `BLOCKED` equivale a un día deshabilitado en HU-04 (no hay bloqueo puntual).
 - El directorio no muestra rating ni disponibilidad del día.
 - La home (HU-00) sigue con datos demo.
 - Reservar desde la grilla es HU-06 (frontend aún no integrado).
 - `DemoRole` y el simulador de rol siguen en la administración de complejos: todavía los usa `complex-admin.page`; quitarlos queda para otra historia.
 - En esta máquina (Node 25) las pruebas necesitan `NODE_OPTIONS=--no-experimental-webstorage`. El aviso de presupuesto de `complex-form.component.scss` ya existe en la base.
+
+## Mejora: «Partido abierto» en la grilla (HU-05 y parte de HU-09)
+
+El backend (TDD-0009 v3) ahora emite `PENDING_MATCH` con `pendingMatch {missingPlayers, level}` cuando un turno lo ocupa un partido abierto con lugares libres. Esta mejora lo consume.
+
+### Fases
+
+1. `slot-grid.service.ts`: se reemplazó el cast de `pendingMatch` por una validación estricta (`missingPlayers` entero de 1 a 3 y `level` de texto). Un `PENDING_MATCH` sin `pendingMatch` válido es un error de parseo y la página muestra el estado de error.
+2. Se eliminó el flujo demo de HU-12 de la página, que no llamaba a ningún backend y habría simulado una cancelación inexistente: `replacedSlotIds`, `replacementNotice` y su timer, `replaceDialogOpen`, `canReplacePending`, `requestPendingReplacement`, `confirmPendingReplacement`, el diálogo `replacement-*` y sus estilos; en el resumen, el input `canReplacePending` y el output `replacePending`; en `bookings/booking.model.ts`, `isPendingReplacementWindowOpen` (se conserva `PendingMatchInfo`). El token `CLOCK` se mantiene: lo usan la grilla y la agenda.
+3. `slot-summary.component.ts`: con sesión, un turno `pending` lleva a `/partidos` ("Ver partidos abiertos") y uno `available` a `/partidos?crear=1` ("Reservar este turno"); sin sesión sigue llevando a `/ingresar`. El resumen del turno pendiente muestra «Faltan N jugadores · nivel X».
+
+### Archivos principales
+
+- `frontend/src/app/slot-grid/slot-grid.service.ts`, `complex-slots.page.{ts,html,scss}`, `slot-summary.component.ts`.
+- `frontend/src/app/bookings/booking.model.ts`.
+- Specs: `slot-grid.service.spec.ts` (pendiente válido, ocho variantes inválidas), `complex-slots.page.spec.ts` (turno pendiente seleccionable, resumen, sin botón ni diálogo de reemplazo, CTA con sesión, error por dato inválido) y `slot-summary.component.spec.ts` (CTA con y sin sesión).
+
+### Validación
+
+- Pruebas de `slot-grid/` en verde (`NODE_OPTIONS=--no-experimental-webstorage`) y `npm run build` sin errores nuevos (los avisos de presupuesto ya existían).
+- Suite completa: en esta máquina fallan por el entorno (`localStorage`, `TestBed` ya instanciado) las specs de `app`, `auth`, `landing`, `complexes`, `club-directory`; ya fallaban en `Desarrollo` antes de este cambio y no son de la grilla.
+- Verificación de punta a punta contra el backend de la PR #50: ver el cuerpo de la PR del frontend.
+
+### Límites
+
+Solo `slot-grid/`, `bookings/booking.model.ts` y docs. No se tocaron `agenda/`, `matches/`, `reservations/` ni `landing/`. Sin backend, migraciones ni Docker. Las animaciones existentes no cambian (no se agregaron nuevas).
