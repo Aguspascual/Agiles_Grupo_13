@@ -58,6 +58,8 @@ export class SlotGridComponent {
   /** Minuto del día actual cuando la grilla muestra hoy; la vista arranca en ese horario. */
   readonly nowMinute = input<number | null>(null);
   readonly cellTemplate = input<TemplateRef<SlotCellContext> | null>(null);
+  /** Qué turnos se pueden elegir; la agenda (HU-07) también elige turnos reservados. */
+  readonly selectable = input<(slot: GridSlot) => boolean>(isSelectable);
   readonly slotSelected = output<GridSlot>();
 
   readonly missingLabel = missingPlayersLabel;
@@ -72,6 +74,7 @@ export class SlotGridComponent {
   readonly columns = computed<PlacedCourt[]>(() => {
     const layout = this.layout();
     if (!layout) return [];
+    const isChoosable = this.selectable();
     return this.courts().map((court, index) => ({
       court,
       gridColumn: index + 2,
@@ -80,7 +83,7 @@ export class SlotGridComponent {
         return {
           slot,
           gridRow: `${row + 1} / span ${span}`,
-          selectable: isSelectable(slot),
+          selectable: isChoosable(slot),
           label: describeSlot(slot, court.name),
         };
       }),
@@ -104,7 +107,7 @@ export class SlotGridComponent {
       if (!element || !layout) return;
       const firstOpen = this.courts()
         .flatMap((court) => court.slots)
-        .filter(isSelectable)
+        .filter(this.selectable())
         .map((slot) => minutesOfDay(slot.startsAt))
         .sort((left, right) => left - right)[0];
       const target =

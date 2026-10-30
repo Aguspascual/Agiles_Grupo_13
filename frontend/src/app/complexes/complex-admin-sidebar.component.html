@@ -19,33 +19,16 @@
       routerLinkActive="active"
       ><span aria-hidden="true">▦</span> Canchas</a
     >
+    <a
+      class="nav-item agenda-nav"
+      [routerLink]="['/admin/complejos', complexId, 'agenda']"
+      routerLinkActive="active"
+      ><span aria-hidden="true">▤</span> Agenda</a
+    >
   }
   <div class="sidebar-footer">
-    @if (showRoleSimulation) {
-      <section class="role-switcher" aria-label="Simular permisos de usuario">
-        <label for="demo-role">Simular vista de</label>
-        <select id="demo-role" [value]="role" (change)="roleChange.emit($any($event.target).value)">
-          <option value="admin">Administración</option>
-          <option value="manager">Encargado</option>
-        </select>
-        @if (role === 'manager') {
-          <label for="demo-manager">Usuario de prueba</label>
-          <select
-            id="demo-manager"
-            [value]="managerId"
-            (change)="managerChange.emit($any($event.target).value)"
-          >
-            @for (manager of managers; track manager.id) {
-              <option [value]="manager.id">{{ manager.name }}</option>
-            }
-          </select>
-        }
-      </section>
-    }
-    <div class="sidebar-note">
-      <span class="status-dot"></span
-      ><span>Panel de demo<br /><small>Datos locales de prueba</small></span>
-    </div>
-    <a class="logout-link" routerLink="/ingresar"><span aria-hidden="true">↪</span> Cerrar sesión</a>
+    <button class="logout-link" type="button" (click)="logout()">
+      <span aria-hidden="true">↪</span> Cerrar sesión
+    </button>
   </div>
 </aside>

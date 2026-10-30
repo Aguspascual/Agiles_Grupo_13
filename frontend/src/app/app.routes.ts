@@ -54,5 +54,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     title: 'Administrar canchas | PádelMatch LP',
   },
+  {
+    path: 'admin/complejos/:complexId/agenda',
+    loadComponent: () => import('./agenda/agenda.page').then((page) => page.AgendaPage),
+    canActivate: [authGuard],
+    title: 'Agenda del complejo | PádelMatch LP',
+  },
   { path: '**', redirectTo: 'ingresar' },
 ];

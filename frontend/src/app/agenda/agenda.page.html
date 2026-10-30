@@ -1,0 +1,193 @@
+<main class="agenda-shell">
+  <app-complex-admin-sidebar [complexId]="complexId()" />
+  <section class="agenda-workspace">
+    @switch (state().status) {
+      @case ('loading') {
+        <p class="agenda-status" role="status">Cargando agenda…</p>
+      }
+      @case ('forbidden') {
+        <section class="agenda-message" role="alert">
+          <span aria-hidden="true">⚠</span>
+          <h1>Sin permisos</h1>
+          <p>{{ permissionError }}</p>
+          <a routerLink="/admin/complejos">Ir a complejos</a>
+        </section>
+      }
+      @case ('not-found') {
+        <section class="agenda-message" role="alert">
+          <span aria-hidden="true">⌂</span>
+          <h1>No encontramos este complejo</h1>
+          <p>Volvé al listado para elegir uno disponible.</p>
+          <a routerLink="/admin/complejos">Ir a complejos</a>
+        </section>
+      }
+      @case ('error') {
+        <section class="agenda-message" role="alert">
+          <span aria-hidden="true">⚠</span>
+          <h1>No pudimos cargar la agenda</h1>
+          <p>{{ connectionError }}</p>
+          <button type="button" (click)="retry()">Reintentar</button>
+        </section>
+      }
+      @default {
+        @if (agenda(); as day) {
+          <header class="agenda-header">
+            <h1>Agenda</h1>
+            <p>
+              {{ day.complex.name }} <span aria-hidden="true">·</span> {{ day.complex.zone }}
+              @if (day.courts.length) {
+                <span aria-hidden="true">·</span> {{ courtSummary() }}
+              }
+            </p>
+          </header>
+
+          <section class="agenda-board" aria-labelledby="agenda-date">
+            <div class="agenda-toolbar">
+              <h2 id="agenda-date">{{ dateLabel() }}</h2>
+              <app-day-strip
+                [selected]="dateKey()"
+                [today]="todayKey"
+                [windowDays]="windowDays"
+                (dateChange)="changeDate($event)"
+              />
+            </div>
+
+            @if (day.courts.length) {
+              <div class="agenda-card">
+                <app-slot-grid
+                  [courts]="gridCourts()"
+                  [selectedSlotId]="selectedSlotId()"
+                  [nowMinute]="nowMinute()"
+                  [selectable]="selectable"
+                  [cellTemplate]="agendaCell"
+                  (slotSelected)="selectSlot($event)"
+                />
+              </div>
+            } @else {
+              <div class="agenda-card agenda-card--empty" role="status">
+                <h3>Este complejo todavía no tiene canchas</h3>
+                <p>Agregá canchas y horarios para ver la agenda.</p>
+              </div>
+            }
+
+            @if (selection(); as chosen) {
+              <section class="agenda-panel" aria-live="polite" [attr.aria-label]="'Turno elegido: ' + chosen.court.name">
+                <div class="agenda-panel__info">
+                  <h2>{{ chosen.court.name }}</h2>
+                  <p>{{ dateLabel() }} · {{ chosen.slot.startsAt }} a {{ chosen.slot.endsAt }}</p>
+                  @if (chosen.reservation; as reservation) {
+                    <p class="agenda-panel__contact">
+                      <strong>{{ reservation.contact.name }}</strong> · {{ reservation.contact.phone }}
+                      <span [class]="'origin-chip is-' + reservation.origin">{{
+                        reservation.origin === 'web' ? 'Web' : 'Manual'
+                      }}</span>
+                    </p>
+                  }
+                </div>
+                <div class="agenda-panel__actions">
+                  @if (chosen.reservation; as reservation) {
+                    <button
+                      type="button"
+                      class="danger"
+                      [disabled]="saving()"
+                      (click)="requestCancel(chosen.court, reservation)"
+                    >
+                      Cancelar reserva
+                    </button>
+                  } @else {
+                    <button type="button" class="primary" [disabled]="saving()" (click)="openManual(chosen)">
+                      Registrar reserva
+                    </button>
+                  }
+                  <button type="button" class="close" aria-label="Cerrar resumen del turno" (click)="selectedSlotId.set(null)">
+                    ×
+                  </button>
+                </div>
+              </section>
+            }
+
+            @if (offGrid().length) {
+              <section class="agenda-offgrid" aria-labelledby="agenda-offgrid-title">
+                <h2 id="agenda-offgrid-title">Reservas fuera de la grilla actual</h2>
+                <p>Estas reservas ya no coinciden con los horarios configurados.</p>
+                <ul>
+                  @for (item of offGrid(); track item.reservation.id) {
+                    <li>
+                      <span class="agenda-offgrid__time">{{ item.reservation.startsAt }} a {{ item.reservation.endsAt }}</span>
+                      <span>{{ item.court.name }}</span>
+                      <span
+                        ><strong>{{ item.reservation.contact.name }}</strong> · {{ item.reservation.contact.phone }}</span
+                      >
+                      <span [class]="'origin-chip is-' + item.reservation.origin">{{
+                        item.reservation.origin === 'web' ? 'Web' : 'Manual'
+                      }}</span>
+                      @if (item.reservation.cancellable) {
+                        <button
+                          type="button"
+                          class="danger"
+                          [disabled]="saving()"
+                          (click)="requestCancel(item.court, item.reservation)"
+                        >
+                          Cancelar reserva
+                        </button>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </section>
+        }
+      }
+    }
+  </section>
+</main>
+
+<ng-template #agendaCell let-slot let-court="court">
+  @switch (slot.state) {
+    @case ('available') {
+      <span class="cell-title">Libre</span>
+      <span class="cell-time">{{ slot.startsAt }} a {{ slot.endsAt }}</span>
+    }
+    @case ('reserved') {
+      @if (reservationFor(slot); as reservation) {
+        <span class="cell-title">{{ reservation.contact.name }}</span>
+        <span class="cell-phone">{{ reservation.contact.phone }}</span>
+        <span [class]="'origin-chip is-' + reservation.origin">{{
+          reservation.origin === 'web' ? 'Web' : 'Manual'
+        }}</span>
+      } @else {
+        <span class="cell-title">Reservado</span>
+      }
+    }
+    @default {
+      <span class="cell-title">No disponible</span>
+      <span class="cell-time">{{ slot.startsAt }} a {{ slot.endsAt }}</span>
+    }
+  }
+</ng-template>
+
+@if (manualTarget(); as target) {
+  <app-manual-reservation-dialog
+    [courtName]="target.court.name"
+    [dateLabel]="dateLabel()"
+    [startsAt]="target.slot.startsAt"
+    [endsAt]="target.slot.endsAt"
+    [saving]="saving()"
+    [closing]="manualClosing()"
+    (save)="registerManual($event)"
+    (close)="closeManual()"
+    (closed)="finishManualClose()"
+  />
+}
+@if (cancelTarget(); as target) {
+  <app-confirm-dialog
+    title="¿Cancelar esta reserva?"
+    [message]="cancelMessage(target.reservation)"
+    confirmLabel="Cancelar reserva"
+    cancelLabel="Volver"
+    (cancel)="cancelTarget.set(null)"
+    (confirm)="confirmCancel()"
+  />
+}
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

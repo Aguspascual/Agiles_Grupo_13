@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { DemoRole, ManagerOption } from './complex.model';
+import { Component, Input, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-complex-admin-sidebar',
@@ -10,11 +10,13 @@ import { DemoRole, ManagerOption } from './complex.model';
   styleUrl: './complex-admin-sidebar.component.scss',
 })
 export class ComplexAdminSidebarComponent {
+  private readonly session = inject(AuthSessionService);
+  private readonly router = inject(Router);
+
   @Input() complexId = '';
-  @Input() showRoleSimulation = false;
-  @Input() role: DemoRole = 'admin';
-  @Input() managers: ManagerOption[] = [];
-  @Input() managerId = '';
-  @Output() roleChange = new EventEmitter<DemoRole>();
-  @Output() managerChange = new EventEmitter<string>();
+
+  logout(): void {
+    this.session.logout();
+    void this.router.navigateByUrl('/ingresar');
+  }
 }
