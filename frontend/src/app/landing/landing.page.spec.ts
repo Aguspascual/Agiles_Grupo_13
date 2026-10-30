@@ -1,9 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { LandingPage } from './landing.page';
+import { PendingMatchMembershipStore } from '../bookings/pending-match-membership.store';
 import { MatchSearchPage } from './match-search.page';
 import { ClubDirectoryPage } from './club-directory.page';
 import { routes } from '../app.routes';
+
+/** Fija la hora de la demo (el partido de ejemplo es hoy a las 20:30). */
+function setDemoClock(hours: number, minutes: number): void {
+  TestBed.inject(PendingMatchMembershipStore).now = () => new Date(new Date().setHours(hours, minutes, 0, 0));
+}
 
 describe('HU-00: landing pública', () => {
   beforeEach(async () => {
@@ -69,6 +75,7 @@ describe('HU-00: landing pública', () => {
   });
 
   it('simula bajarse de un partido completo y libera un lugar al confirmar', () => {
+    setDemoClock(10, 0);
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -91,6 +98,18 @@ describe('HU-00: landing pública', () => {
     expect(root.querySelector('.membership-card__occupancy')?.textContent).toContain('3/4');
     expect(root.querySelector('.membership-card__vacancy')?.textContent).toContain('Falta 1 jugador');
     expect(root.querySelector('[role="status"]')?.textContent).toContain('Te bajaste del partido');
+    fixture.destroy();
+  });
+
+  it('RN-03: con menos de 2 horas la baja queda deshabilitada y el título refleja el estado', () => {
+    setDemoClock(19, 0);
+    const fixture = TestBed.createComponent(MatchSearchPage);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('.membership-card__eyebrow')?.textContent).toContain('TU TURNO COMPLETO');
+    expect(root.querySelector('.membership-card__eyebrow')?.textContent).not.toContain('PENDIENTE');
+    expect(root.querySelector<HTMLButtonElement>('.membership-card footer button')?.disabled).toBe(true);
     fixture.destroy();
   });
 
