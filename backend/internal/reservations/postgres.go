@@ -59,6 +59,14 @@ func (r *Repository) ListOwn(ctx context.Context, actorID string, start, end tim
 }
 
 func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID string, input Request, start time.Time) (Reservation, error) {
+	return r.create(ctx, complexID, courtID, actorID, input, start, false)
+}
+
+func (r *Repository) CreateManual(ctx context.Context, complexID, courtID, actorID string, input Request, start time.Time) (Reservation, error) {
+	return r.create(ctx, complexID, courtID, actorID, input, start, true)
+}
+
+func (r *Repository) create(ctx context.Context, complexID, courtID, actorID string, input Request, start time.Time, manual bool) (Reservation, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return Reservation{}, err
@@ -66,6 +74,14 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 	defer tx.Rollback(ctx)
 	result := Reservation{Status: "reserved", Complex: NamedResource{ID: complexID}, Court: NamedResource{ID: courtID}, Date: input.Date, StartsAt: input.StartsAt, TimeZone: "America/Argentina/Buenos_Aires"}
 	err = tx.QueryRow(ctx, `SELECT name FROM complexes WHERE id=$1::uuid AND deleted_at IS NULL FOR SHARE`, complexID).Scan(&result.Complex.Name)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return Reservation{}, err
+	}
+	if manual {
+		if authErr := authorizeManual(ctx, tx, complexID, actorID, errors.Is(err, pgx.ErrNoRows)); authErr != nil {
+			return Reservation{}, authErr
+		}
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Reservation{}, ErrNotFound
 	}
@@ -129,18 +145,26 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 	if occupied {
 		return Reservation{}, ErrConflict
 	}
-	err = tx.QueryRow(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone) VALUES($1::uuid,$2::uuid,$3::uuid,$4,$5,'reserved',3,$6,$7) RETURNING id::text`, complexID, courtID, actorID, start, end, input.Contact.Name, input.Contact.Phone).Scan(&result.ID)
+	origin := "web"
+	var organizer, companions any = actorID, 3
+	if manual {
+		origin, organizer, companions = "manual", nil, nil
+	}
+	err = tx.QueryRow(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone,origin,registered_by)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$4,$5,'reserved',$6,$7,$8,$9,$10::uuid) RETURNING id::text`, complexID, courtID, organizer, start, end, companions, input.Contact.Name, input.Contact.Phone, origin, actorID).Scan(&result.ID)
 	if err != nil {
 		return Reservation{}, err
 	}
 	result.EndsAt = end.Format("15:04")
-	payload, err := json.Marshal(result)
-	if err != nil {
-		return Reservation{}, err
-	}
-	_, err = tx.Exec(ctx, `INSERT INTO reservation_notices(user_id,reservation_id,kind,payload) VALUES($1::uuid,$2::uuid,'reservation_confirmed',$3::jsonb)`, actorID, result.ID, string(payload))
-	if err != nil {
-		return Reservation{}, err
+	if !manual {
+		payload, err := json.Marshal(result)
+		if err != nil {
+			return Reservation{}, err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO reservation_notices(user_id,reservation_id,kind,payload) VALUES($1::uuid,$2::uuid,'reservation_confirmed',$3::jsonb)`, actorID, result.ID, string(payload))
+		if err != nil {
+			return Reservation{}, err
+		}
 	}
 	if err = tx.Commit(ctx); err != nil {
 		return Reservation{}, err

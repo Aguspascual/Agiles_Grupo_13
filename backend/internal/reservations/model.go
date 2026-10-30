@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	ErrInvalid  = errors.New("invalid reservation")
-	ErrConflict = errors.New("reservation conflict")
-	ErrNotFound = errors.New("resource not found")
+	ErrInvalid   = errors.New("invalid reservation")
+	ErrConflict  = errors.New("reservation conflict")
+	ErrNotFound  = errors.New("resource not found")
+	ErrForbidden = errors.New("reservation forbidden")
 )
 
 type Contact struct {

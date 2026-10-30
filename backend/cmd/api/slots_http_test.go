@@ -81,20 +81,20 @@ func TestHTTPPostgresHU05AvailabilityAndMidnightProjection(t *testing.T) {
 	if _, err := db.Exec(ctx, `INSERT INTO court_schedule_intervals(schedule_day_id,opens_at,closes_at) VALUES($1::uuid,'18:00','21:00')`, changedDurationScheduleID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-30 18:30:00-03','2026-10-30 20:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-30 18:30:00-03','2026-10-30 20:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-30 23:30:00-03','2026-10-31 01:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, overnightCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-30 23:30:00-03','2026-10-31 01:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, overnightCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-30 19:00:00-03','2026-10-30 20:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, changedDurationCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-30 19:00:00-03','2026-10-30 20:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, changedDurationCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-30 18:00:00-03','2026-10-30 19:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, inactiveCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-30 18:00:00-03','2026-10-30 19:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, inactiveCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
 	var disabledScheduleID string
@@ -104,12 +104,12 @@ func TestHTTPPostgresHU05AvailabilityAndMidnightProjection(t *testing.T) {
 	if _, err := db.Exec(ctx, `INSERT INTO court_schedule_intervals(schedule_day_id,opens_at,closes_at) VALUES($1::uuid,'09:00','12:00')`, disabledScheduleID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-31 09:30:00-03','2026-10-31 10:30:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-31 09:30:00-03','2026-10-31 10:30:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-31 11:00:00-03','2026-10-31 12:00:00-03','cancelled',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
+	if _, err := db.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-31 11:00:00-03','2026-10-31 12:00:00-03','cancelled',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,8 +188,8 @@ func TestHTTPPostgresHU05AvailabilityAndMidnightProjection(t *testing.T) {
 	if _, err := raceTx.Exec(ctx, `SELECT id FROM courts WHERE id=$1::uuid FOR UPDATE`, gridCourtID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := raceTx.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,starts_at,ends_at,status,companions,contact_name,contact_phone)
-		VALUES($1::uuid,$2::uuid,$3::uuid,'2026-10-30 20:00:00-03','2026-10-30 21:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
+	if _, err := raceTx.Exec(ctx, `INSERT INTO reservations(complex_id,court_id,organizer_id,registered_by,starts_at,ends_at,status,companions,contact_name,contact_phone)
+		VALUES($1::uuid,$2::uuid,$3::uuid,$3::uuid,'2026-10-30 20:00:00-03','2026-10-30 21:00:00-03','reserved',3,'PRIVATE CONTACT','555-PRIVATE')`, complexID, gridCourtID, registered.User.ID); err != nil {
 		t.Fatal(err)
 	}
 	type concurrentHTTPResult struct {

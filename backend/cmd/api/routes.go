@@ -49,6 +49,9 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	}
 	reservationService, err := reservations.NewService(reservations.NewRepository(db))
 	if err != nil {
+		mux.HandleFunc("POST "+reservations.ManualPath, func(w http.ResponseWriter, _ *http.Request) {
+			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
+		})
 		mux.HandleFunc("POST "+reservations.BasePath, func(w http.ResponseWriter, _ *http.Request) {
 			auth.WriteError(w, http.StatusInternalServerError, "no se pudo crear la reserva")
 		})
@@ -61,6 +64,7 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	} else {
 		protectedReservations := auth.RequireUser(secret, auth.NewPostgresRepository(db), reservationService.Handler())
 		mux.Handle("POST "+reservations.BasePath, protectedReservations)
+		mux.Handle("POST "+reservations.ManualPath, protectedReservations)
 		mux.Handle("GET "+reservations.OwnPath, protectedReservations)
 		mux.Handle("GET "+reservations.NoticesPath, protectedReservations)
 	}

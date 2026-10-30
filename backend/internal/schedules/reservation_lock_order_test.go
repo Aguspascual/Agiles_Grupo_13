@@ -33,6 +33,14 @@ func waitForCourtWaiter(t *testing.T, ctx context.Context, db *pgxpool.Pool, que
 }
 
 func TestReservationAndChangeBothLockOrders(t *testing.T) {
+	testReservationAndChangeBothLockOrders(t, false)
+}
+
+func TestManualReservationAndChangeBothLockOrders(t *testing.T) {
+	testReservationAndChangeBothLockOrders(t, true)
+}
+
+func testReservationAndChangeBothLockOrders(t *testing.T, manual bool) {
 	location, err := time.LoadLocation("America/Argentina/Buenos_Aires")
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +73,12 @@ func TestReservationAndChangeBothLockOrders(t *testing.T) {
 				bookResult, changeResult := make(chan error, 1), make(chan error, 1)
 				book := func() {
 					go func() {
-						_, err := reservations.NewRepository(db).Create(ctx, testComplex, testCourt, testActor,
+						repository := reservations.NewRepository(db)
+						create := repository.Create
+						if manual {
+							create = repository.CreateManual
+						}
+						_, err := create(ctx, testComplex, testCourt, testActor,
 							reservations.Request{Date: start.Format("2006-01-02"), StartsAt: "10:00", Contact: reservations.Contact{Name: "Test", Phone: "123"}}, start)
 						bookResult <- err
 					}()

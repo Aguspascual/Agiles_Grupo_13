@@ -73,3 +73,28 @@ valores de perfil ya admitidos por el registro, exige los cinco campos y rechaza
 campos extra, ausentes, nulos o JSON adicional. La integración con Angular y la
 presentación del perfil en partidos quedan pendientes; no se incluyen múltiples
 zonas ni privacidad.
+
+## HU-15 — Alta de reservas manuales
+
+`POST /api/v1/complexes/{complexId}/courts/{courtId}/manual-reservations` requiere
+JWT y permiso de administrador general o encargado asignado al complejo. Recibe
+`date`, `startsAt` y `contact: { name, phone }`; devuelve `201` con la misma forma de
+reserva de HU-06. El servidor define duración, estado y registrante. Se rechazan con
+`400` los datos inválidos, con `401/403` la falta de autenticación/permiso, con `404`
+los recursos inexistentes y con `409` los turnos pasados, fuera de configuración u ocupados.
+
+La migración `007_manual_reservations.sql` conserva los registros web y agrega origen
+y registrante. Las reservas manuales no tienen organizador ni acompañantes ficticios,
+no aparecen como reservas personales del empleado y no generan avisos. Comparten
+ocupación, bloqueos, disponibilidad HU-05 y protecciones HU-03/04 con las reservas web.
+El número `006` queda para HU-14; no es necesario que exista para aplicar `007`.
+
+**Despliegue coordinado:** detener los escritores antiguos, aplicar la migración y
+arrancar el backend actualizado. La escritura web anterior no completa la nueva
+columna obligatoria `registered_by`. No ejecutar una reversión destructiva con reservas
+manuales guardadas. No se cambia ni habilita la cancelación HU-14 para reservas manuales.
+
+Diseño: [TDD-0012](../docs/backend/TDDs/TDD-0012-hu-15-alta-reserva-manual.md).
+Fases y validaciones: [implementación HU-15](../docs/backend/HU-15-implementacion.md).
+Frontend, agenda, edición, cancelación, participantes, pagos y notificaciones externas
+siguen fuera del alcance de esta entrega.
