@@ -1,0 +1,52 @@
+<div class="dialog-backdrop" [class.closing]="closing()" (click)="close.emit()">
+  <section
+    #panel
+    class="dialog-panel"
+    role="dialog"
+    tabindex="-1"
+    aria-modal="true"
+    aria-labelledby="manual-dialog-title"
+    [class.closing]="closing()"
+    (click)="$event.stopPropagation()"
+    (animationend)="finishClose($event)"
+  >
+    <h2 id="manual-dialog-title">Registrar reserva</h2>
+    <p class="summary">
+      <strong>{{ courtName() }}</strong><br />
+      {{ dateLabel() }} · {{ startsAt() }} a {{ endsAt() }}
+    </p>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label for="manual-name">Nombre de quien reserva</label>
+      <input
+        id="manual-name"
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+        [attr.aria-invalid]="showError('name')"
+        [attr.aria-describedby]="showError('name') ? 'manual-name-error' : null"
+      />
+      @if (showError('name')) {
+        <small id="manual-name-error" class="error" role="alert">Ingresá el nombre.</small>
+      }
+      <label for="manual-phone">Teléfono</label>
+      <input
+        id="manual-phone"
+        type="text"
+        inputmode="tel"
+        formControlName="phone"
+        autocomplete="off"
+        [attr.aria-invalid]="showError('phone')"
+        [attr.aria-describedby]="showError('phone') ? 'manual-phone-error' : null"
+      />
+      @if (showError('phone')) {
+        <small id="manual-phone-error" class="error" role="alert">Ingresá un teléfono de contacto.</small>
+      }
+      <div class="actions">
+        <button type="button" class="secondary" (click)="close.emit()" [disabled]="closing()">Volver</button>
+        <button type="submit" class="primary" [disabled]="saving() || closing()">
+          {{ saving() ? 'Registrando…' : 'Registrar reserva' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

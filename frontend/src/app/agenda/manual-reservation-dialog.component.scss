@@ -1,0 +1,134 @@
+.dialog-backdrop {
+  position: fixed;
+  z-index: 12;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 18px;
+  background: #101b2b80;
+  backdrop-filter: blur(4px);
+  animation: manual-backdrop-enter 0.24s ease both;
+}
+.dialog-panel {
+  width: min(100%, 420px);
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  padding: clamp(18px, 4vw, 26px);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 26px 70px #0b182a30;
+  animation: manual-dialog-enter 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dialog-backdrop.closing {
+  animation: manual-backdrop-exit 0.2s ease both;
+}
+.dialog-panel.closing {
+  animation: manual-dialog-exit 0.2s cubic-bezier(0.7, 0, 0.84, 0) both;
+}
+h2 {
+  margin: 0 0 6px;
+  color: #131b2e;
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+}
+.summary {
+  margin: 0 0 16px;
+  color: #59685d;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+form {
+  display: grid;
+  gap: 6px;
+}
+label {
+  margin-top: 8px;
+  color: #29364a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d8e1db;
+  border-radius: 10px;
+  color: #17251d;
+  font: inherit;
+}
+input:focus-visible {
+  outline: 3px solid #10b98166;
+  outline-offset: 1px;
+}
+input[aria-invalid='true'] {
+  border-color: #c0392b;
+}
+.error {
+  color: #b3261e;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.primary {
+  background: #10b981;
+  color: #fff;
+}
+.secondary {
+  background: #eef2ef;
+  color: #29364a;
+}
+@keyframes manual-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes manual-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes manual-backdrop-exit {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes manual-dialog-exit {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-backdrop,
+  .dialog-panel {
+    animation: none !important;
+  }
+}
