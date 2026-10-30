@@ -33,6 +33,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
     title: 'Editar perfil | PádelMatch',
   },
+  {
+    path: 'mis-reservas',
+    loadComponent: () =>
+      import('./reservations/my-reservations.page').then((page) => page.MyReservationsPage),
+    canActivate: [authGuard],
+    title: 'Mis reservas | PádelMatch',
+  },
   // Las pantallas de administración se cargan bajo demanda para aliviar la carga inicial del jugador.
   {
     path: 'admin/complejos',

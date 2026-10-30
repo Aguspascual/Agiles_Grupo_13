@@ -1,0 +1,107 @@
+<main class="my-page">
+  <app-landing-header />
+
+  <section class="my-heading" aria-labelledby="my-title">
+    <h1 id="my-title">Mis reservas</h1>
+    <p>Tus reservas y los partidos a los que te sumaste, en un solo lugar.</p>
+  </section>
+
+  <section class="my-content" aria-label="Mis reservas y partidos">
+    <div class="my-tabs" role="tablist" aria-label="Período">
+      @for (tab of tabs; track tab.view; let index = $index) {
+        <button
+          type="button"
+          role="tab"
+          class="my-tab"
+          [id]="'tab-' + tab.param"
+          [class.is-active]="view() === tab.view"
+          [attr.aria-selected]="view() === tab.view"
+          [attr.aria-controls]="'panel-' + tab.param"
+          [attr.tabindex]="view() === tab.view ? 0 : -1"
+          (click)="selectView(tab.view)"
+          (keydown)="onTabKey($event, index)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <div
+      class="my-panel"
+      role="tabpanel"
+      [id]="'panel-' + (view() === 'upcoming' ? 'proximos' : 'jugados')"
+      [attr.aria-labelledby]="'tab-' + (view() === 'upcoming' ? 'proximos' : 'jugados')"
+    >
+      @switch (status()) {
+        @case ('loading') {
+          <div class="my-empty" role="status"><p>Cargando tus reservas…</p></div>
+        }
+        @case ('error') {
+          <div class="my-empty" role="alert">
+            <h2>No pudimos cargar tus reservas</h2>
+            <p>Revisá tu conexión e intentá nuevamente.</p>
+            <button type="button" (click)="load()">Reintentar</button>
+          </div>
+        }
+        @default {
+          @if (items().length) {
+            <ul class="my-list">
+              @for (item of items(); track itemKey(item)) {
+                <li class="my-card" [class.is-cancelled]="item.status === 'cancelled'" data-reservation-card>
+                  <div class="my-card__main">
+                    <p class="my-card__type">{{ typeLabel(item) }}</p>
+                    <h2>{{ item.complex.name }} · {{ item.court.name }}</h2>
+                    <p class="my-card__when">{{ dateLabel(item) }} · {{ timeLabel(item) }}</p>
+                    <div class="my-card__chips">
+                      <span class="chip" [class]="'chip ' + statusClass(item)" data-status>{{ statusLabel(item) }}</span>
+                      @if (item.kind === 'match') {
+                        <span class="chip is-role" data-role>{{ roleLabel(item) }}</span>
+                        @if (item.match; as match) {
+                          <span class="chip is-level" data-level>Nivel {{ match.targetLevel }}</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                  @if (item.cancellable) {
+                    <button type="button" class="my-card__cancel" [disabled]="saving()" (click)="requestCancel(item)">
+                      Cancelar reserva
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+            @if (hasMore()) {
+              <div class="my-more">
+                <button type="button" [disabled]="loadingMore()" (click)="loadMore()">
+                  {{ loadingMore() ? 'Cargando…' : 'Ver más' }}
+                </button>
+              </div>
+            }
+          } @else {
+            <div class="my-empty">
+              <h2>{{ emptyMessage() }}</h2>
+              <p>
+                Buscá un <a routerLink="/partidos">partido</a> o reservá un turno en un
+                <a routerLink="/clubes">club</a>.
+              </p>
+            </div>
+          }
+        }
+      }
+    </div>
+  </section>
+
+  <app-landing-footer />
+</main>
+
+@if (cancelTarget(); as target) {
+  <app-confirm-dialog
+    title="¿Cancelar esta reserva?"
+    message="Si cancelás, el turno vuelve a quedar libre."
+    confirmLabel="Cancelar reserva"
+    cancelLabel="Volver"
+    (cancel)="cancelTarget.set(null)"
+    (confirm)="confirmCancel()"
+  />
+}
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />
