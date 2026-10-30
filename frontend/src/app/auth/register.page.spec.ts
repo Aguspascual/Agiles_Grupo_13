@@ -169,6 +169,12 @@ describe('registro de jugador HU-01', () => {
       'Ya existe una cuenta con ese correo electrónico.',
     );
     expect(sessionStorage.getItem(AuthTokenStore.storageKey)).toBeNull();
+    expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.form-error')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Ya existe una cuenta con ese correo electrónico. Iniciá sesión');
+
+    fixture.componentInstance.form.controls.email.setValue('otra@example.com');
+    expect(fixture.componentInstance.form.controls.email.hasError('emailTaken')).toBe(false);
   });
 
   it('muestra un error recuperable para HTTP 500 y permite reintentar', () => {

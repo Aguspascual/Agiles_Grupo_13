@@ -30,6 +30,8 @@
                 <p class="field-error">Ingresá tu correo electrónico.</p>
               } @else if ((submitted || form.controls.email.touched) && form.controls.email.hasError('email')) {
                 <p class="field-error">Ingresá un correo electrónico válido.</p>
+              } @else if (form.controls.email.hasError('emailTaken')) {
+                <p class="field-error">Ya existe una cuenta con ese correo electrónico. Iniciá sesión o usá otro correo.</p>
               }
             </div>
               <div class="field">
@@ -104,7 +106,7 @@
           </div>
 
           @if (errorMessage) {
-            <p class="field-error" role="alert">{{ errorMessage }}</p>
+            <p class="form-error" role="alert">{{ errorMessage }}</p>
           }
           <button class="primary-button" type="submit" [disabled]="requestInProgress" [attr.aria-busy]="requestInProgress">
             {{ requestInProgress ? 'Creando cuenta…' : 'Crear mi cuenta y buscar partidos' }} <span aria-hidden="true">→</span>

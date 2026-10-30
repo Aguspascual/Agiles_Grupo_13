@@ -123,7 +123,10 @@ export class RegisterPage {
     if (this.requestInProgress) return;
     this.submitted = true;
     this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.revealFirstError();
+      return;
+    }
 
     this.errorMessage = '';
     this.requestInProgress = true;
@@ -138,7 +141,18 @@ export class RegisterPage {
       error: (error: unknown) => {
         this.requestInProgress = false;
         this.errorMessage = this.registrationError(error);
+        if (error instanceof HttpErrorResponse && error.status === 409) this.form.controls.email.setErrors({ emailTaken: true });
+        this.revealFirstError();
       },
+    });
+  }
+
+  private revealFirstError(): void {
+    setTimeout(() => {
+      const target = this.host.nativeElement.querySelector<HTMLElement>('.field-error, .form-error');
+      target?.scrollIntoView?.({ block: 'center' });
+      const field = target?.closest('.field')?.querySelector<HTMLElement>('input');
+      field?.focus({ preventScroll: true });
     });
   }
 
