@@ -10,6 +10,7 @@ Rama: `mejora/frontend-ajustes-visuales`.
 4. Al presionar un partido se abre el mismo modal de detalle de "Buscar Partidos" (también con Enter). Los botones de la tarjeta no abren el modal. Desde el modal se puede bajar del partido.
 5. "Próximo turno" muestra una cuenta regresiva en días y horas:minutos, que se actualiza sola.
 6. Corrección en el modal: la pareja A queda en la columna izquierda y la B en la derecha, y "Fecha y hora" ya no repite "hs".
+7. Cada tarjeta muestra la foto de la cancha (GET /api/v1/public/courts/{id}/image); si la cancha no tiene foto, se usa una imagen genérica.
 
 ## Backend
 

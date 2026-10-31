@@ -1,50 +1,52 @@
-<div class="my-card__topline">
-  <span class="my-card__kind">{{ typeLabel() }}</span>
-  <span class="my-chip" data-status [class.is-cancelled]="item().status === 'cancelled'" [class.is-open]="item().kind === 'match' && item().status === 'reserved' && item().match?.status === 'open'">
-    {{ statusLabel() }}
-  </span>
-</div>
-
-<div class="my-card__body">
-  <div class="my-card__icon" aria-hidden="true">
-    @if (item().kind === 'match') { <span>↗</span> } @else { <span>◷</span> }
+<div class="my-card__layout">
+  <img class="my-card__image" [src]="imageSrc()" [alt]="'Cancha ' + item().court.name + ' de ' + item().complex.name" loading="lazy" (error)="useFallback($event)" />
+  <div class="my-card__main">
+  <div class="my-card__topline">
+    <span class="my-card__kind">{{ typeLabel() }}</span>
+    <span class="my-chip" data-status [class.is-cancelled]="item().status === 'cancelled'" [class.is-open]="item().kind === 'match' && item().status === 'reserved' && item().match?.status === 'open'">
+      {{ statusLabel() }}
+    </span>
   </div>
-  <div class="my-card__details">
-    <h2>{{ item().complex.name }} <span>·</span> {{ item().court.name }}</h2>
-    <div class="my-card__meta">
-      <span><span aria-hidden="true">⌖</span> {{ date() }}</span>
-      <span><span aria-hidden="true">◷</span> {{ time() }}</span>
-    </div>
-    <div class="my-card__chips">
-      @if (item().kind === 'match') {
-        <span class="my-chip is-role" data-role>{{ item().role === 'organizer' ? 'Organizador' : 'Jugador' }}</span>
-        @if (item().match; as match) {
-          <span class="my-chip is-level" data-level>Nivel {{ match.targetLevel }}</span>
-          @if (match.status === 'open' && item().status === 'reserved') {
-            <span class="my-chip is-open">Faltan {{ match.missingPlayers }} {{ match.missingPlayers === 1 ? 'jugador' : 'jugadores' }}</span>
+  
+  <div class="my-card__body">
+    <div class="my-card__details">
+      <h2>{{ item().complex.name }} <span>·</span> {{ item().court.name }}</h2>
+      <div class="my-card__meta">
+        <span><span aria-hidden="true">⌖</span> {{ date() }}</span>
+        <span><span aria-hidden="true">◷</span> {{ time() }}</span>
+      </div>
+      <div class="my-card__chips">
+        @if (item().kind === 'match') {
+          <span class="my-chip is-role" data-role>{{ item().role === 'organizer' ? 'Organizador' : 'Jugador' }}</span>
+          @if (item().match; as match) {
+            <span class="my-chip is-level" data-level>Nivel {{ match.targetLevel }}</span>
+            @if (match.status === 'open' && item().status === 'reserved') {
+              <span class="my-chip is-open">Faltan {{ match.missingPlayers }} {{ match.missingPlayers === 1 ? 'jugador' : 'jugadores' }}</span>
+            }
           }
+        } @else {
+          <span class="my-chip is-role">A tu nombre</span>
         }
-      } @else {
-        <span class="my-chip is-role">A tu nombre</span>
-      }
+      </div>
     </div>
   </div>
-</div>
-
-<div class="my-card__footer">
-  <span class="my-card__notice">
-    @if (item().status === 'cancelled') { Turno cancelado } @else if (item().kind === 'match' && item().match?.status === 'full') { Grupo completo } @else { {{ item().kind === 'match' ? 'Convocatoria abierta' : 'Turno reservado' }} }
-  </span>
-  @if (item().cancellable) {
-    <button type="button" class="my-card__cancel" [disabled]="saving()" (click)="cancel.emit(item())">
-      Cancelar reserva
-    </button>
-  }
-  @if (canLeave()) {
-    <button type="button" class="my-card__leave" [disabled]="saving()" (click)="leave.emit(item())">
-      Bajarme del partido
-    </button>
-  } @else if (isLeaveExpired()) {
-    <span class="my-card__leave-expired" role="note">Baja cerrada (menos de 2 h)</span>
-  }
+  
+  <div class="my-card__footer">
+    <span class="my-card__notice">
+      @if (item().status === 'cancelled') { Turno cancelado } @else if (item().kind === 'match' && item().match?.status === 'full') { Grupo completo } @else { {{ item().kind === 'match' ? 'Convocatoria abierta' : 'Turno reservado' }} }
+    </span>
+    @if (item().cancellable) {
+      <button type="button" class="my-card__cancel" [disabled]="saving()" (click)="cancel.emit(item())">
+        Cancelar reserva
+      </button>
+    }
+    @if (canLeave()) {
+      <button type="button" class="my-card__leave" [disabled]="saving()" (click)="leave.emit(item())">
+        Bajarme del partido
+      </button>
+    } @else if (isLeaveExpired()) {
+      <span class="my-card__leave-expired" role="note">Baja cerrada (menos de 2 h)</span>
+    }
+  </div>
+  </div>
 </div>
