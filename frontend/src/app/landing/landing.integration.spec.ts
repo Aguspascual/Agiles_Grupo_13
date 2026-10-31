@@ -75,7 +75,7 @@ describe('HU-00: Inicio con datos de API', () => {
     expect(root.textContent).toContain('Calle 10 y 20');
     expect(root.textContent).toContain('1');
     expect(root.querySelector('[data-match-card="match-real-1"]')).not.toBeNull();
-    expect(root.querySelector('[data-match-card] img.match-card__image')).toBeNull();
+    expect(root.querySelector('[data-match-card] img.match-card__image')).not.toBeNull();
     expect(root.querySelector('.home-search__advanced')).toBeNull();
     expect(root.textContent).not.toContain('1.250+');
     expect(root.textContent).not.toContain('La Cumbre Pádel');

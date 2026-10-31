@@ -7,6 +7,7 @@ import { FeaturedCourtsComponent } from './featured-courts.component';
 import { LandingFooterComponent } from './landing-footer.component';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
+import { MatchDetailDialogComponent } from './match-detail-dialog.component';
 import { AuthSessionService } from '../auth/auth-session.service';
 import { PublicComplex, PublicCourt } from '../complexes/complex.model';
 import { ComplexApiService } from '../complexes/complex-api.service';
@@ -26,6 +27,7 @@ import { ToastComponent } from '../shared/toast.component';
     ClubCardComponent,
     FeaturedCourtsComponent,
     ToastComponent,
+    MatchDetailDialogComponent,
   ],
   templateUrl: './landing.page.html',
 })
@@ -40,8 +42,11 @@ export class LandingPage {
   readonly complexes = signal<PublicComplex[]>([]);
   readonly courts = signal<PublicCourt[]>([]);
   readonly matches = signal<MatchPreview[]>([]);
+  readonly selectedMatch = signal<MatchPreview | null>(null);
+  readonly leavingMatchId = signal<string | null>(null);
+  private lastDetailTrigger?: HTMLElement;
   readonly zones = computed(() => [...new Set(this.complexes().map((complex) => complex.zone))].sort());
-  readonly levels = computed(() => [...new Set(this.matches().map((match) => match.level))].sort());
+  readonly levels = computed(() => [...new Set(this.matches().flatMap((match) => match.levels ?? [match.level]))].sort());
   /** Cantidad de canchas publicadas de cada complejo. */
   readonly courtCounts = computed(() => {
     const counts = new Map<string, number>();
@@ -51,7 +56,7 @@ export class LandingPage {
   readonly recommendedMatches = computed(() => {
     const all = this.matches();
     const level = this.session.currentUser()?.level;
-    return (level ? all.filter((match) => match.level === level) : all).slice(0, 3);
+    return (level ? all.filter((match) => (match.levels ?? [match.level]).includes(level)) : all).slice(0, 3);
   });
   readonly availableMatches = computed(() => {
     let matches = this.matches();
@@ -62,7 +67,7 @@ export class LandingPage {
   readonly stats = computed(() => [
     { value: this.matches().length, label: 'PARTIDOS ABIERTOS', icon: '⌁' },
     { value: this.complexes().length, label: 'CLUBES PUBLICADOS', icon: '▦' },
-    { value: new Set(this.matches().map((match) => match.level)).size, label: 'NIVELES BUSCADOS', icon: '◎' },
+    { value: new Set(this.matches().flatMap((match) => match.levels ?? [match.level])).size, label: 'NIVELES BUSCADOS', icon: '◎' },
     { value: this.matches().reduce((total, match) => total + match.players.length, 0), label: 'INSCRIPCIONES EN PARTIDOS', icon: '♙' },
   ]);
   readonly availableFilters = ['Todos', 'Urgentes', 'Completar grupo'];
@@ -93,8 +98,7 @@ export class LandingPage {
       next: ({ complexes, matches, courts }) => {
         this.complexes.set(complexes);
         this.courts.set(courts);
-        // La API aún no ofrece fotografías; no usar la imagen de presentación del mapper.
-        this.matches.set(matches.map((match) => ({ ...match, image: '' })));
+        this.matches.set(matches);
         this.loading.set(false);
       },
       error: () => {
@@ -102,6 +106,54 @@ export class LandingPage {
         this.loadError.set(true);
       },
     });
+  }
+
+  openDetails(detail: { match: MatchPreview; trigger: HTMLElement }): void {
+    this.lastDetailTrigger = detail.trigger;
+    this.selectedMatch.set(detail.match);
+  }
+
+  closeDetails(): void {
+    this.selectedMatch.set(null);
+    setTimeout(() => this.lastDetailTrigger?.focus());
+  }
+
+  joinMatch(match: MatchPreview): void {
+    this.matchesApi.join(match.id).subscribe({
+      next: (updated) => {
+        this.selectedMatch.set(updated);
+        this.showToast(`Te sumaste al partido en ${updated.club}.`);
+        this.refreshMatches();
+      },
+      error: () => this.showToast('No pudimos sumarte al partido. Intentá nuevamente.'),
+    });
+  }
+
+  leaveMatch(match: MatchPreview): void {
+    if (this.leavingMatchId()) return;
+    this.leavingMatchId.set(match.id);
+    this.matchesApi.leave(match.id).subscribe({
+      next: (result) => {
+        this.leavingMatchId.set(null);
+        this.closeDetails();
+        this.showToast(result.deleted ? 'Te bajaste del partido. El partido se eliminó y el turno quedó libre.' : 'Te bajaste del partido. Tu lugar quedó disponible.');
+        this.refreshMatches();
+      },
+      error: () => {
+        this.leavingMatchId.set(null);
+        this.showToast('No pudimos procesar la baja. Intentá otra vez.');
+        this.refreshMatches();
+      },
+    });
+  }
+
+  private refreshMatches(): void {
+    this.matchesApi.list().subscribe({ next: (matches) => this.matches.set(matches) });
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage.set(message);
+    setTimeout(() => this.toastMessage.set(''), 3500);
   }
 
   dismissToast(): void {

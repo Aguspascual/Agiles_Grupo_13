@@ -75,7 +75,7 @@
       </div>
       <div class="recommended-grid" data-recommended-matches>
         @for (match of recommendedMatches(); track match.id) {
-          <app-match-card [match]="match" [searchMode]="true" [browseMode]="true" />
+          <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
         } @empty {
           <p class="empty-matches">Todavía no hay partidos abiertos para recomendar.</p>
         }
@@ -97,7 +97,7 @@
         </div>
         <div class="available-grid">
           @for (match of availableMatches(); track match.id) {
-            <app-match-card [match]="match" [searchMode]="true" [browseMode]="true" />
+            <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
           } @empty {
             <p class="empty-matches">Todavía no hay partidos abiertos para mostrar.</p>
           }
@@ -132,6 +132,9 @@
     </div>
   </section>
 
-  <app-landing-footer />
+  @if (selectedMatch(); as match) {
+  <app-match-detail-dialog [match]="match" [leaving]="leavingMatchId() === match.id" (close)="closeDetails()" (join)="joinMatch($event)" (leave)="leaveMatch($event)" />
+}
+<app-landing-footer />
   @if (toastMessage()) { <app-toast [message]="toastMessage()" (dismiss)="dismissToast()" /> }
 </main>

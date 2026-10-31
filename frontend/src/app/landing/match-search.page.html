@@ -44,8 +44,7 @@
     >
       <div class="filter-sidebar__heading">
         <h2 id="filters-title">Filtros</h2>
-        <span>{{ activeFiltersCount }} activos</span
-        ><button type="button" (click)="clearFilters()">Limpiar filtros</button>
+        <button type="button" (click)="clearFilters()">Limpiar filtros</button>
         <button
           class="filter-sidebar__close"
           type="button"
@@ -55,26 +54,21 @@
           ×
         </button>
       </div>
-      <label class="open-toggle"
-        ><input type="checkbox" [checked]="onlyOpen" (change)="onlyOpen = !onlyOpen" /><span
-          >Solo con lugares libres</span
-        ><i aria-hidden="true">✓</i></label
-      >
-      <fieldset>
-        <legend>
-          Zona / Localidad
-        </legend>
-        @for (zone of zones; track zone) {
-          <label class="check-row"
-            ><input
-              type="checkbox"
-              [checked]="selectedZones.includes(zone)"
-              (change)="selectedZones = toggleSelection(selectedZones, zone)"
-            /><span>{{ zone }}</span></label
-          >
-        }
+      <fieldset class="filter-group">
+        <legend>Zona / Localidad</legend>
+        <div class="chip-list">
+          @for (zone of zones; track zone) {
+            <label class="chip" [class.is-active]="selectedZones.includes(zone)"
+              ><input
+                type="checkbox"
+                [checked]="selectedZones.includes(zone)"
+                (change)="selectedZones = toggleSelection(selectedZones, zone)"
+              /><span>{{ zone }}</span></label
+            >
+          }
+        </div>
       </fieldset>
-      <fieldset>
+      <fieldset class="filter-group">
         <legend>Fecha de juego</legend>
         <div class="day-pills">
           @for (day of days; track day) {
@@ -88,7 +82,7 @@
           }
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset class="filter-group">
         <legend>Categoría / Nivel</legend>
         <div class="level-pills">
           @for (level of levels; track level) {
@@ -102,40 +96,38 @@
           }
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset class="filter-group">
         <legend>Horario preferido</legend>
-        @for (time of preferredTimes; track time) {
-          <label class="check-row check-row--text"
-            ><input
-              type="checkbox"
-              [checked]="selectedTimes.includes(time)"
-              (change)="selectedTimes = toggleSelection(selectedTimes, time)"
-            /><span>{{ time }}</span></label
-          >
-        }
-      </fieldset>
-      <fieldset>
-        <legend>Características de cancha</legend>
-        @for (feature of courtFeatures; track feature) {
-          <label class="check-row check-row--text"
-            ><input
-              type="checkbox"
-              [checked]="selectedFeatures.includes(feature)"
-              (change)="selectedFeatures = toggleSelection(selectedFeatures, feature)"
-            /><span>{{ feature }}</span></label
-          >
-        }
-      </fieldset>
-      <label class="club-select"
-        ><span>Club específico</span
-        ><select name="club" [(ngModel)]="selectedClub">
-          <option>Todos los clubes de La Plata</option>
-          @for (match of matches(); track match.club) {
-            <option [value]="match.club">{{ match.club }}</option>
+        <div class="option-list">
+          @for (time of preferredTimes; track time) {
+            <label class="option-row" [class.is-active]="selectedTimes.includes(time)"
+              ><input
+                type="checkbox"
+                [checked]="selectedTimes.includes(time)"
+                (change)="selectedTimes = toggleSelection(selectedTimes, time)"
+              /><span class="option-row__box" aria-hidden="true"></span><span>{{ time }}</span></label
+            >
           }
-        </select></label
-      >
-      <article class="organize-card">
+        </div>
+      </fieldset>
+      <fieldset class="filter-group">
+        <legend>Características de cancha</legend>
+        <div class="chip-list">
+          @for (feature of courtFeatures; track feature) {
+            <label class="chip" [class.is-active]="selectedFeatures.includes(feature)"
+              ><input
+                type="checkbox"
+                [checked]="selectedFeatures.includes(feature)"
+                (change)="selectedFeatures = toggleSelection(selectedFeatures, feature)"
+              /><span>{{ feature }}</span></label
+            >
+          }
+        </div>
+      </fieldset>
+      <div class="club-select">
+        <span id="club-select-label">Club específico</span>
+        <app-select-menu label="Club específico" [options]="clubOptions()" [value]="selectedClub" (valueChange)="selectedClub = $event" />
+      </div>      <article class="organize-card">
         <small>CIRCUITO PLATENSE</small>
         <h3>¿Organizás tu propio torneo?</h3>
         <p>Habilitá inscripciones, cuadros automatizados y ranking mensual en APA.</p>

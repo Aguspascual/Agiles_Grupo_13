@@ -47,7 +47,6 @@
 }
 
 .create-match-dialog__icon { width: 52px; height: 52px; font-size: 25px; }
-.eyebrow { color: #07865f; font-size: .68rem; font-weight: 800; letter-spacing: .12em; }
 .create-match-dialog h2 { margin: 3px 0 0; color: #182637; font-size: 1.5rem; letter-spacing: -.04em; }
 .icon-button { width: 40px; height: 40px; margin-left: auto; border: 1px solid #e3e9e5; border-radius: 50%; background: #fff; color: #3d4b46; font-size: 1.55rem; cursor: pointer; }
 .icon-button:hover { background: #f2f7f4; }
@@ -63,17 +62,20 @@
 .mode-option small { color: #697771; font-size: .74rem; line-height: 1.35; }
 
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
-.form-grid label { display: grid; align-content: start; gap: 7px; min-width: 0; color: #394840; font-size: .78rem; font-weight: 750; }
+.form-grid label, .form-grid .field { display: grid; align-content: start; gap: 7px; min-width: 0; color: #394840; font-size: .78rem; font-weight: 750; }
+.form-grid .field { --select-menu-font: .85rem; --select-menu-height: 44px; }
 .form-grid__wide { grid-column: 1 / -1; }
-.form-grid input, .form-grid select { width: 100%; min-height: 44px; padding: 0 13px; border: 1px solid #d9e3de; border-radius: 10px; background-color: #fff; color: #26342d; font: inherit; font-size: .85rem; }
-.form-grid select { appearance: none; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%2356655d' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 6 5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; }
-.form-grid input:focus-visible, .form-grid select:focus-visible, button:focus-visible { outline: 3px solid #35bd8b; outline-offset: 2px; }
+.form-grid input { width: 100%; min-height: 44px; padding: 0 13px; border: 1px solid #d9e3de; border-radius: 10px; background-color: #fff; color: #26342d; font: inherit; font-size: .85rem; }
+.form-grid input[type='date']::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; filter: brightness(0); }
+.form-grid input:focus-visible, button:focus-visible { outline: 3px solid #35bd8b; outline-offset: 2px; }
 .field-hint { color: #78867e; font-size: .7rem; font-weight: 500; }
 .form-state { margin: 13px 0; padding: 12px 14px; border-radius: 10px; background: #f3f7f5; color: #52615a; font-size: .84rem; }
 .form-state a { color: #087a59; font-weight: 800; }
 .form-error { margin: 14px 0 0; color: #a8323c; font-size: .82rem; font-weight: 700; }
 .create-match-dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 .create-match-dialog__actions button { min-height: 44px; padding: 0 17px; border: 1px solid transparent; border-radius: 10px; font: inherit; font-size: .83rem; font-weight: 800; cursor: pointer; }
+.button-secondary { border-color: #d9e3de !important; background: #fff; color: #394840; }
+.button-secondary:hover { background: #f3f7f5; }
 .button-primary { background: #07865f; color: #fff; box-shadow: 0 7px 18px rgb(7 134 95 / 18%); }
 .button-primary:hover:not(:disabled) { background: #066e4e; }
 .button-primary:disabled { opacity: .48; cursor: not-allowed; }
@@ -94,7 +96,7 @@
   .mode-option b { font-size: .77rem; }
   .mode-option small { font-size: .68rem; }
   .form-grid { gap: 12px; }
-  .form-grid label { grid-column: 1 / -1; }
+  .form-grid label, .form-grid .field { grid-column: 1 / -1; }
   .invite-fields { padding: 11px; }
   .create-match-dialog__actions button { flex: 1; padding-inline: 10px; }
 }

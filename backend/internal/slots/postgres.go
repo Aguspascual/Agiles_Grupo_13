@@ -56,7 +56,7 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 		return Snapshot{}, err
 	}
 	reservationRows, err := tx.Query(ctx, `SELECT r.court_id::text,r.starts_at,r.ends_at,
-		CASE WHEN r.origin='open_match' AND pm.id IS NOT NULL THEN pm.target_level END,
+		CASE WHEN r.origin='open_match' AND pm.id IS NOT NULL THEN array_to_string(ARRAY[pm.target_level]||pm.extra_levels,' / ') END,
 		CASE WHEN r.origin='open_match' AND pm.id IS NOT NULL
 			THEN 4-(SELECT count(*) FROM pending_match_players p WHERE p.match_id=pm.id) END
 		FROM reservations r JOIN courts c ON c.id=r.court_id

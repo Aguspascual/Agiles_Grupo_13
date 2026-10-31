@@ -11,7 +11,11 @@ import { MatchCardComponent } from './match-card.component';
 import { MatchDetailDialogComponent } from './match-detail-dialog.component';
 import { ToastComponent } from '../shared/toast.component';
 import { MatchApiService } from '../matches/match-api.service';
+import { ComplexApiService } from '../complexes/complex-api.service';
+import { SelectMenuComponent, SelectOption } from '../shared/select-menu.component';
 import { CreateMatchDialogComponent } from '../matches/create-match-dialog.component';
+
+const ALL_CLUBS = 'Todos los clubes de La Plata';
 
 @Component({
   selector: 'app-match-search-page',
@@ -24,6 +28,7 @@ import { CreateMatchDialogComponent } from '../matches/create-match-dialog.compo
     MatchDetailDialogComponent,
     CreateMatchDialogComponent,
     ToastComponent,
+    SelectMenuComponent,
   ],
   templateUrl: './match-search.page.html',
 })
@@ -35,6 +40,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   readonly matches = signal<MatchPreview[]>([]);
   readonly session = inject(AuthSessionService);
   private readonly api = inject(MatchApiService);
+  private readonly complexesApi = inject(ComplexApiService);
   private readonly router = inject(Router);
   readonly zones = ZONES;
   readonly levels = LEVELS;
@@ -56,8 +62,9 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   dayFilterEnabled = false;
   selectedTimes: string[] = [];
   selectedFeatures: string[] = [];
-  selectedClub = 'Todos los clubes de La Plata';
-  onlyOpen = false;
+  selectedClub = ALL_CLUBS;
+  /** Clubes registrados (se leen de la base de datos, no de los partidos publicados). */
+  readonly clubOptions = signal<SelectOption[]>([{ value: ALL_CLUBS, label: ALL_CLUBS }]);
   filtersOpen = false;
   readonly loadingMatches = signal(true);
   readonly matchesError = signal('');
@@ -153,6 +160,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadMatches();
+    this.loadClubs();
     this.route.queryParams.subscribe((params) => {
       const zone = typeof params['zona'] === 'string' ? params['zona'].trim() : '';
       const level = typeof params['nivel'] === 'string' ? params['nivel'].trim() : '';
@@ -221,6 +229,17 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     return 'No pudimos procesar la baja. Intentá otra vez.';
   }
 
+  private loadClubs(): void {
+    this.complexesApi.listPublic().subscribe({
+      next: (complexes) =>
+        this.clubOptions.set([
+          { value: ALL_CLUBS, label: ALL_CLUBS },
+          ...complexes.map((complex) => ({ value: complex.name, label: complex.name })),
+        ]),
+      error: () => undefined,
+    });
+  }
+
   get activeFiltersCount(): number {
     return (
       this.selectedZones.length +
@@ -228,7 +247,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
       Number(this.dayFilterEnabled) +
       this.selectedTimes.length +
       this.selectedFeatures.length +
-      Number(this.selectedClub !== 'Todos los clubes de La Plata')
+      Number(this.selectedClub !== ALL_CLUBS)
     );
   }
 
@@ -236,14 +255,11 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     return this.matches().filter(
       (match) =>
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
-        (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&
+        (!this.selectedLevels.length || (match.levels ?? [match.level]).some((level) => this.selectedLevels.includes(level))) &&
         (!this.dayFilterEnabled ||
           this.selectedDay === 'Todos' ||
           this.matchesSelectedDay(match)) &&
-        (!this.selectedClub ||
-          this.selectedClub === 'Todos los clubes de La Plata' ||
-          match.club === this.selectedClub) &&
-        (!this.onlyOpen || match.openSpots > 0) &&
+        (!this.selectedClub || this.selectedClub === ALL_CLUBS || match.club === this.selectedClub) &&
         this.matchesPreferredTime(match) &&
         this.selectedFeatures.every((feature) => this.matchesCourtFeature(match, feature)),
     );
@@ -295,7 +311,6 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     this.dayFilterEnabled = false;
     this.selectedTimes = [];
     this.selectedFeatures = [];
-    this.selectedClub = 'Todos los clubes de La Plata';
-    this.onlyOpen = false;
+    this.selectedClub = ALL_CLUBS;
   }
 }

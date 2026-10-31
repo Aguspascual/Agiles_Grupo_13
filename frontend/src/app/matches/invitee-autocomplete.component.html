@@ -10,7 +10,7 @@
       autocomplete="off"
       role="combobox"
       aria-autocomplete="list"
-      [attr.aria-expanded]="suggestions.length > 0"
+      [attr.aria-expanded]="visibleSuggestions.length > 0"
       [attr.aria-controls]="inputId + '-list'"
       [placeholder]="selected ? 'Jugador seleccionado' : 'Escribí nombre o correo'"
       required
@@ -26,9 +26,9 @@
   } @else if (searching) {
     <small class="field-hint" role="status">Buscando jugadores…</small>
   }
-  @if (suggestions.length > 0) {
+  @if (visibleSuggestions.length > 0) {
     <ul class="invitee-suggestions" [id]="inputId + '-list'" role="listbox" [attr.aria-label]="'Jugadores encontrados para ' + label">
-      @for (player of suggestions; track player.id) {
+      @for (player of visibleSuggestions; track player.id) {
         <li role="presentation">
           <button type="button" role="option" (click)="select(player)">
             <b>{{ player.name }}</b><small>{{ player.emailHint }}</small>

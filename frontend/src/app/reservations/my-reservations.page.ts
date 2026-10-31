@@ -8,6 +8,8 @@ import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
 import { ToastComponent } from '../shared/toast.component';
 import { MatchApiService } from '../matches/match-api.service';
+import { MatchPreview } from '../landing/landing.data';
+import { MatchDetailDialogComponent } from '../landing/match-detail-dialog.component';
 import { MyReservationCardComponent } from './my-reservation-card.component';
 import { MyReservationsSummaryComponent } from './my-reservations-summary.component';
 import { MyReservationItem, MyReservationView, ReservationApiService } from './reservation-api.service';
@@ -24,7 +26,7 @@ type ListStatus = 'loading' | 'ready' | 'error';
 /** HU-17: consulta integrada de reservas propias y partidos desde la API autenticada. */
 @Component({
   selector: 'app-my-reservations-page',
-  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent],
+  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent, MatchDetailDialogComponent],
   templateUrl: './my-reservations.page.html',
   styleUrl: './my-reservations.page.scss',
 })
@@ -48,8 +50,14 @@ export class MyReservationsPage implements OnInit {
   readonly cancelTarget = signal<MyReservationItem | null>(null);
   readonly leaveTarget = signal<MyReservationItem | null>(null);
   readonly toastMessage = signal('');
+  readonly selectedMatch = signal<MatchPreview | null>(null);
+  readonly leavingMatchId = signal<string | null>(null);
+  private lastTrigger?: HTMLElement;
+  /** Próximo turno cuando se está viendo "Jugados" (la lista cargada es otra). */
+  private readonly upcomingNext = signal<MyReservationItem | null>(null);
+  private nextSubscription?: Subscription;
   readonly nextItem = computed(() =>
-    this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : null,
+    this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : this.upcomingNext(),
   );
   readonly nextDate = computed(() => this.nextItem() ? this.dateLabel(this.nextItem()!) : '');
   readonly nextTime = computed(() => this.nextItem() ? this.timeLabel(this.nextItem()!) : '');
@@ -63,6 +71,7 @@ export class MyReservationsPage implements OnInit {
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.loadSubscription?.unsubscribe();
+      this.nextSubscription?.unsubscribe();
       if (this.toastTimer) clearTimeout(this.toastTimer);
     });
   }
@@ -103,6 +112,7 @@ export class MyReservationsPage implements OnInit {
     this.hasMore.set(false);
     this.loadingMore.set(false);
     this.nextOffset = 0;
+    this.loadNext();
     this.loadSubscription = this.api.listMine(this.view(), PAGE_SIZE, 0).subscribe({
       next: (result) => {
         this.items.set(result.items);
@@ -111,6 +121,15 @@ export class MyReservationsPage implements OnInit {
         this.status.set('ready');
       },
       error: () => this.status.set('error'),
+    });
+  }
+
+  private loadNext(): void {
+    this.nextSubscription?.unsubscribe();
+    if (this.view() === 'upcoming') return;
+    this.nextSubscription = this.api.listMine('upcoming', PAGE_SIZE, 0).subscribe({
+      next: (result) => this.upcomingNext.set(result.items.find((item) => item.status === 'reserved') ?? null),
+      error: () => this.upcomingNext.set(null),
     });
   }
 
@@ -129,6 +148,40 @@ export class MyReservationsPage implements OnInit {
       error: () => {
         this.loadingMore.set(false);
         this.showToast('No pudimos cargar más. Revisá tu conexión e intentá nuevamente.');
+      },
+    });
+  }
+
+  openDetails(item: MyReservationItem, event: Event): void {
+    if (item.kind !== 'match' || item.status !== 'reserved') return;
+    if ((event.target as HTMLElement).closest('button, a')) return;
+    this.lastTrigger = event.currentTarget as HTMLElement;
+    this.matchApi.get(item.id).subscribe({
+      next: (match) => this.selectedMatch.set(match),
+      error: () => this.showToast('No pudimos abrir el detalle del partido. Intentá nuevamente.'),
+    });
+  }
+
+  closeDetails(): void {
+    this.selectedMatch.set(null);
+    setTimeout(() => this.lastTrigger?.focus());
+  }
+
+  leaveFromDetails(match: MatchPreview): void {
+    if (this.leavingMatchId()) return;
+    this.leavingMatchId.set(match.id);
+    this.matchApi.leave(match.id).subscribe({
+      next: (result) => {
+        this.leavingMatchId.set(null);
+        this.closeDetails();
+        this.showToast(result.deleted ? 'Te bajaste del partido. El partido se eliminó y el turno quedó libre.' : 'Te bajaste del partido. Tu lugar quedó disponible.');
+        this.load();
+      },
+      error: () => {
+        this.leavingMatchId.set(null);
+        this.closeDetails();
+        this.showToast('No pudimos procesar la baja. Intentá otra vez.');
+        this.load();
       },
     });
   }

@@ -25,6 +25,11 @@ export class MatchApiService {
     return this.http.get<unknown>(MATCHES_API, { params }).pipe(map(parseMatchList));
   }
 
+  /** Un partido en el que el jugador participa (abierto, completo o ya jugado). */
+  get(matchId: string): Observable<MatchPreview> {
+    return this.http.get<unknown>(`${MATCHES_API}/${encodeURIComponent(matchId)}`).pipe(map(parseMatchEnvelope));
+  }
+
   createOpen(complexId: string, courtId: string, request: MatchCreateRequest): Observable<MatchPreview> {
     const url = `/api/v1/complexes/${encodeURIComponent(complexId)}/courts/${encodeURIComponent(courtId)}/matches`;
     return this.http.post<unknown>(url, request).pipe(map(parseMatchEnvelope));

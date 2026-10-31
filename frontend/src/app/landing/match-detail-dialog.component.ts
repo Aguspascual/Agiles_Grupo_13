@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, inject } from '@angular/core';
-import { MatchPreview } from './landing.data';
+import { MatchPreview, PlayerPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
@@ -87,6 +87,15 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (this.closeTimer) clearTimeout(this.closeTimer);
   }
 
+  useFallbackImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith('/images/cancha-interior.jpg')) image.src = '/images/cancha-interior.jpg';
+  }
+
+  get startTime(): string {
+    return this.match.time.match(/\d{1,2}:\d{2}/)?.[0] ?? this.match.time;
+  }
+
   get endTime(): string {
     const start = this.match.time.match(/(\d{1,2}):(\d{2})/);
     const duration = Number(this.match.duration.match(/\d+/)?.[0] ?? 90);
@@ -127,18 +136,28 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (!currentLevel) return '';
     const order = ['Principiante', '8va', '7ma', '6ta', '5ta', '4ta', '3ra', '2da', '1ra'];
     const current = order.indexOf(currentLevel);
-    const target = order.indexOf(this.match.level);
-    return current >= 0 && target >= 0 && Math.abs(current - target) > 1
+    const targets = (this.match.levels ?? [this.match.level]).map((level) => order.indexOf(level)).filter((index) => index >= 0);
+    return current >= 0 && targets.length > 0 && targets.every((target) => Math.abs(current - target) > 1)
       ? `Tu nivel declarado es ${currentLevel} y el buscado es ${this.match.level}. Podés sumarte igual.`
       : '';
   }
 
+  /** Cada jugador ocupa el lugar que eligió (1 a 4); quienes no lo informaron completan los libres. */
   get courtSlots() {
-    return Array.from({ length: 4 }, (_, index) => ({
-      player: this.match.players[index],
-      team: index < 2 ? 'Pareja A' : 'Pareja B',
-      position: this.match.players[index]?.position ?? 'Lugar disponible',
-      isCurrentUser: this.match.players[index] ? this.isCurrentPlayer(this.match.players[index].name) : false,
-    }));
-  }
-}
+    const taken = new Map<number, PlayerPreview>();
+    const unplaced: PlayerPreview[] = [];
+    for (const player of this.match.players) {
+      if (player.slot && player.slot >= 1 && player.slot <= 4 && !taken.has(player.slot)) taken.set(player.slot, player);
+      else unplaced.push(player);
+    }
+    return Array.from({ length: 4 }, (_, index) => {
+      const player = taken.get(index + 1) ?? (taken.has(index + 1) ? undefined : unplaced.shift());
+      return {
+        player,
+        team: index < 2 ? 'Pareja A' : 'Pareja B',
+        side: index % 2 === 0 ? 'Drive' : 'Revés',
+        position: player?.position ?? 'Lugar disponible',
+        isCurrentUser: player ? this.isCurrentPlayer(player.name) : false,
+      };
+    });
+  }}

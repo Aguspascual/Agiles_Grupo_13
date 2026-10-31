@@ -3,6 +3,8 @@ export interface ApiPlayer {
   level: string;
   position?: string;
   organizer: boolean;
+  /** Lugar en la cancha: 1 y 2 son la pareja A, 3 y 4 la pareja B. */
+  slot?: number;
 }
 
 export interface ApiMatch {
@@ -20,6 +22,7 @@ export interface ApiMatch {
   startsAt: string;
   endsAt: string;
   targetLevel: string;
+  targetLevels?: string[];
   players: ApiPlayer[];
   missingPlayers: number;
 }
@@ -63,4 +66,8 @@ export interface MatchCreateRequest {
   date: string;
   startsAt: string;
   targetLevel: string;
+  /** Hasta tres niveles buscados; el primero es el principal. */
+  targetLevels: string[];
+  /** Lugar elegido en la cancha (1 a 4). */
+  slot?: number;
 }

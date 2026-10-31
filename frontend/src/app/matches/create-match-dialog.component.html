@@ -9,7 +9,6 @@
     <header class="create-match-dialog__header">
       <span class="create-match-dialog__icon" aria-hidden="true">＋</span>
       <div>
-        <span class="eyebrow">PÁDELMATCH · LA PLATA</span>
         <h2 id="create-match-title">Crear nuevo partido</h2>
       </div>
       <button class="icon-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
@@ -49,22 +48,14 @@
         <p class="form-state" role="status">No hay complejos con canchas disponibles.</p>
       } @else {
         <div class="form-grid">
-          <label>
-            <span>Complejo</span>
-            <select [ngModel]="complexId" (ngModelChange)="changeComplex($event)" name="complex" required>
-              @for (complex of complexes; track complex.id) {
-                <option [value]="complex.id">{{ complex.name }} · {{ complex.zone }}</option>
-              }
-            </select>
-          </label>
-          <label>
-            <span>Cancha</span>
-            <select [ngModel]="courtId" (ngModelChange)="changeCourt($event)" name="court" required>
-              @for (court of selectedComplex?.courts ?? []; track court.id) {
-                <option [value]="court.id">{{ court.name }} · {{ court.covered ? 'Techada' : 'Aire libre' }}</option>
-              }
-            </select>
-          </label>
+          <div class="field">
+            <span id="complex-label">Complejo</span>
+            <app-select-menu label="Complejo" [options]="complexOptions" [value]="complexId" (valueChange)="changeComplex($event)" />
+          </div>
+          <div class="field">
+            <span id="court-label">Cancha</span>
+            <app-select-menu label="Cancha" [options]="courtOptions" [value]="courtId" (valueChange)="changeCourt($event)" />
+          </div>
           <label>
             <span>Fecha</span>
             <input
@@ -77,26 +68,35 @@
               required
             />
           </label>
-          <label>
-            <span>Horario disponible</span>
-            <select [(ngModel)]="startsAt" name="startsAt" required [disabled]="loadingSlots">
-              <option value="">{{ loadingSlots ? 'Buscando horarios…' : 'Seleccioná un horario' }}</option>
-              @for (slot of availableSlots; track slot.id) {
-                <option [value]="slot.startsAt">{{ slot.startsAt }}–{{ slot.endsAt }}</option>
-              }
-            </select>
+          <div class="field">
+            <span id="slot-label">Horario disponible</span>
+            <app-select-menu
+              label="Horario disponible"
+              [options]="slotOptions"
+              [value]="startsAt"
+              [disabled]="loadingSlots || !slotOptions.length"
+              [placeholder]="loadingSlots ? 'Buscando horarios…' : slotOptions.length ? 'Elegí un horario' : 'Sin turnos libres'"
+              (valueChange)="startsAt = $event"
+            />
             @if (!loadingSlots && !availableSlots.length) {
               <small class="field-hint">No hay turnos libres para esa fecha.</small>
             }
-          </label>
-          @if (mode === 'open') {
-            <label class="form-grid__wide">
-              <span>Nivel buscado</span>
-              <select [(ngModel)]="targetLevel" name="targetLevel" required>
-                @for (level of levels; track level) { <option [value]="level">{{ level }}</option> }
-              </select>
-            </label>
-          } @else {
+          </div>          @if (mode === 'open') {
+            <div class="field form-grid__wide">
+              <span id="levels-label">Nivel buscado <small class="field-hint">Podés elegir hasta {{ maxLevels }} niveles</small></span>
+              <app-multi-select
+                label="Nivel buscado"
+                [options]="levelOptions"
+                [selected]="targetLevels"
+                [max]="maxLevels"
+                placeholder="Elegí uno o más niveles"
+                (selectedChange)="targetLevels = $event"
+              />
+            </div>
+            <div class="field form-grid__wide">
+              <span id="position-label">Tu lugar en la cancha</span>
+              <app-court-position-picker [value]="slot" [initials]="initials" (valueChange)="slot = $event" />
+            </div>          } @else {
             <label class="form-grid__wide">
               <span>Responsable de la reserva</span>
               <input [value]="session.currentUser()?.name ?? ''" readonly aria-readonly="true" />
@@ -119,6 +119,7 @@
                 <app-invitee-autocomplete
                   [label]="'Jugador ' + ($index + 2) + ' · nombre o correo'"
                   [inputId]="'invitee-' + $index"
+                  [excludedIds]="excludedFor($index)"
                   (selectionChange)="updateInvitee($index, $event)"
                 />
               }
@@ -138,7 +139,7 @@
         <button
           class="button-primary"
           type="submit"
-          [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !session.currentUser()"
+          [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !session.currentUser() || (mode === 'open' && !targetLevels.length)"
         >
           {{ saving ? 'Guardando…' : mode === 'open' ? 'Publicar partido' : 'Reservar e invitar' }}
         </button>

@@ -1,6 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { MyReservationItem } from './reservation-api.service';
 
+const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
+
 @Component({
   selector: 'app-my-reservation-card',
   templateUrl: './my-reservation-card.component.html',
@@ -13,6 +15,16 @@ export class MyReservationCardComponent {
   readonly saving = input(false);
   readonly cancel = output<MyReservationItem>();
   readonly leave = output<MyReservationItem>();
+
+  /** Foto de la cancha que cargó el complejo; si no tiene, se usa una imagen genérica. */
+  imageSrc(): string {
+    return `/api/v1/public/courts/${encodeURIComponent(this.item().court.id)}/image`;
+  }
+
+  useFallback(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith(FALLBACK_IMAGE)) image.src = FALLBACK_IMAGE;
+  }
 
   canLeave(): boolean {
     const item = this.item();

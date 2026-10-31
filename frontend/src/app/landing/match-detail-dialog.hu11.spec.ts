@@ -32,7 +32,7 @@ describe('HU-11: persistencia visual de la inscripción', () => {
   it('reconoce a la cuenta entre los jugadores y no ofrece volver a inscribirse', () => {
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(root.textContent).toContain('Ya estás inscripto en este partido');
+    expect(root.textContent).toContain('Tu lugar en este partido est\u00e1 confirmado');
     expect(root.querySelector('.join-match-button')).toBeNull();
   });
 });

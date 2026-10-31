@@ -20,6 +20,7 @@ var (
 const (
 	ListPath    = "/api/v1/matches"
 	CreatePath  = "/api/v1/complexes/{complexId}/courts/{courtId}/matches"
+	GetPath     = "/api/v1/matches/{matchId}"
 	JoinPath    = "/api/v1/matches/{matchId}/players"
 	LeavePath   = "/api/v1/matches/{matchId}/players/me"
 	NoticesPath = "/api/v1/match-notices"
@@ -37,6 +38,8 @@ type Player struct {
 	Level     string `json:"level"`
 	Position  string `json:"position,omitempty"`
 	Organizer bool   `json:"organizer"`
+	// Slot is the place taken on the court: 1 and 2 are pair A, 3 and 4 are pair B (0 when unknown).
+	Slot int `json:"slot,omitempty"`
 }
 
 type Match struct {
@@ -55,6 +58,7 @@ type Match struct {
 	StartsAt      string   `json:"startsAt"`
 	EndsAt        string   `json:"endsAt"`
 	TargetLevel   string   `json:"targetLevel"`
+	TargetLevels  []string `json:"targetLevels"`
 	Players       []Player `json:"players"`
 	Missing       int      `json:"missingPlayers"`
 }
@@ -80,9 +84,20 @@ type ComplexOption struct {
 }
 
 type CreateRequest struct {
-	Date        string `json:"date"`
-	StartsAt    string `json:"startsAt"`
-	TargetLevel string `json:"targetLevel"`
+	Date         string   `json:"date"`
+	StartsAt     string   `json:"startsAt"`
+	TargetLevel  string   `json:"targetLevel"`
+	TargetLevels []string `json:"targetLevels"`
+	// Slot is the place the organizer takes on the court (1 to 4); 0 leaves it to be assigned.
+	Slot int `json:"slot"`
+}
+
+// Levels returns the sought levels in order: the first one is the primary level.
+func (r CreateRequest) Levels() []string {
+	if len(r.TargetLevels) > 0 {
+		return append([]string(nil), r.TargetLevels...)
+	}
+	return []string{r.TargetLevel}
 }
 
 type ListFilters struct {
@@ -119,10 +134,19 @@ func ParseFilters(query url.Values, location *time.Location) (ListFilters, error
 func (r *CreateRequest) Validate(now time.Time, location *time.Location) (time.Time, error) {
 	r.Date = strings.TrimSpace(r.Date)
 	r.StartsAt = strings.TrimSpace(r.StartsAt)
-	r.TargetLevel = strings.TrimSpace(r.TargetLevel)
-	if !validLevels[r.TargetLevel] || len(r.Date) != 10 || len(r.StartsAt) != 5 {
+	levels := r.Levels()
+	seen := map[string]bool{}
+	for index := range levels {
+		levels[index] = strings.TrimSpace(levels[index])
+		if !validLevels[levels[index]] || seen[levels[index]] {
+			return time.Time{}, ErrInvalid
+		}
+		seen[levels[index]] = true
+	}
+	if len(levels) > 3 || r.Slot < 0 || r.Slot > 4 || len(r.Date) != 10 || len(r.StartsAt) != 5 {
 		return time.Time{}, ErrInvalid
 	}
+	r.TargetLevel, r.TargetLevels = levels[0], levels
 	start, err := time.ParseInLocation("2006-01-02 15:04", r.Date+" "+r.StartsAt, location)
 	if err != nil || start.Format("2006-01-02 15:04") != r.Date+" "+r.StartsAt || !start.After(now) {
 		return time.Time{}, ErrInvalid

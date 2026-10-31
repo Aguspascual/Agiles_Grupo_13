@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { MatchPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
 
+const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
+
 @Component({
   selector: 'app-match-card',
   imports: [RouterLink],
@@ -11,22 +13,19 @@ import { AuthSessionService } from '../auth/auth-session.service';
       class="match-card"
       [class.match-card--search]="searchMode"
       [attr.data-match-card]="match.id"
+      [class.match-card--clickable]="detailsMode"
+      [attr.data-match-detail]="detailsMode ? '' : null"
+      [attr.role]="detailsMode ? 'button' : null"
+      [attr.tabindex]="detailsMode ? 0 : null"
+      [attr.aria-label]="detailsMode ? 'Ver detalle del partido en ' + match.club : null"
+      (click)="detailsMode && openDetails($event)"
+      (keydown.enter)="detailsMode && openDetails($event)"
+      (keydown.space)="detailsMode && openDetails($event); detailsMode && $event.preventDefault()"
     >
       <header class="match-card__top">
-        <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>
-        <span class="match-card__duration">{{ match.duration }}</span>
-        <span class="match-card__availability" [class.is-full]="match.openSpots === 0">
-          {{
-            match.openSpots === 0
-              ? 'Completo'
-              : match.openSpots === 1
-                ? 'Falta 1'
-                : match.openSpots + ' faltan'
-          }}
-        </span>
-      </header>
+        <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>      </header>
       @if (searchMode && match.image) {
-        <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" />
+        <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" (error)="useFallbackImage($event)" />
       }
       <div class="match-card__club">
         <div>
@@ -56,13 +55,11 @@ import { AuthSessionService } from '../auth/auth-session.service';
         </div>
       </div>
       <footer class="match-card__bottom">
-        @if (match.features[0]) {
-          <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
-        } @else { <span></span> }
+        <span class="match-card__missing" [class.is-full]="match.openSpots === 0">
+          <i aria-hidden="true">{{ match.openSpots === 0 ? '✓' : '+' }}</i>{{ missingLabel }}
+        </span>
         @if (detailsMode) {
-          <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
-            Ver partido <span aria-hidden="true">↗</span>
-          </button>
+          <span></span>
         } @else if (browseMode) {
           <a class="match-card__details" routerLink="/partidos">Ver partido <span aria-hidden="true">→</span></a>
         } @else {
@@ -93,6 +90,11 @@ export class MatchCardComponent {
     this.actionCompleted = true;
   }
 
+  useFallbackImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith(FALLBACK_IMAGE)) image.src = FALLBACK_IMAGE;
+  }
+
   openDetails(event: Event): void {
     this.viewDetails.emit({ match: this.match, trigger: event.currentTarget as HTMLElement });
   }
@@ -106,6 +108,11 @@ export class MatchCardComponent {
   private displayName(name: string): string {
     const [firstName, ...surnames] = name.trim().split(/\s+/);
     return surnames.length ? `${firstName} ${surnames[0][0]}.` : firstName;
+  }
+
+  get missingLabel(): string {
+    const spots = this.match.openSpots;
+    return spots === 0 ? 'Partido completo' : spots === 1 ? 'Falta 1 jugador' : `Faltan ${spots} jugadores`;
   }
 
   get emptySlots(): number[] {

@@ -4,31 +4,31 @@
   <div class="my-shell">
     <section class="my-heading" aria-labelledby="my-title">
       <div>
-        <span class="my-heading__eyebrow" aria-hidden="true"></span>
         <h1 id="my-title">Mis Partidos</h1>
       </div>
+    <div class="my-tabs" role="tablist" aria-label="Período de partidos">
+      @for (tab of tabs; track tab.view; let index = $index) {
+        <button
+          type="button"
+          role="tab"
+          class="my-tab"
+          [id]="'tab-' + tab.param"
+          [class.is-active]="view() === tab.view"
+          [attr.aria-selected]="view() === tab.view"
+          [attr.aria-controls]="'panel-' + tab.param"
+          [attr.tabindex]="view() === tab.view ? 0 : -1"
+          (click)="selectView(tab.view)"
+          (keydown)="onTabKey($event, index)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
     </section>
 
     <div class="my-layout">
       <section class="my-content" aria-label="Mis reservas y partidos">
-        <div class="my-tabs" role="tablist" aria-label="Período de partidos">
-          @for (tab of tabs; track tab.view; let index = $index) {
-            <button
-              type="button"
-              role="tab"
-              class="my-tab"
-              [id]="'tab-' + tab.param"
-              [class.is-active]="view() === tab.view"
-              [attr.aria-selected]="view() === tab.view"
-              [attr.aria-controls]="'panel-' + tab.param"
-              [attr.tabindex]="view() === tab.view ? 0 : -1"
-              (click)="selectView(tab.view)"
-              (keydown)="onTabKey($event, index)"
-            >
-              {{ tab.label }}
-            </button>
-          }
-        </div>
 
         <div
           class="my-panel"
@@ -51,7 +51,18 @@
               @if (items().length) {
                 <ul class="my-list">
                   @for (item of items(); track itemKey(item)) {
-                    <li class="my-card" data-reservation-card [class.is-cancelled]="item.status === 'cancelled'" [class.is-match]="item.kind === 'match'">
+                    <li
+                      class="my-card"
+                      data-reservation-card
+                      [class.is-cancelled]="item.status === 'cancelled'"
+                      [class.is-match]="item.kind === 'match'"
+                      [class.is-clickable]="item.kind === 'match' && item.status === 'reserved'"
+                      [attr.role]="item.kind === 'match' && item.status === 'reserved' ? 'button' : null"
+                      [attr.tabindex]="item.kind === 'match' && item.status === 'reserved' ? 0 : null"
+                      [attr.aria-label]="item.kind === 'match' && item.status === 'reserved' ? 'Ver detalle del partido en ' + item.complex.name : null"
+                      (click)="openDetails(item, $event)"
+                      (keydown.enter)="openDetails(item, $event)"
+                    >
                       <app-my-reservation-card
                         [item]="item"
                         [date]="dateLabel(item)"
@@ -75,8 +86,6 @@
                   <div class="my-empty__icon" aria-hidden="true">◷</div>
                   <h2>{{ emptyMessage() }}</h2>
                   <p>Cuando tengas una reserva o te sumes a un partido, lo vas a encontrar acá.</p>
-                  <a routerLink="/partidos">Explorar partidos <span aria-hidden="true">→</span></a>
-                  <a routerLink="/clubes">Ver clubes <span aria-hidden="true">→</span></a>
                 </div>
               }
             }
@@ -118,5 +127,8 @@
     (cancel)="leaveTarget.set(null)"
     (confirm)="confirmLeave()"
   />
+}
+@if (selectedMatch(); as match) {
+  <app-match-detail-dialog [match]="match" [leaving]="leavingMatchId() === match.id" (close)="closeDetails()" (leave)="leaveFromDetails($event)" />
 }
 <app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

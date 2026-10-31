@@ -17,6 +17,8 @@ export interface InviteeDraft {
 export class InviteeAutocompleteComponent implements OnInit, OnDestroy {
   @Input() label = 'Jugador invitado';
   @Input() inputId = 'invitee-search';
+  /** Jugadores que no deben ofrecerse (el organizador y los ya elegidos en otros lugares). */
+  @Input() excludedIds: string[] = [];
   @Output() selectionChange = new EventEmitter<InviteeDraft>();
 
   private readonly api = inject(FullMatchApiService);
@@ -49,6 +51,10 @@ export class InviteeAutocompleteComponent implements OnInit, OnDestroy {
       this.suggestions = players;
       this.searching = false;
     });
+  }
+
+  get visibleSuggestions(): FullMatchInviteeSuggestion[] {
+    return this.suggestions.filter((player) => !this.excludedIds.includes(player.id));
   }
 
   updateQuery(query: string): void {

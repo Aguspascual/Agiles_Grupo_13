@@ -1,36 +1,37 @@
 :host { display: block; }
-.my-card__topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px 0; }
-.my-card__kind { color: #087b56; font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-.my-card__body { display: flex; gap: 16px; padding: 16px 22px 20px; }
-.my-card__icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border-radius: 14px; background: #e3f7ed; color: #07805a; font-size: 1.25rem; font-weight: 800; }
+.my-card__layout { display: flex; align-items: stretch; }
+.my-card__image { flex: 0 0 230px; width: 230px; object-fit: cover; background: #e3f7ed; }
+.my-card__main { flex: 1; min-width: 0; }
+.my-card__topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 0; }
+.my-card__kind { color: #087b56; font-size: .58rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.my-card__body { display: flex; gap: 12px; padding: 10px 16px 14px; }
 .my-card__details { min-width: 0; }
-h2 { margin: 0; color: #1b2538; font-size: 1.08rem; font-weight: 750; line-height: 1.35; }
+h2 { margin: 0; color: #1b2538; font-size: .86rem; font-weight: 750; line-height: 1.35; }
 h2 span { color: #7d8797; font-weight: 500; }
-.my-card__meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 7px; color: #697588; font-size: .83rem; }
-.my-card__meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.my-card__meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; color: #697588; font-size: .7rem; }
+.my-card__meta > span { display: inline-flex; align-items: center; gap: 5px; }
 .my-card__meta > span > span { color: #07805a; font-weight: 800; }
-.my-card__chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
-.my-chip { display: inline-flex; align-items: center; min-height: 25px; padding: 3px 10px; border-radius: 999px; background: #eff1f6; color: #465267; font-size: .7rem; font-weight: 750; }
+.my-card__chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.my-chip { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 8px; border-radius: 999px; background: #eff1f6; color: #465267; font-size: .6rem; font-weight: 750; }
 .my-chip.is-role { background: #e8efff; color: #35528b; }
 .my-chip.is-level { background: #eff0ff; color: #5855a5; }
 .my-chip.is-open { background: #e6f8ef; color: #087b56; }
 .my-chip.is-cancelled { background: #fde9e9; color: #a52632; }
-.my-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; padding: 10px 22px; border-top: 1px solid #eef0f5; background: #fbfcff; }
-.my-card__notice { color: #667286; font-size: .8rem; }
-.my-card__cancel { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 1px solid #f1caca; border-radius: 9px; background: #fff; color: #ad2d38; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
-.my-card__cancel:hover:not(:disabled) { background: #fff4f4; }
-.my-card__cancel:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
-.my-card__cancel:disabled { opacity: .55; cursor: not-allowed; }
-.my-card__leave { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 1px solid #f0c9cd; border-radius: 9px; background: #fff; color: #a72d3a; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
-.my-card__leave:hover:not(:disabled) { background: #fff2f3; }
-.my-card__leave:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
-.my-card__leave:disabled { opacity: .55; cursor: not-allowed; }
-.my-card__leave-expired { color: #7a6370; font-size: .72rem; }
+.my-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; padding: 7px 16px; border-top: 1px solid #eef0f5; background: #fbfcff; }
+.my-card__notice { color: #667286; font-size: .68rem; }
+.my-card__cancel, .my-card__leave { flex: 0 0 auto; min-height: 30px; padding: 0 11px; border: 1px solid #f1caca; border-radius: 8px; background: #fff; color: #ad2d38; font: inherit; font-size: .66rem; font-weight: 750; cursor: pointer; }
+.my-card__cancel:hover:not(:disabled), .my-card__leave:hover:not(:disabled) { background: #fff4f4; }
+.my-card__cancel:focus-visible, .my-card__leave:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
+.my-card__cancel:disabled, .my-card__leave:disabled { opacity: .55; cursor: not-allowed; }
+.my-card__leave-expired { color: #7a6370; font-size: .64rem; }
 @media (max-width: 760px) {
-  .my-card__topline { padding: 15px 16px 0; }
-  .my-card__body { gap: 12px; padding: 14px 16px 16px; }
-  .my-card__icon { flex-basis: 38px; width: 38px; height: 38px; }
-  h2 { font-size: .98rem; }
-  .my-card__meta { font-size: .78rem; }
-  .my-card__footer { padding-inline: 16px; }
+  .my-card__layout { display: flex; align-items: stretch; }
+.my-card__image { flex: 0 0 230px; width: 230px; object-fit: cover; background: #e3f7ed; }
+.my-card__main { flex: 1; min-width: 0; }
+.my-card__topline { padding: 11px 12px 0; }
+  .my-card__body { gap: 10px; padding: 9px 12px 12px; }
+  .my-card__footer { padding-inline: 12px; flex-wrap: wrap; }
+  .my-card__layout { flex-direction: column; }
+  .my-card__image { flex-basis: auto; width: 100%; height: 110px; }
 }
+@media (max-width: 980px) and (min-width: 761px) { .my-card__image { flex-basis: 150px; width: 150px; } }

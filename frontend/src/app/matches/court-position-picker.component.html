@@ -1,0 +1,23 @@
+<div class="court-picker">
+  <div class="court-picker__pairs" aria-hidden="true"><span>PAREJA A</span><span>PAREJA B</span></div>
+  <div class="court-picker__court" role="radiogroup" aria-label="Tu lugar en la cancha">
+    <span class="court-picker__net" aria-hidden="true"></span>
+    @for (spot of spots; track spot.slot) {
+      <button
+        type="button"
+        role="radio"
+        class="court-picker__spot"
+        [class.is-selected]="value === spot.slot"
+        [attr.aria-checked]="value === spot.slot"
+        [attr.aria-label]="'Pareja ' + spot.pair + ', ' + spot.side"
+        [style.grid-column]="spot.pair === 'A' ? 1 : 3"
+        [style.grid-row]="spot.side === 'Drive' ? 1 : 2"
+        (click)="choose(spot.slot)"
+      >
+        <span class="court-picker__dot" aria-hidden="true">{{ value === spot.slot ? initials : '+' }}</span>
+        <small>{{ spot.side }}</small>
+      </button>
+    }
+  </div>
+  <p class="court-picker__summary" role="status">{{ summary }}</p>
+</div>

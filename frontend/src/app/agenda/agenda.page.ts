@@ -241,6 +241,11 @@ export class AgendaPage implements OnDestroy {
     this.selectedSlotId.set(this.selectedSlotId() === slot.id ? null : slot.id);
   }
 
+  useFallbackImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith('/images/cancha-interior.jpg')) image.src = '/images/cancha-interior.jpg';
+  }
+
   clearSelection(): void {
     if (this.manualTarget() || this.cancelTarget()) return;
     this.selectedSlotId.set(null);

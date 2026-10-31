@@ -1,52 +1,40 @@
 :host { display: block; }
 
 .my-page {
-  min-height: 100vh;
+  zoom: 1.2;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh / 1.2);
   background: #f8f8ff;
   color: #182235;
 }
 .my-shell {
-  width: min(1320px, calc(100% - 64px));
+  flex: 1;
+  width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 36px 0 64px;
+  padding: 10px 0 40px;
 }
-.my-heading { margin-bottom: 24px; }
-.my-heading__eyebrow {
-  display: block;
-  width: 28px;
-  height: 8px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background: #a9edd4;
-}
+.my-heading { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
 .my-heading h1 {
   margin: 0;
-  color: #182235;
-  font-size: clamp(2rem, 3vw, 2.65rem);
-  font-weight: 800;
-  letter-spacing: -.055em;
+  color: #1d2737;
+  font-size: 1.38rem;
+  font-weight: 850;
+  letter-spacing: -0.05em;
 }
-.my-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 28px; align-items: start; }
+.my-layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 17px; align-items: start; }
 .my-content { min-width: 0; }
-.my-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-  padding-bottom: 10px;
-  overflow-x: auto;
-  border-bottom: 1px solid #e8e9f1;
-  scrollbar-width: thin;
-}
+.my-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
 .my-tab {
   flex: 0 0 auto;
-  min-height: 42px;
-  padding: 0 18px;
+  min-height: 32px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   color: #566174;
   font: inherit;
-  font-size: .88rem;
+  font-size: .72rem;
   font-weight: 700;
   cursor: pointer;
   transition: color .18s ease, background .18s ease;
@@ -57,43 +45,46 @@
   outline: 3px solid #10b981;
   outline-offset: 3px;
 }
-.my-list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
-.my-card { overflow: hidden; border: 1px solid #e8e9f2; border-radius: 18px; background: #fff; box-shadow: 0 5px 18px #20244b0a; }
-.my-card.is-match { border-top: 4px solid #54c99a; }
+.my-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.my-card { overflow: hidden; border: 1px solid #e8e9f2; border-radius: 14px; background: #fff; box-shadow: 0 4px 14px #20244b0a; }
+.my-card.is-clickable { cursor: pointer; transition: box-shadow .18s ease, transform .18s ease; }
+.my-card.is-clickable:hover { box-shadow: 0 8px 20px #20244b14; transform: translateY(-1px); }
+.my-card.is-clickable:focus-visible { outline: 3px solid #10b981; outline-offset: 2px; }
 .my-card.is-cancelled { background: #fcfcfe; }
 .my-more button:disabled { opacity: .55; cursor: not-allowed; }
-.my-more { padding: 22px 0 4px; text-align: center; }
+.my-more { padding: 14px 0 4px; text-align: center; }
 .my-more button, .my-state button {
-  min-height: 42px;
-  padding: 0 18px;
+  min-height: 34px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #087f5b;
   color: white;
   font: inherit;
+  font-size: .74rem;
   font-weight: 750;
   cursor: pointer;
 }
-.my-state { display: grid; min-height: 260px; align-content: center; justify-items: center; gap: 10px; padding: 34px; border: 1px dashed #dfe2ec; border-radius: 18px; background: #fff; text-align: center; }
+.my-state { display: grid; min-height: 200px; align-content: center; justify-items: center; gap: 8px; padding: 26px; border: 1px dashed #dfe2ec; border-radius: 14px; background: #fff; text-align: center; }
 .my-state h2, .my-state p { margin: 0; }
-.my-state h2 { color: #202b3f; font-size: 1.08rem; }
-.my-state p { max-width: 420px; color: #718096; font-size: .9rem; line-height: 1.55; }
-.my-state a { color: #087f5b; font-weight: 750; text-decoration: none; }
-.my-empty__icon { display: grid; width: 44px; height: 44px; place-items: center; margin-bottom: 5px; border-radius: 14px; background: #e3f7ed; color: #07805a; font-size: 1.25rem; font-weight: 800; }
+.my-state h2 { color: #202b3f; font-size: .9rem; }
+.my-state p { max-width: 380px; color: #718096; font-size: .74rem; line-height: 1.5; }
+.my-state a { color: #087f5b; font-size: .74rem; font-weight: 750; text-decoration: none; }
+.my-empty__icon { display: grid; width: 36px; height: 36px; place-items: center; margin-bottom: 4px; border-radius: 11px; background: #e3f7ed; color: #07805a; font-size: 1rem; font-weight: 800; }
 .my-spinner { width: 26px; height: 26px; border: 3px solid #d8efe4; border-top-color: #07805a; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 980px) {
-  .my-layout { grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; }
-  .my-shell { width: min(100% - 40px, 800px); }
+  .my-layout { grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; }
+  .my-shell { width: min(100% - 32px, 800px); }
 }
 @media (max-width: 760px) {
-  .my-shell { width: calc(100% - 32px); padding: 25px 0 40px; }
-  .my-heading { margin-bottom: 18px; }
-  .my-layout { grid-template-columns: 1fr; gap: 18px; }
+  .my-shell { width: calc(100% - 28px); padding: 10px 0 30px; }
+  .my-layout { grid-template-columns: 1fr; gap: 14px; }
   app-my-reservations-summary { grid-row: 1; }
-  .my-tab { padding-inline: 13px; font-size: .82rem; }
+  .my-tab { padding-inline: 11px; font-size: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .my-card.is-clickable { transition: none; transform: none !important; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

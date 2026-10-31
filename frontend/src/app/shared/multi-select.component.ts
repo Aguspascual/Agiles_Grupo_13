@@ -22,6 +22,8 @@ export class MultiSelectComponent {
   @Input() placeholder = 'Elegí una o más opciones';
   @Input() emptyText = 'No hay opciones disponibles';
   @Input() disabled = false;
+  /** Cantidad máxima de opciones que se pueden marcar (sin límite si es null). */
+  @Input() max: number | null = null;
   @Output() selectedChange = new EventEmitter<string[]>();
 
   open = false;
@@ -40,7 +42,12 @@ export class MultiSelectComponent {
     if (this.open) setTimeout(() => this.items()[0]?.focus());
   }
 
+  isBlocked(value: string): boolean {
+    return this.max !== null && this.selected.length >= this.max && !this.selected.includes(value);
+  }
+
   toggle(option: MultiSelectOption): void {
+    if (this.isBlocked(option.value)) return;
     this.selectedChange.emit(
       this.isSelected(option.value) ? this.selected.filter((value) => value !== option.value) : [...this.selected, option.value],
     );

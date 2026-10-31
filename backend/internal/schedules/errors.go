@@ -2,6 +2,7 @@ package schedules
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
@@ -26,6 +27,9 @@ func writeError(w http.ResponseWriter, err error) {
 		status, message = 428, "If-Match es obligatorio"
 	case errors.Is(err, ErrReservationSourceUnavailable):
 		status, message = 503, "operación no disponible: la fuente real de reservas aún no está integrada"
+	}
+	if status == 500 {
+		log.Printf("schedules: %v", err)
 	}
 	auth.WriteError(w, status, message)
 }

@@ -22,7 +22,7 @@ func readPendingMatches(ctx context.Context, tx pgx.Tx, reservations []Reservati
 	if len(ids) == 0 {
 		return nil
 	}
-	rows, err := tx.Query(ctx, `SELECT pm.reservation_id::text,pm.id::text,pm.status,pm.target_level,p.name,p.level,COALESCE(p.position,''),pmp.is_organizer
+	rows, err := tx.Query(ctx, `SELECT pm.reservation_id::text,pm.id::text,pm.status,array_to_string(ARRAY[pm.target_level]||pm.extra_levels,' / '),p.name,p.level,COALESCE(p.position,''),pmp.is_organizer
 		FROM pending_matches pm
 		JOIN pending_match_players pmp ON pmp.match_id=pm.id
 		JOIN player_profiles p ON p.user_id=pmp.user_id

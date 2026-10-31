@@ -24,3 +24,5 @@
 .multi-menu li.multi-empty:hover { background: transparent; }
 @keyframes multi-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .multi-menu { animation: none; } .multi-trigger, .multi-trigger svg, .multi-menu li { transition: none; } }
+.multi-menu li.is-blocked { opacity: .45; cursor: not-allowed; }
+.multi-menu li.is-blocked:hover { background: transparent; }

@@ -53,13 +53,20 @@ describe('HU-17: Mis reservas', () => {
     [...root().querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label);
 
   async function settle(): Promise<void> {
+    flushNextTurn();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
   }
 
+  /** En "Jugados" la página consulta también los próximos turnos para la tarjeta "Próximo turno". */
+  function flushNextTurn(upcoming: unknown = page([])): void {
+    if (fixture.componentInstance.view() !== 'past') return;
+    for (const req of http.match((request) => request.url === LIST_URL && request.params.get('view') === 'upcoming')) req.flush(upcoming as object);
+  }
+
   function expectList(view: string, offset = 0): TestRequest {
-    const req = http.expectOne((request) => request.url === LIST_URL);
+    const req = http.expectOne((request) => request.url === LIST_URL && request.params.get('view') === view);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('view')).toBe(view);
     expect(req.request.params.get('limit')).toBe('20');
@@ -234,6 +241,8 @@ describe('HU-17: Mis reservas', () => {
     expectList('past').flush(page([]));
     await settle();
     expect(text()).toContain('Todavía no jugaste ningún partido.');
+    expect(root().querySelector('.my-state a[href="/partidos"]')).toBeNull();
+    expect(root().querySelector('.my-state a[href="/clubes"]')).toBeNull();
   });
 
   it('cambia de pestaña, consulta la vista pasada y actualiza la URL', async () => {
@@ -250,6 +259,15 @@ describe('HU-17: Mis reservas', () => {
     expect(cards().length).toBe(1);
     expect(cards()[0].textContent).toContain('Partido abierto');
     expect(navigate).toHaveBeenCalledWith([], { queryParams: { vista: 'jugados' }, replaceUrl: true });
+  });
+
+  it('en Jugados la tarjeta Próximo turno muestra el próximo turno de los próximos', async () => {
+    await render(null, { vista: 'jugados' });
+    expectList('past').flush(page([]));
+    flushNextTurn(page([reservation('r-9')]));
+    await settle();
+    expect(root().querySelector('.next-card')?.textContent).not.toContain('Todav');
+    expect(root().querySelector('.next-card__countdown')).not.toBeNull();
   });
 
   it('abre directamente la pestaña indicada en la URL', async () => {
