@@ -76,7 +76,9 @@
 
             @if (selection(); as chosen) {
               @if (chosen.reservation) {
-              <section class="agenda-panel" aria-live="polite" [attr.aria-label]="'Turno elegido: ' + chosen.court.name">
+              <div class="agenda-modal" (click)="selectedSlotId.set(null)">
+              <section class="agenda-panel" role="dialog" aria-modal="true" [attr.aria-label]="'Detalle del turno: ' + chosen.court.name" (click)="$event.stopPropagation()">
+                <img class="agenda-panel__image" [src]="'/api/v1/public/courts/' + chosen.court.id + '/image'" [alt]="'Cancha ' + chosen.court.name" (error)="useFallbackImage($event)" />
                 <div class="agenda-panel__info">
                   <h2>{{ chosen.court.name }}</h2>
                   <p>{{ dateLabel() }} · {{ chosen.slot.startsAt }} a {{ chosen.slot.endsAt }}</p>
@@ -127,6 +129,7 @@
                   </button>
                 </div>
               </section>
+              </div>
               }
             }
 

@@ -317,3 +317,59 @@ button:disabled {
     animation: none !important;
   }
 }
+.agenda-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: auto;
+  background: rgb(17 28 24 / 55%);
+  backdrop-filter: blur(4px);
+  animation: agenda-modal-in 0.18s ease-out both;
+}
+.agenda-modal .agenda-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  padding: 0 0 18px;
+  box-shadow: 0 28px 90px rgb(14 34 25 / 30%);
+}
+.agenda-modal .agenda-panel__image {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  background: #eef0f3;
+}
+.agenda-modal .agenda-panel__info {
+  padding: 0 22px;
+}
+.agenda-modal .agenda-panel__actions {
+  justify-content: flex-end;
+  padding: 0 22px;
+}
+.agenda-modal .agenda-panel__actions .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px #0003;
+}
+@keyframes agenda-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agenda-modal { animation: none !important; }
+}

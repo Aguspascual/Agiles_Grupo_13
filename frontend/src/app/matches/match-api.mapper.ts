@@ -62,7 +62,7 @@ export function toMatchPreview(match: ApiMatch): MatchPreview {
     duration: `${duration(match.startsAt, match.endsAt)} min`,
     club: match.complex,
     courtName: match.court,
-    image: '/images/cancha-interior.jpg',
+    image: `/api/v1/public/courts/${encodeURIComponent(match.courtId)}/image`,
     imageAlt: `Cancha ${match.court} del complejo ${match.complex}`,
     address: match.address,
     zone: match.zone,

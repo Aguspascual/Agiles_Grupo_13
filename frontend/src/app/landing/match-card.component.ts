@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { MatchPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
 
+const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
+
 @Component({
   selector: 'app-match-card',
   imports: [RouterLink],
@@ -23,7 +25,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
       <header class="match-card__top">
         <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>      </header>
       @if (searchMode && match.image) {
-        <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" />
+        <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" (error)="useFallbackImage($event)" />
       }
       <div class="match-card__club">
         <div>
@@ -86,6 +88,11 @@ export class MatchCardComponent {
 
   completeDemoAction(): void {
     this.actionCompleted = true;
+  }
+
+  useFallbackImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith(FALLBACK_IMAGE)) image.src = FALLBACK_IMAGE;
   }
 
   openDetails(event: Event): void {

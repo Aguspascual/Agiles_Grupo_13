@@ -76,7 +76,7 @@
           }
         </section>
         <section class="venue-card">
-          <img [src]="match.image" [alt]="match.imageAlt" />
+          <img [src]="match.image" [alt]="match.imageAlt" (error)="useFallbackImage($event)" />
           <div><b>{{ match.courtName }} · {{ match.features[0] }}</b><span>{{ match.address }}, {{ match.zone }}</span></div>
         </section>
       </aside>

@@ -87,6 +87,11 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (this.closeTimer) clearTimeout(this.closeTimer);
   }
 
+  useFallbackImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith('/images/cancha-interior.jpg')) image.src = '/images/cancha-interior.jpg';
+  }
+
   get startTime(): string {
     return this.match.time.match(/\d{1,2}:\d{2}/)?.[0] ?? this.match.time;
   }
