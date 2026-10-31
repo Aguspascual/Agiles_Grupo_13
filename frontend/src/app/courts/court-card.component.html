@@ -41,15 +41,19 @@
           [attr.aria-label]="'Administrar horarios de ' + court.name"
           (click)="closeActions()"
         >Horarios</a>
-        <button role="menuitem" data-action="edit" type="button" (click)="closeActions(); edit.emit(court)">Editar</button>
-        <button
-          role="menuitem"
-          class="danger-action"
-          data-action="remove"
-          type="button"
-          [attr.aria-label]="'Dar de baja ' + court.name"
-          (click)="closeActions(); remove.emit(court)"
-        >Dar de baja</button>
+        @if (readonly) {
+          <a role="menuitem" [routerLink]="['/admin/complejos', court.complexId, 'canchas']" (click)="closeActions()">Administrar canchas</a>
+        } @else {
+          <button role="menuitem" data-action="edit" type="button" (click)="closeActions(); edit.emit(court)">Editar</button>
+          <button
+            role="menuitem"
+            class="danger-action"
+            data-action="remove"
+            type="button"
+            [attr.aria-label]="'Dar de baja ' + court.name"
+            (click)="closeActions(); remove.emit(court)"
+          >Dar de baja</button>
+        }
       </div>
     }
   </footer>

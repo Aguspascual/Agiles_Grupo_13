@@ -14,6 +14,8 @@ export class CourtCardComponent {
   readonly features = COURT_FEATURES;
   @ViewChild('actionsTrigger') private actionsTrigger?: ElementRef<HTMLButtonElement>;
   @Input({ required: true }) court!: CourtRecord;
+  /** En el listado de todas las canchas solo se ofrece ir a los horarios o a administrar el complejo. */
+  @Input() readonly = false;
   @Output() edit = new EventEmitter<CourtRecord>();
   @Output() remove = new EventEmitter<CourtRecord>();
   actionsOpen = false;

@@ -12,21 +12,20 @@
     [routerLinkActiveOptions]="{ exact: true }"
     ><span aria-hidden="true">⌂</span> Complejos</a
   >
+  <a
+    class="nav-item courts-nav"
+    routerLink="/admin/canchas"
+    [class.active]="isCourtsRoute()"
+    ><span aria-hidden="true">▦</span> Canchas</a
+  >
   @if (complexId) {
-    <a
-      class="nav-item courts-nav"
-      [routerLink]="['/admin/complejos', complexId, 'canchas']"
-      routerLinkActive="active"
-      ><span aria-hidden="true">▦</span> Canchas</a
-    >
     <a
       class="nav-item agenda-nav"
       [routerLink]="['/admin/complejos', complexId, 'agenda']"
       routerLinkActive="active"
       ><span aria-hidden="true">▤</span> Agenda</a
     >
-  }
-  <div class="sidebar-footer">
+  }  <div class="sidebar-footer">
     <button class="logout-link" type="button" (click)="logout()">
       <span aria-hidden="true">↪</span> Cerrar sesión
     </button>

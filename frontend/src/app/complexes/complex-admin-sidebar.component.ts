@@ -15,6 +15,11 @@ export class ComplexAdminSidebarComponent {
 
   @Input() complexId = '';
 
+  /** La sección Canchas incluye el listado general y la administración de las canchas de un complejo. */
+  isCourtsRoute(): boolean {
+    return /^\/admin\/(canchas|complejos\/[^/]+\/canchas)(\/|$)/.test(this.router.url.split('?')[0]);
+  }
+
   logout(): void {
     this.session.logout();
     void this.router.navigateByUrl('/ingresar');

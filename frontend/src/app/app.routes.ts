@@ -54,6 +54,12 @@ export const routes: Routes = [
     title: 'Administrar complejos | PádelMatch LP',
   },
   {
+    path: 'admin/canchas',
+    loadComponent: () => import('./courts/all-courts.page').then((page) => page.AllCourtsPage),
+    canActivate: [authGuard],
+    title: 'Canchas | PádelMatch LP',
+  },
+  {
     // Vista completa de un complejo: datos, agenda del día y gestión de canchas.
     path: 'admin/complejos/:complexId',
     loadComponent: () => import('./agenda/agenda.page').then((page) => page.AgendaPage),
