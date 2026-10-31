@@ -8,7 +8,8 @@ Rama: `mejora/frontend-ajustes-visuales`. Incluye cambios de backend autorizados
 2. **Carrusel "Complejo registrado".** La tarjeta del hero pasa las canchas registradas con su imagen, nombre, tipo, complejo, dirección, zona y características. Avanza sola cada 5 segundos, se pausa con el mouse o el foco, tiene flechas y puntos, y una cancha sin imagen usa la del complejo. Con `prefers-reduced-motion` no hay avance automático ni transición. Sin canchas, muestra el primer complejo.
 3. **Complejos publicados.** Cada tarjeta muestra la imagen del complejo, zona, nombre, dirección y cantidad de canchas.
 4. **Header.** Se quitó el acceso "Clubes" de la barra y del menú.
-5. **Enlaces.** "Ver turnos" y la flecha del carrusel apuntan a `/clubes/:id/turnos` (antes iban a `/complejos/...`, una ruta que no existe).
+5. **Filtros en una fila.** Zona, fecha y nivel quedan en la misma fila también en pantallas de hasta 820px (800x600); el botón Buscar partidos ocupa el ancho completo debajo.
+6. **Enlaces.** "Ver turnos" y la flecha del carrusel apuntan a `/clubes/:id/turnos` (antes iban a `/complejos/...`, una ruta que no existe).
 
 ## Archivos principales
 
