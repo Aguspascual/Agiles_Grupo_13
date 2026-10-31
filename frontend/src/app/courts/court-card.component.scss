@@ -203,3 +203,12 @@
   }
   .actions-menu { animation: none; }
 }
+
+/* Tarjeta del listado general: todas miden lo mismo y se abren al presionarlas. */
+.court-card.is-selectable { grid-template-rows: 130px 28px 62px; align-content: start; height: 100%; cursor: pointer; outline-offset: 2px; }
+.court-card.is-selectable:focus-visible { outline: 3px solid #10b98173; }
+.is-selectable .court-visual { min-height: 0; height: 130px; }
+.is-selectable .court-heading { flex-wrap: nowrap; }
+.is-selectable .type-tag { flex: none; }
+.is-selectable .court-number { flex: 0 1 auto; }
+.is-selectable .court-features { align-content: flex-start; height: 62px; overflow: hidden; }

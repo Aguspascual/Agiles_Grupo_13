@@ -4,7 +4,6 @@
   <section class="all-courts-workspace" aria-labelledby="all-courts-title">
     <header class="all-courts-header">
       <h1 id="all-courts-title">Canchas</h1>
-      @if (!loading() && !loadError()) { <span class="count-chip">{{ summary() }}</span> }
     </header>
 
     @if (loading()) {
@@ -34,7 +33,7 @@
             <p class="group-empty" role="alert">No pudimos cargar las canchas de este complejo.</p>
           } @else if (group.courts.length) {
             <div class="court-grid">
-              @for (court of group.courts; track court.id) { <app-court-card [court]="court" [readonly]="true" /> }
+              @for (court of group.courts; track court.id) { <app-court-card [court]="court" [selectable]="true" (open)="openCourt($event)" /> }
             </div>
           } @else {
             <p class="group-empty">Este complejo todavía no tiene canchas.</p>
@@ -44,3 +43,8 @@
     }
   </section>
 </main>
+
+@if (editing(); as court) {
+  <app-court-form-dialog [court]="court" [saving]="saving()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
+}
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

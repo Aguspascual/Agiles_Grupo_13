@@ -40,7 +40,7 @@ describe('todas las canchas', () => {
     expect(groups.map((group) => group.querySelector('h2')?.textContent)).toEqual(['Club Norte', 'Club Sur']);
     expect(groups[0].querySelectorAll('app-court-card')).toHaveLength(2);
     expect(groups[1].querySelectorAll('app-court-card')).toHaveLength(1);
-    expect(root().querySelector('.count-chip')?.textContent).toContain('3 canchas en 2 complejos');
+    expect(root().querySelector('.count-chip')).toBeNull();
     expect(root().querySelector('a.group-link')?.getAttribute('href')).toBe('/admin/complejos/c1');
   });
 
@@ -70,16 +70,40 @@ describe('todas las canchas', () => {
     expect(root().textContent).toContain('No hay complejos disponibles');
   });
 
-  it('la tarjeta en solo lectura ofrece Horarios y Administrar canchas, sin editar ni dar de baja', async () => {
+  it('cada tarjeta es un botón sin menú de tres puntitos y abre la cancha para editarla', async () => {
     await render();
     http.expectOne('/api/v1/complexes').flush({ complexes: [complex('c1', 'Club Norte', 'Gonnet')] });
     http.expectOne('/api/v1/complexes/c1/courts').flush({ courts: [court('k1', 'c1', 'Cancha 1', true)] });
     await fixture.whenStable();
     fixture.detectChanges();
 
-    (root().querySelector('.actions-trigger') as HTMLButtonElement).click();
+    expect(root().querySelector('.actions-trigger')).toBeNull();
+    expect(root().querySelector('app-court-form-dialog')).toBeNull();
+    (root().querySelector('.court-card') as HTMLElement).click();
     fixture.detectChanges();
-    const items = [...root().querySelectorAll('.actions-menu [role="menuitem"]')].map((item) => item.textContent?.trim());
-    expect(items).toEqual(['Horarios', 'Administrar canchas']);
+
+    expect(root().querySelector('app-court-form-dialog')).not.toBeNull();
+    expect(root().querySelector('#court-name')).not.toBeNull();
+  });
+
+  it('guarda los cambios de la cancha, cierra el modal y avisa', async () => {
+    await render();
+    http.expectOne('/api/v1/complexes').flush({ complexes: [complex('c1', 'Club Norte', 'Gonnet')] });
+    http.expectOne('/api/v1/complexes/c1/courts').flush({ courts: [court('k1', 'c1', 'Cancha 1', true)] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (root().querySelector('.court-card') as HTMLElement).click();
+    fixture.detectChanges();
+
+    fixture.componentInstance.save({ name: 'Cancha Central', covered: false, imageDataUrl: null, features: ['wifi'] });
+    const request = http.expectOne('/api/v1/complexes/c1/courts/k1');
+    expect(request.request.method).toBe('PUT');
+    request.flush({ court: court('k1', 'c1', 'Cancha Central', false) });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    fixture.detectChanges();
+
+    expect(root().querySelector('app-court-form-dialog')).toBeNull();
+    expect(root().querySelector('.court-number')?.textContent).toContain('Cancha Central');
+    expect(root().textContent).toContain('Cambios de la cancha guardados.');
   });
 });
