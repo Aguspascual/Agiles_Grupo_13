@@ -26,9 +26,7 @@
   align-items: center;
   gap: 9px;
 }
-.match-card__time,
-.match-card__duration,
-.match-card__availability {
+.match-card__time {
   padding: 5px 7px;
   border-radius: 5px;
   background: #eef0ff;
@@ -36,22 +34,6 @@
   font-size: 0.61rem;
   font-weight: 750;
   white-space: nowrap;
-}
-.match-card__duration {
-  padding-inline: 0;
-  background: transparent;
-  color: #8990a2;
-  font-weight: 600;
-}
-.match-card__availability {
-  margin-left: auto;
-  background: #e7f8ef;
-  color: #148355;
-  text-transform: uppercase;
-}
-.match-card__availability.is-full {
-  background: #f2f2f5;
-  color: #7f8490;
 }
 .match-card__club {
   display: flex;
@@ -235,3 +217,17 @@
     transition: none;
   }
 }
+.match-card__missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #e7f8ef;
+  color: #148355;
+  font-size: 0.62rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.match-card__missing i { font-style: normal; font-size: 0.8rem; }
+.match-card__missing.is-full { background: #f2f2f5; color: #7f8490; }

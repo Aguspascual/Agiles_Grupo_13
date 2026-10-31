@@ -13,18 +13,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
       [attr.data-match-card]="match.id"
     >
       <header class="match-card__top">
-        <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>
-        <span class="match-card__duration">{{ match.duration }}</span>
-        <span class="match-card__availability" [class.is-full]="match.openSpots === 0">
-          {{
-            match.openSpots === 0
-              ? 'Completo'
-              : match.openSpots === 1
-                ? 'Falta 1'
-                : match.openSpots + ' faltan'
-          }}
-        </span>
-      </header>
+        <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>      </header>
       @if (searchMode && match.image) {
         <img class="match-card__image" [src]="match.image" [alt]="match.imageAlt" loading="lazy" />
       }
@@ -56,9 +45,9 @@ import { AuthSessionService } from '../auth/auth-session.service';
         </div>
       </div>
       <footer class="match-card__bottom">
-        @if (match.features[0]) {
-          <span class="match-card__feature"><i aria-hidden="true">⌁</i>{{ match.features[0] }}</span>
-        } @else { <span></span> }
+        <span class="match-card__missing" [class.is-full]="match.openSpots === 0">
+          <i aria-hidden="true">{{ match.openSpots === 0 ? '✓' : '+' }}</i>{{ missingLabel }}
+        </span>
         @if (detailsMode) {
           <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
             Ver partido <span aria-hidden="true">↗</span>
@@ -106,6 +95,11 @@ export class MatchCardComponent {
   private displayName(name: string): string {
     const [firstName, ...surnames] = name.trim().split(/\s+/);
     return surnames.length ? `${firstName} ${surnames[0][0]}.` : firstName;
+  }
+
+  get missingLabel(): string {
+    const spots = this.match.openSpots;
+    return spots === 0 ? 'Partido completo' : spots === 1 ? 'Falta 1 jugador' : `Faltan ${spots} jugadores`;
   }
 
   get emptySlots(): number[] {
