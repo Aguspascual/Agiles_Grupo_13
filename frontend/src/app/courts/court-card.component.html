@@ -1,4 +1,4 @@
-<article class="court-card">
+<article class="court-card" [class.is-selectable]="selectable" [attr.role]="selectable ? 'button' : null" [attr.tabindex]="selectable ? 0 : null" [attr.aria-label]="selectable ? 'Abrir ' + court.name : null" (click)="onActivate($event)" (keydown.enter)="onActivate($event)" (keydown.space)="onActivate($event)">
   @if (court.imageDataUrl) {
     <img class="court-photo" [src]="court.imageDataUrl" [alt]="'Foto de ' + court.name" />
   } @else {
@@ -10,7 +10,7 @@
     <span class="type-tag">{{ court.covered ? 'TECHADA' : 'DESCUBIERTA' }}</span
     ><span class="court-number">{{ court.name }}</span>
   </div>
-  @if (court.features.length) {
+  @if (court.features.length || selectable) {
     <ul class="court-features" aria-label="Características de la cancha">
       @for (feature of features; track feature.id) {
         @if (court.features.includes(feature.id)) {
@@ -19,38 +19,40 @@
       }
     </ul>
   }
-  <footer class="card-actions">
-    <button
-      #actionsTrigger
-      class="actions-trigger"
-      type="button"
-      aria-haspopup="menu"
-      [attr.aria-expanded]="actionsOpen"
-      [attr.aria-label]="'Acciones de ' + court.name"
-      (click)="toggleActions()"
-    >
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" />
-      </svg>
-    </button>
-    @if (actionsOpen) {
-      <div class="actions-menu" role="menu" [attr.aria-label]="'Acciones de ' + court.name" (keydown.escape)="closeActions(true)">
-        <a
-          role="menuitem"
-          [routerLink]="['/admin/complejos', court.complexId, 'canchas', court.id, 'horarios']"
-          [attr.aria-label]="'Administrar horarios de ' + court.name"
-          (click)="closeActions()"
-        >Horarios</a>
-        <button role="menuitem" data-action="edit" type="button" (click)="closeActions(); edit.emit(court)">Editar</button>
-        <button
-          role="menuitem"
-          class="danger-action"
-          data-action="remove"
-          type="button"
-          [attr.aria-label]="'Dar de baja ' + court.name"
-          (click)="closeActions(); remove.emit(court)"
-        >Dar de baja</button>
-      </div>
-    }
-  </footer>
+  @if (!selectable) {
+    <footer class="card-actions">
+      <button
+        #actionsTrigger
+        class="actions-trigger"
+        type="button"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="actionsOpen"
+        [attr.aria-label]="'Acciones de ' + court.name"
+        (click)="toggleActions()"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" />
+        </svg>
+      </button>
+      @if (actionsOpen) {
+        <div class="actions-menu" role="menu" [attr.aria-label]="'Acciones de ' + court.name" (keydown.escape)="closeActions(true)">
+          <a
+            role="menuitem"
+            [routerLink]="['/admin/complejos', court.complexId, 'canchas', court.id, 'horarios']"
+            [attr.aria-label]="'Administrar horarios de ' + court.name"
+            (click)="closeActions()"
+          >Horarios</a>
+          <button role="menuitem" data-action="edit" type="button" (click)="closeActions(); edit.emit(court)">Editar</button>
+          <button
+            role="menuitem"
+            class="danger-action"
+            data-action="remove"
+            type="button"
+            [attr.aria-label]="'Dar de baja ' + court.name"
+            (click)="closeActions(); remove.emit(court)"
+          >Dar de baja</button>
+        </div>
+      }
+    </footer>
+  }
 </article>

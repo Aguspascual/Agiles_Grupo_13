@@ -18,7 +18,9 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 
 // ListComplexes returns active complexes with the same public fields as Complex.
 func (r *PostgresRepository) ListComplexes(ctx context.Context) ([]Complex, error) {
-	rows, err := r.db.Query(ctx, `SELECT id::text,name,address,zone FROM complexes WHERE deleted_at IS NULL ORDER BY name,id`)
+	rows, err := r.db.Query(ctx, `SELECT id::text,name,address,zone,
+		CASE WHEN image_data IS NULL THEN '' ELSE '/api/v1/public/complexes/'||id::text||'/image?v='||floor(extract(epoch from updated_at))::bigint END
+		FROM complexes WHERE deleted_at IS NULL ORDER BY name,id`)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +28,7 @@ func (r *PostgresRepository) ListComplexes(ctx context.Context) ([]Complex, erro
 	complexes := []Complex{}
 	for rows.Next() {
 		var item Complex
-		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.ImageURL); err != nil {
 			return nil, err
 		}
 		complexes = append(complexes, item)
@@ -100,7 +102,7 @@ func (r *PostgresRepository) ReadAvailability(ctx context.Context, complexID str
 func ReadCourtData(ctx context.Context, tx pgx.Tx, complexID string, weekday int) ([]CourtData, error) {
 	rows, err := tx.Query(ctx, `SELECT c.id::text,c.name,c.covered,d.id::text,d.weekday,d.enabled,d.duration_minutes,
 		d.revision::text,i.id::text,to_char(i.opens_at,'HH24:MI'),to_char(i.closes_at,'HH24:MI')
-		FROM courts c LEFT JOIN court_schedule_days d ON d.court_id=c.id AND d.weekday=$2
+		FROM courts c LEFT JOIN court_schedule_days d ON d.court_id=c.id AND d.weekday IN ($2::int, ($2::int+5)%7+1)
 		LEFT JOIN court_schedule_intervals i ON i.schedule_day_id=d.id
 		WHERE c.complex_id=$1::uuid AND c.deleted_at IS NULL
 		ORDER BY c.name,c.id,i.opens_at,i.id`, complexID, weekday)
@@ -128,11 +130,15 @@ func ReadCourtData(ctx context.Context, tx pgx.Tx, complexID string, weekday int
 		}
 		if scheduleID != nil {
 			court := &courts[index]
-			if court.Schedule == nil {
-				court.Schedule = &schedules.Day{Weekday: int(*scheduleWeekday), Enabled: *enabled, DurationMinutes: int(*duration), Revision: *revision, Intervals: []schedules.Interval{}}
+			target := &court.Previous
+			if int(*scheduleWeekday) == weekday {
+				target = &court.Schedule
+			}
+			if *target == nil {
+				*target = &schedules.Day{Weekday: int(*scheduleWeekday), Enabled: *enabled, DurationMinutes: int(*duration), Revision: *revision, Intervals: []schedules.Interval{}}
 			}
 			if intervalID != nil {
-				court.Schedule.Intervals = append(court.Schedule.Intervals, schedules.Interval{ID: *intervalID, OpensAt: *opensAt, ClosesAt: *closesAt})
+				(*target).Intervals = append((*target).Intervals, schedules.Interval{ID: *intervalID, OpensAt: *opensAt, ClosesAt: *closesAt})
 			}
 		}
 	}

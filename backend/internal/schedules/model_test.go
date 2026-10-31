@@ -26,7 +26,15 @@ func TestDraftValidation(t *testing.T) {
 		{"null intervals", func(d *Draft) { d.Enabled = false; d.Intervals = nil }, true},
 		{"midnight opening", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "00:00", ClosesAt: "01:00"}} }, false},
 		{"last valid minute", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "22:59", ClosesAt: "23:59"}} }, false},
-		{"crosses midnight", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "22:00", ClosesAt: "02:00"}} }, true},
+		{"crosses midnight", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "22:00", ClosesAt: "02:00"}} }, false},
+		{"morning and overnight", func(d *Draft) {
+			d.Intervals = []Interval{{OpensAt: "17:00", ClosesAt: "01:00"}, {OpensAt: "08:00", ClosesAt: "12:00"}}
+		}, false},
+		{"overnight overlaps a later interval", func(d *Draft) {
+			d.Intervals = []Interval{{OpensAt: "17:00", ClosesAt: "01:00"}, {OpensAt: "20:00", ClosesAt: "22:00"}}
+		}, true},
+		{"overnight shorter than duration", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "23:30", ClosesAt: "00:00"}} }, true},
+		{"overnight fits one turn", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "23:30", ClosesAt: "00:30"}} }, false},
 		{"equal endpoints", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "09:00", ClosesAt: "09:00"}} }, true},
 		{"shorter than duration", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "09:00", ClosesAt: "09:59"}} }, true},
 		{"non divisible remainder allowed", func(d *Draft) { d.Intervals = []Interval{{OpensAt: "09:00", ClosesAt: "10:15"}} }, false},
@@ -37,7 +45,7 @@ func TestDraftValidation(t *testing.T) {
 		{"overlap", func(d *Draft) { d.Intervals = append(d.Intervals, Interval{OpensAt: "12:00", ClosesAt: "14:00"}) }, true},
 		{"duplicate intervals", func(d *Draft) { d.Intervals = append(d.Intervals, d.Intervals[0]) }, true},
 		{"contiguous intervals", func(d *Draft) { d.Intervals = append(d.Intervals, Interval{OpensAt: "13:00", ClosesAt: "14:00"}) }, false},
-		{"disabled still validates", func(d *Draft) { d.Enabled = false; d.Intervals[0].ClosesAt = "02:00" }, true},
+		{"disabled still validates", func(d *Draft) { d.Enabled = false; d.Intervals[0].ClosesAt = "09:00" }, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,5 +67,25 @@ func TestDraftSortsIntervalsWithoutChangingCallerSlice(t *testing.T) {
 	}
 	if d.Intervals[0].OpensAt != "09:00" || input[0].OpensAt != "17:00" {
 		t.Fatalf("draft=%+v, input=%+v", d.Intervals, input)
+	}
+}
+
+func TestConflictsWithAdjacentDays(t *testing.T) {
+	overnight := Day{Weekday: 1, Intervals: []Interval{{OpensAt: "17:00", ClosesAt: "01:00"}}}
+	morning := Day{Weekday: 2, Intervals: []Interval{{OpensAt: "00:30", ClosesAt: "10:00"}}}
+	free := Day{Weekday: 2, Intervals: []Interval{{OpensAt: "08:00", ClosesAt: "10:00"}}}
+	draft := func(intervals ...Interval) Draft { return Draft{Weekday: 2, Enabled: true, DurationMinutes: 60, Intervals: intervals} }
+
+	if !ConflictsWithAdjacentDays(draft(Interval{OpensAt: "00:30", ClosesAt: "10:00"}), &overnight, nil) {
+		t.Fatal("an opening before the previous day's spill ends must conflict")
+	}
+	if ConflictsWithAdjacentDays(draft(Interval{OpensAt: "08:00", ClosesAt: "10:00"}), &overnight, nil) {
+		t.Fatal("an opening after the spill must not conflict")
+	}
+	if !ConflictsWithAdjacentDays(Draft{Weekday: 1, Intervals: overnight.Intervals}, nil, &morning) {
+		t.Fatal("a spill past the next day's opening must conflict")
+	}
+	if ConflictsWithAdjacentDays(Draft{Weekday: 1, Intervals: overnight.Intervals}, nil, &free) {
+		t.Fatal("a spill before the next day's opening must not conflict")
 	}
 }

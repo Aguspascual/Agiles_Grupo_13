@@ -20,6 +20,11 @@ export class CourtApiService {
     );
   }
 
+  /** Canchas de un complejo sin modificar el estado compartido (para listados de varios complejos). */
+  list(complexId: string): Observable<CourtRecord[]> {
+    return this.http.get<unknown>(COURT_API(complexId)).pipe(map(parseCourtList));
+  }
+
   create(complexId: string, draft: CourtDraft): Observable<CourtRecord> {
     return this.http.post<unknown>(COURT_API(complexId), toBody(draft)).pipe(
       map(parseCourtEnvelope),

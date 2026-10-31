@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/slotcheck"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -138,39 +139,11 @@ func (r *Repository) CreateFullMatch(ctx context.Context, complexID, courtID, ac
 	} else if err != nil {
 		return FullMatch{}, err
 	}
-	weekday := int(start.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	var dayID string
-	var duration int
-	var enabled bool
-	err = tx.QueryRow(ctx, `SELECT id::text,enabled,duration_minutes FROM court_schedule_days WHERE court_id=$1::uuid AND weekday=$2`, courtID, weekday).Scan(&dayID, &enabled, &duration)
-	if errors.Is(err, pgx.ErrNoRows) || (!enabled && err == nil) {
-		return FullMatch{}, ErrConflict
-	}
+	duration, offered, err := slotcheck.Duration(ctx, tx, courtID, start)
 	if err != nil {
 		return FullMatch{}, err
 	}
-	rows, err := tx.Query(ctx, `SELECT substring(opens_at::text from 1 for 5),substring(closes_at::text from 1 for 5) FROM court_schedule_intervals WHERE schedule_day_id=$1::uuid`, dayID)
-	if err != nil {
-		return FullMatch{}, err
-	}
-	var intervals []Interval
-	for rows.Next() {
-		var interval Interval
-		if err := rows.Scan(&interval.Open, &interval.Close); err != nil {
-			rows.Close()
-			return FullMatch{}, err
-		}
-		intervals = append(intervals, interval)
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return FullMatch{}, err
-	}
-	if !slotWithinSchedule(input.StartsAt, duration, intervals) || !start.After(now) {
+	if !offered || !start.After(now) {
 		return FullMatch{}, ErrConflict
 	}
 	end := start.Add(time.Duration(duration) * time.Minute)

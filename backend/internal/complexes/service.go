@@ -69,7 +69,7 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var draft Draft
-	if !auth.DecodeJSON(w, r, &draft) {
+	if !decodeDraft(w, r, &draft) {
 		return
 	}
 	if err := draft.Validate(true); err != nil {
@@ -95,7 +95,7 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var draft Draft
-	if !auth.DecodeJSON(w, r, &draft) {
+	if !decodeDraft(w, r, &draft) {
 		return
 	}
 	if err := draft.Validate(true); err != nil {
@@ -108,6 +108,18 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	auth.WriteJSON(w, 200, map[string]any{"complex": item})
+}
+
+func decodeDraft(w http.ResponseWriter, r *http.Request, draft *Draft) bool {
+	if err := auth.DecodeJSONWithLimit(w, r, draft, 7<<20); err != nil {
+		message := "JSON inválido o demasiado grande"
+		if errors.Is(err, auth.ErrTrailingJSON) {
+			message = "JSON inválido"
+		}
+		auth.WriteError(w, http.StatusBadRequest, message)
+		return false
+	}
+	return true
 }
 
 func (s *Service) delete(w http.ResponseWriter, r *http.Request) {

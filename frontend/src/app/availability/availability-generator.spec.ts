@@ -94,6 +94,39 @@ describe('generateAvailabilitySlots', () => {
   });
 });
 
+describe('franjas que cruzan la medianoche', () => {
+  const week = [rule(1, [interval('morning', '08:00', '12:00'), interval('night', '17:00', '01:00')])];
+
+  it('genera los turnos nocturnos hasta las 00:00 y el resto en el día siguiente', () => {
+    const mondaySlots = generateAvailabilitySlots('court-1', week, monday);
+    expect(mondaySlots.map(({ startsAt, endsAt }) => `${startsAt}-${endsAt}`)).toEqual([
+      '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00',
+      '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00',
+    ]);
+
+    const tuesday = new Date(2026, 9, 13, 12);
+    const spill = generateAvailabilitySlots('court-1', week, tuesday);
+    expect(spill.map(({ startsAt, endsAt, date }) => `${date} ${startsAt}-${endsAt}`)).toEqual(['2026-10-13 00:00-01:00']);
+  });
+
+  it('acepta 8:00 a 12:00 y 17:00 a 01:00 en el mismo día', () => {
+    expect(isValidWeeklySchedule(week)).toBe(true);
+  });
+
+  it('rechaza una franja nocturna que pisa otra del mismo día', () => {
+    expect(isValidWeeklySchedule([rule(1, [interval('night', '17:00', '01:00'), interval('late', '20:00', '22:00')])])).toBe(false);
+  });
+
+  it('rechaza una apertura del día siguiente anterior al cierre nocturno', () => {
+    expect(isValidWeeklySchedule([...week, rule(2, [interval('early', '00:30', '10:00')])])).toBe(false);
+    expect(isValidWeeklySchedule([...week, rule(2, [interval('morning', '08:00', '10:00')])])).toBe(true);
+  });
+
+  it('rechaza una franja con apertura y cierre iguales', () => {
+    expect(isValidWeeklySchedule([rule(1, [interval('same', '09:00', '09:00')])])).toBe(false);
+  });
+});
+
 describe('isValidWeeklySchedule', () => {
   it('accepts non-overlapping same-day intervals and disabled days without intervals', () => {
     expect(

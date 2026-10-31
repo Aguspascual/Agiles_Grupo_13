@@ -14,9 +14,18 @@ export class CourtCardComponent {
   readonly features = COURT_FEATURES;
   @ViewChild('actionsTrigger') private actionsTrigger?: ElementRef<HTMLButtonElement>;
   @Input({ required: true }) court!: CourtRecord;
+  /** En el listado general la tarjeta completa es un botón que abre la cancha; no muestra el menú de acciones. */
+  @Input() selectable = false;
+  @Output() open = new EventEmitter<CourtRecord>();
   @Output() edit = new EventEmitter<CourtRecord>();
   @Output() remove = new EventEmitter<CourtRecord>();
   actionsOpen = false;
+
+  onActivate(event: Event): void {
+    if (!this.selectable) return;
+    event.preventDefault();
+    this.open.emit(this.court);
+  }
 
   toggleActions(): void {
     this.actionsOpen = !this.actionsOpen;

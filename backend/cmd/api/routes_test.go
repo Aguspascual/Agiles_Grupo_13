@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -73,6 +78,17 @@ func httpTestPool(t *testing.T) (*pgxpool.Pool, context.Context) {
 	return db, ctx
 }
 
+func testComplexImageDataURL(t *testing.T) string {
+	t.Helper()
+	picture := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	picture.Set(0, 0, color.RGBA{R: 20, G: 120, B: 80, A: 255})
+	var content bytes.Buffer
+	if err := png.Encode(&content, picture); err != nil {
+		t.Fatal(err)
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(content.Bytes())
+}
+
 // S6; HU01 -> HU02 -> HU03 -> TDD0001/0003/0004, using real TCP HTTP and PostgreSQL.
 func TestHTTPPostgresHU04Flow(t *testing.T) {
 	db, ctx := httpTestPool(t)
@@ -134,12 +150,20 @@ func TestHTTPPostgresHU04Flow(t *testing.T) {
 	}
 	request("GET", "/api/v1/auth/me", logged.Token, "", "", 200)
 	request("POST", "/api/v1/auth/login", "", strings.Replace(loginBody, "TestPassword-123!", "wrong", 1), "", 401)
-	data, _ := request("POST", "/api/v1/complexes", admin.Token, fmt.Sprintf(`{"name":"HTTP complex","address":"1","zone":"Gonnet","phone":"123","managerIds":[%q]}`, manager.User.ID), "", 201)
+	clubImage := testComplexImageDataURL(t)
+	data, _ := request("POST", "/api/v1/complexes", admin.Token, fmt.Sprintf(`{"name":"HTTP complex","address":"1","zone":"Gonnet","phone":"123","imageDataUrl":%q,"managerIds":[%q]}`, clubImage, manager.User.ID), "", 201)
 	var complexResponse struct {
 		Complex complexes.Complex `json:"complex"`
 	}
-	if err := json.Unmarshal(data, &complexResponse); err != nil || complexResponse.Complex.ID == "" {
+	if err := json.Unmarshal(data, &complexResponse); err != nil || complexResponse.Complex.ID == "" || complexResponse.Complex.ImageDataURL == nil || *complexResponse.Complex.ImageDataURL != clubImage {
 		t.Fatalf("complex=%s err=%v", data, err)
+	}
+	data, _ = request("GET", "/api/v1/complexes", admin.Token, "", "", 200)
+	var listed struct {
+		Complexes []complexes.Complex `json:"complexes"`
+	}
+	if err := json.Unmarshal(data, &listed); err != nil || len(listed.Complexes) != 1 || listed.Complexes[0].ImageDataURL == nil || *listed.Complexes[0].ImageDataURL != clubImage {
+		t.Fatalf("listed complex image=%s err=%v", data, err)
 	}
 	courtsPath := "/api/v1/complexes/" + complexResponse.Complex.ID + "/courts"
 	data, _ = request("POST", courtsPath, manager.Token, `{"name":"HTTP court","covered":true,"features":["lighting"]}`, "", 201)

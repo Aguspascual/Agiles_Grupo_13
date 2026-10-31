@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/slotcheck"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -106,42 +107,11 @@ func (r *Repository) create(ctx context.Context, complexID, courtID, actorID str
 	if !start.After(time.Now()) {
 		return Reservation{}, ErrConflict
 	}
-	weekday := int(start.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	var dayID string
-	var duration int
-	var enabled bool
-	err = tx.QueryRow(ctx, `SELECT id::text, enabled, duration_minutes FROM court_schedule_days WHERE court_id=$1::uuid AND weekday=$2`, courtID, weekday).Scan(&dayID, &enabled, &duration)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Reservation{}, ErrConflict
-	}
+	duration, offered, err := slotcheck.Duration(ctx, tx, courtID, start)
 	if err != nil {
 		return Reservation{}, err
 	}
-	if !enabled {
-		return Reservation{}, ErrConflict
-	}
-	rows, err := tx.Query(ctx, `SELECT substring(opens_at::text from 1 for 5), substring(closes_at::text from 1 for 5) FROM court_schedule_intervals WHERE schedule_day_id=$1::uuid`, dayID)
-	if err != nil {
-		return Reservation{}, err
-	}
-	var intervals []Interval
-	for rows.Next() {
-		var i Interval
-		if err = rows.Scan(&i.Open, &i.Close); err != nil {
-			rows.Close()
-			return Reservation{}, err
-		}
-		intervals = append(intervals, i)
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return Reservation{}, err
-	}
-	if !slotWithinSchedule(input.StartsAt, duration, intervals) {
+	if !offered {
 		return Reservation{}, ErrConflict
 	}
 	end := start.Add(time.Duration(duration) * time.Minute)

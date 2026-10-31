@@ -252,18 +252,20 @@ describe('HU-07: agenda del complejo', () => {
     expect(cell('19:30 a 21:00')!.tagName).toBe('BUTTON');
   });
 
-  it('ofrece Registrar reserva en un turno libre y Cancelar reserva en uno reservado', async () => {
+  it('abre el alta de reserva al presionar un turno libre y Cancelar reserva en uno reservado', async () => {
     await render();
     await click(cell('19:30 a 21:00'));
-    expect(button('Registrar reserva')).toBeTruthy();
+    expect(root().querySelector('app-manual-reservation-dialog')).toBeTruthy();
+    expect(button('Registrar reserva')).toBeUndefined();
     expect(button('Cancelar reserva')).toBeUndefined();
+    fixture.componentInstance.finishManualClose();
+    await settle();
 
     await click(cell('18:00 a 19:30'));
+    expect(root().querySelector('app-manual-reservation-dialog')).toBeNull();
     expect(button('Cancelar reserva')).toBeTruthy();
-    expect(button('Registrar reserva')).toBeUndefined();
     expect(text()).toContain('Ana Pérez');
   });
-
   it('lista las reservas fuera de la grilla actual y permite cancelarlas', async () => {
     await render();
     const section = root().querySelector('.agenda-offgrid')!;
@@ -341,7 +343,6 @@ describe('HU-07: agenda del complejo', () => {
 
   async function openManualDialog(): Promise<void> {
     await click(cell('19:30 a 21:00'));
-    await click(button('Registrar reserva'));
     expect(root().querySelector('app-manual-reservation-dialog')).toBeTruthy();
     const name = root().querySelector<HTMLInputElement>('#manual-name')!;
     name.value = ' Luis Gómez ';

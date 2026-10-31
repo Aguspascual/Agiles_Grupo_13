@@ -1,0 +1,50 @@
+<main class="all-courts-shell">
+  <app-complex-admin-sidebar />
+
+  <section class="all-courts-workspace" aria-labelledby="all-courts-title">
+    <header class="all-courts-header">
+      <h1 id="all-courts-title">Canchas</h1>
+    </header>
+
+    @if (loading()) {
+      <p class="all-courts-status" role="status">Cargando canchas.</p>
+    } @else if (loadError()) {
+      <section class="all-courts-message" role="alert">
+        <h2>No pudimos cargar las canchas</h2>
+        <p>{{ loadError() }}</p>
+        <button type="button" (click)="load()">Reintentar</button>
+      </section>
+    } @else if (!groups().length) {
+      <section class="all-courts-message" role="status">
+        <h2>No hay complejos disponibles</h2>
+        <p>Cuando haya complejos asignados a tu cuenta, sus canchas van a aparecer acá.</p>
+      </section>
+    } @else {
+      @for (group of groups(); track group.complex.id) {
+        <section class="complex-group" [attr.aria-label]="'Canchas de ' + group.complex.name">
+          <header class="group-header">
+            <div class="group-title">
+              <h2>{{ group.complex.name }}</h2>
+              <span class="zone-tag">{{ group.complex.zone }}</span>
+            </div>
+            <a class="group-link" [routerLink]="['/admin/complejos', group.complex.id]">Ver complejo <span aria-hidden="true">→</span></a>
+          </header>
+          @if (group.failed) {
+            <p class="group-empty" role="alert">No pudimos cargar las canchas de este complejo.</p>
+          } @else if (group.courts.length) {
+            <div class="court-grid">
+              @for (court of group.courts; track court.id) { <app-court-card [court]="court" [selectable]="true" (open)="openCourt($event)" /> }
+            </div>
+          } @else {
+            <p class="group-empty">Este complejo todavía no tiene canchas.</p>
+          }
+        </section>
+      }
+    }
+  </section>
+</main>
+
+@if (editing(); as court) {
+  <app-court-form-dialog [court]="court" [saving]="saving()" [closing]="formClosing()" (save)="save($event)" (close)="closeForm()" (closed)="finishFormClose()" />
+}
+<app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />

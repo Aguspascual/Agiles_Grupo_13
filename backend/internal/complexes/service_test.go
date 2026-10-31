@@ -1,11 +1,15 @@
 package complexes
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -64,7 +68,7 @@ func (r *testRepository) Create(_ context.Context, d Draft) (Complex, error) {
 			return Complex{}, ErrInvalid
 		}
 	}
-	c := Complex{ID: complexID, Name: d.Name, Address: d.Address, Zone: d.Zone, Phone: d.Phone}
+	c := Complex{ID: complexID, Name: d.Name, Address: d.Address, Zone: d.Zone, Phone: d.Phone, ImageDataURL: d.ImageDataURL}
 	r.complexes[c.ID] = c
 	r.assignments[c.ID] = append([]string(nil), d.ManagerIDs...)
 	return c, nil
@@ -94,6 +98,7 @@ func (r *testRepository) Update(_ context.Context, id, actor string, admin bool,
 		r.assignments[id] = append([]string(nil), d.ManagerIDs...)
 	}
 	c.Name, c.Address, c.Zone, c.Phone = d.Name, d.Address, d.Zone, d.Phone
+	c.ImageDataURL = d.ImageDataURL
 	r.complexes[id] = c
 	return c, nil
 }
@@ -138,6 +143,16 @@ func testToken(userID string) string {
 	return unsigned + "." + encode(mac.Sum(nil))
 }
 
+func testImageDataURL() string {
+	imageValue := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	imageValue.Set(0, 0, color.RGBA{R: 20, G: 120, B: 80, A: 255})
+	var content bytes.Buffer
+	if err := png.Encode(&content, imageValue); err != nil {
+		panic(err)
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(content.Bytes())
+}
+
 func testHandler(repo *testRepository) http.Handler {
 	return auth.RequireUser([]byte(strings.Repeat("s", 32)), tokenUserLookup{}, NewService(repo).Handler())
 }
@@ -168,6 +183,21 @@ func TestAdminCreatesComplexWithMultiplePersistedManagers(t *testing.T) {
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil || response.Complex.ID != complexID {
 		t.Fatalf("response %s; decode %v", w.Body, err)
+	}
+}
+
+func TestComplexImageIsAcceptedAndInvalidImageRejected(t *testing.T) {
+	imageURL := testImageDataURL()
+	valid := strings.TrimSuffix(validDraft, "}") + `,"imageDataUrl":"` + imageURL + `"}`
+	repo := newTestRepository()
+	w := request(testHandler(repo), http.MethodPost, "/api/v1/complexes", adminID, valid)
+	if w.Code != http.StatusCreated || repo.complexes[complexID].ImageDataURL == nil || *repo.complexes[complexID].ImageDataURL != imageURL {
+		t.Fatalf("valid image status=%d body=%s stored=%v", w.Code, w.Body, repo.complexes[complexID].ImageDataURL)
+	}
+
+	invalid := strings.Replace(valid, imageURL, "data:image/png;base64,aGVsbG8=", 1)
+	if got := request(testHandler(newTestRepository()), http.MethodPost, "/api/v1/complexes", adminID, invalid).Code; got != http.StatusBadRequest {
+		t.Fatalf("invalid image status=%d", got)
 	}
 }
 

@@ -18,21 +18,7 @@
         }
       </div>
     </div>
-    @if (featuredClubs()[0]; as featured) {
-      <article class="featured-court" aria-label="Complejo destacado">
-        <div class="featured-court__caption">
-          <span>COMPLEJO REGISTRADO</span>
-          <h2>{{ featured.name }}</h2>
-          <p>{{ featured.address }} · {{ featured.zone }}</p>
-        </div>
-        <a
-          [routerLink]="['/complejos', featured.id, 'turnos']"
-          class="court-action"
-          [attr.aria-label]="'Ver turnos de ' + featured.name"
-          >↗</a
-        >
-      </article>
-    }
+    <app-featured-courts [courts]="courts()" [complexes]="complexes()" />
 
     <form class="home-search" data-home-search aria-label="Buscar partidos" (submit)="$event.preventDefault()">
       <label>
@@ -125,8 +111,8 @@
         <a routerLink="/clubes">Ver clubes <span aria-hidden="true">→</span></a>
       </div>
       <div class="clubs-grid" data-featured-clubs>
-        @for (club of featuredClubs(); track club.id) {
-          <app-club-card [club]="club" />
+        @for (club of complexes(); track club.id) {
+          <app-club-card [club]="club" [courtCount]="courtCounts().get(club.id) ?? 0" />
         } @empty {
           <p class="empty-matches">Todavía no hay complejos publicados.</p>
         }

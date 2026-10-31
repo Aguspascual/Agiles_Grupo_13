@@ -6,6 +6,7 @@ import (
 
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/agenda"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/catalog"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/complexes"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/courts"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/matches"
@@ -49,6 +50,11 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 	}
 	// The player-facing club directory is public: it exposes only id, name, address and zone (TDD-0014).
 	mux.Handle("GET /api/v1/public/complexes", availabilityService.ListHandler())
+	// Home page showcase: courts of every active complex and the pictures of complexes and courts.
+	catalogService := catalog.NewService(catalog.NewPostgresRepository(db))
+	mux.Handle("GET /api/v1/public/courts", catalogService.CourtsHandler())
+	mux.Handle("GET /api/v1/public/complexes/{id}/image", catalogService.ComplexImageHandler())
+	mux.Handle("GET /api/v1/public/courts/{id}/image", catalogService.CourtImageHandler())
 	complexService := complexes.NewService(complexes.NewPostgresRepository(db))
 	protectedComplexes := auth.RequireUser(secret, auth.NewPostgresRepository(db), complexService.Handler())
 	mux.Handle("/api/v1/complexes", protectedComplexes)

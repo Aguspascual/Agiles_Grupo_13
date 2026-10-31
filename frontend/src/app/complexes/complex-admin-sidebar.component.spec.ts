@@ -23,7 +23,7 @@ describe('sidebar de administración', () => {
     fixture.destroy();
   });
 
-  it('dirige Canchas al complejo abierto', async () => {
+  it('dirige Canchas al listado de todas las canchas', async () => {
     await TestBed.configureTestingModule({
       imports: [ComplexAdminSidebarComponent],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -35,7 +35,7 @@ describe('sidebar de administración', () => {
     const courtsLink = fixture.nativeElement.querySelector('.courts-nav') as HTMLAnchorElement;
 
     expect(courtsLink).not.toBeNull();
-    expect(courtsLink.getAttribute('href')).toBe('/admin/complejos/complex-centro/canchas');
+    expect(courtsLink.getAttribute('href')).toBe('/admin/canchas');
     fixture.destroy();
   });
 
@@ -71,12 +71,18 @@ describe('sidebar de administración', () => {
     expect(button.tagName).toBe('BUTTON');
     expect(button.textContent).toContain('Cerrar sesión');
     button.click();
+    fixture.detectChanges();
+
+    expect(logout).not.toHaveBeenCalled();
+    const dialog = fixture.nativeElement.querySelector('app-confirm-dialog') as HTMLElement;
+    expect(dialog.textContent).toContain('¿Cerrar sesión?');
+    (dialog.querySelector('.danger-button') as HTMLButtonElement).click();
 
     expect(logout).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith('/ingresar');
     fixture.destroy();
   });
-  it('oculta Canchas mientras no hay un complejo abierto', async () => {
+  it('muestra Canchas aunque no haya un complejo abierto y oculta Agenda', async () => {
     await TestBed.configureTestingModule({
       imports: [ComplexAdminSidebarComponent],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -85,7 +91,8 @@ describe('sidebar de administración', () => {
     const fixture = TestBed.createComponent(ComplexAdminSidebarComponent);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.courts-nav')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.courts-nav')?.getAttribute('href')).toBe('/admin/canchas');
+    expect(fixture.nativeElement.querySelector('.agenda-nav')).toBeNull();
     fixture.destroy();
   });
 });

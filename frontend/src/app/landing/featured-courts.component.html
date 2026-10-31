@@ -1,0 +1,52 @@
+@if (slides.length) {
+  <article
+    class="featured-court"
+    aria-roledescription="carrusel"
+    aria-label="Complejos y canchas registrados"
+    (mouseenter)="pause(true)"
+    (mouseleave)="pause(false)"
+  >
+    <div class="slides" [attr.aria-live]="autoplay ? 'off' : 'polite'">
+      @for (slide of slides; track slide.key; let position = $index) {
+        <div
+          class="slide"
+          [class.is-active]="position === index()"
+          role="group"
+          aria-roledescription="diapositiva"
+          [attr.aria-label]="position + 1 + ' de ' + slides.length"
+          [attr.aria-hidden]="position === index() ? null : 'true'"
+          [attr.inert]="position === index() ? null : ''"
+        >
+          @if (slide.image) {
+            <img class="slide__image" [src]="slide.image" [alt]="'Imagen de ' + slide.courtName + ' en ' + slide.complexName" />
+          } @else {
+            <span class="slide__placeholder" aria-hidden="true">⌂</span>
+          }
+          <span class="slide__shade" aria-hidden="true"></span>
+          <div class="slide__caption">
+            <span class="slide__label">COMPLEJO REGISTRADO</span>
+            <h2>{{ slide.courtName }}<small>{{ slide.kind ? ' · ' + slide.kind : '' }}</small></h2>
+            <p class="slide__complex">{{ slide.complexName }}</p>
+            <p class="slide__location">{{ slide.location }}</p>
+            @if (slide.features.length) {
+              <ul class="slide__features" aria-label="Características de la cancha">
+                @for (feature of slide.features; track feature) { <li>{{ feature }}</li> }
+              </ul>
+            }
+          </div>
+          <a class="court-action" [routerLink]="['/clubes', slide.complexId, 'turnos']" [attr.aria-label]="'Ver turnos de ' + slide.complexName">→</a>
+        </div>
+      }
+    </div>
+
+    @if (slides.length > 1) {
+      <button class="slides__nav slides__nav--prev" type="button" aria-label="Cancha anterior" (click)="previous()" (focus)="pause(true)" (blur)="pause(false)">‹</button>
+      <button class="slides__nav slides__nav--next" type="button" aria-label="Cancha siguiente" (click)="next()" (focus)="pause(true)" (blur)="pause(false)">›</button>
+      <div class="slides__dots" role="group" aria-label="Elegir cancha">
+        @for (slide of slides; track slide.key; let position = $index) {
+          <button type="button" [class.is-active]="position === index()" [attr.aria-label]="'Ver ' + slide.courtName + ' de ' + slide.complexName" [attr.aria-current]="position === index() ? 'true' : null" (click)="go(position)"></button>
+        }
+      </div>
+    }
+  </article>
+}

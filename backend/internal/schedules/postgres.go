@@ -68,6 +68,9 @@ func (r *PostgresRepository) Create(ctx context.Context, complexID, courtID, act
 		return Day{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err := r.checkAdjacentDays(ctx, tx, courtID, draft); err != nil {
+		return Day{}, err
+	}
 	var dayID string
 	err = tx.QueryRow(ctx, `INSERT INTO court_schedule_days(court_id,weekday,enabled,duration_minutes)
 		VALUES($1::uuid,$2,$3,$4) ON CONFLICT(court_id,weekday) DO NOTHING RETURNING id::text`,
@@ -99,6 +102,9 @@ func (r *PostgresRepository) Update(ctx context.Context, complexID, courtID, act
 	}
 	if current.Revision != revision {
 		return Day{}, ErrStaleRevision
+	}
+	if err := r.checkAdjacentDays(ctx, tx, courtID, draft); err != nil {
+		return Day{}, err
 	}
 	changed := !sameIntervals(current.Intervals, draft.Intervals)
 	if changed {
@@ -163,6 +169,29 @@ func (r *PostgresRepository) Delete(ctx context.Context, complexID, courtID, act
 		return ErrStaleRevision
 	}
 	return tx.Commit(ctx)
+}
+
+// checkAdjacentDays rejects a day whose overnight spill overlaps the next day, or that opens before the
+// previous day's spill has ended.
+func (r *PostgresRepository) checkAdjacentDays(ctx context.Context, tx pgx.Tx, courtID string, draft Draft) error {
+	days, err := readDays(ctx, tx, courtID, 0)
+	if err != nil {
+		return err
+	}
+	var previous, next *Day
+	previousWeekday, nextWeekday := (draft.Weekday+5)%7+1, draft.Weekday%7+1
+	for index := range days {
+		switch days[index].Weekday {
+		case previousWeekday:
+			previous = &days[index]
+		case nextWeekday:
+			next = &days[index]
+		}
+	}
+	if ConflictsWithAdjacentDays(draft, previous, next) {
+		return ErrInvalid
+	}
+	return nil
 }
 
 func sameIntervals(left, right []Interval) bool {

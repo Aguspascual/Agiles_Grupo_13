@@ -46,6 +46,16 @@ describe('LandingHeaderComponent con sesión HU-01', () => {
     expect(fixture.nativeElement.querySelector('.profile-menu')).toBeNull();
   });
 
+  it('no ofrece el acceso Clubes ni en la barra ni en el menú', () => {
+    createHeader();
+    (fixture.nativeElement.querySelector('.nav-menu-trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const links = [...fixture.nativeElement.querySelectorAll('.site-navigation a')] as HTMLAnchorElement[];
+
+    expect(links.some((anchor) => anchor.textContent?.trim() === 'Clubes')).toBe(false);
+    expect(links.some((anchor) => anchor.getAttribute('href') === '/clubes')).toBe(false);
+  });
+
   it('enlaza Mis partidos a /mis-reservas en la barra y en el menú, sin apuntar a /ingresar', () => {
     createHeader();
     const desktop = [...fixture.nativeElement.querySelectorAll('.desktop-nav-links a')] as HTMLAnchorElement[];

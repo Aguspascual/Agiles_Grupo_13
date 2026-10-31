@@ -232,6 +232,12 @@ export class AgendaPage implements OnDestroy {
   }
 
   selectSlot(slot: GridSlot): void {
+    if (slot.state === 'available') {
+      this.selectedSlotId.set(slot.id);
+      const chosen = this.selection();
+      if (chosen && !chosen.reservation) this.openManual(chosen);
+      return;
+    }
     this.selectedSlotId.set(this.selectedSlotId() === slot.id ? null : slot.id);
   }
 
@@ -264,6 +270,7 @@ export class AgendaPage implements OnDestroy {
 
   finishManualClose(): void {
     clearTimeout(this.closeTimer);
+    this.selectedSlotId.set(null);
     this.manualTarget.set(null);
     this.manualClosing.set(false);
   }

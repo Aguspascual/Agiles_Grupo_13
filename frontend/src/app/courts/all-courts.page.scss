@@ -1,0 +1,22 @@
+.all-courts-shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; background: var(--pm-admin-canvas); color: #131b2e; }
+.all-courts-workspace { width: min(100%, 1440px); min-width: 0; padding: clamp(18px, 3vh, 32px) clamp(18px, 3vw, 48px) 32px; animation: all-courts-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.all-courts-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #d8e1db; }
+.all-courts-header h1 { margin: 0; font-size: clamp(1.7rem, 3vw, 2.4rem); line-height: 1.1; letter-spacing: -0.045em; }
+.complex-group { margin-bottom: 26px; }
+.group-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.group-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; }
+.group-title h2 { margin: 0; font-size: 1.15rem; letter-spacing: -0.03em; }
+.zone-tag { padding: 5px 10px; border-radius: 999px; background: #d9f2e6; color: #005236; font-size: 0.72rem; font-weight: 800; }
+.group-link { flex: none; color: #006c49; font-size: 0.82rem; font-weight: 800; text-decoration: none; }
+.group-link:hover { text-decoration: underline; }
+.court-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 14px; align-items: stretch; }
+.group-empty { margin: 0; padding: 18px; border: 1px dashed #cdd5e2; border-radius: 14px; background: #fff; color: #687469; font-size: 0.86rem; text-align: center; }
+.all-courts-status { margin: 40px 0; text-align: center; color: #687469; }
+.all-courts-message { display: grid; justify-items: center; gap: 6px; padding: 50px 20px; border: 1px dashed #cdd5e2; border-radius: 16px; background: #fff; text-align: center; }
+.all-courts-message h2 { margin: 0; font-size: 1.1rem; }
+.all-courts-message p { margin: 0; color: #687469; font-size: 0.88rem; }
+.all-courts-message button { margin-top: 8px; padding: 9px 14px; border: 1px solid #ccebdc; border-radius: 9px; background: #f0faf5; color: #006c49; font: inherit; font-weight: 800; cursor: pointer; }
+@keyframes all-courts-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1000px) { .all-courts-shell { grid-template-columns: 188px minmax(0, 1fr); } }
+@media (max-width: 560px) { .all-courts-shell { grid-template-columns: minmax(0, 1fr); } .all-courts-workspace { padding: 12px 14px 20px; } }
+@media (prefers-reduced-motion: reduce) { .all-courts-workspace { animation: none; } }

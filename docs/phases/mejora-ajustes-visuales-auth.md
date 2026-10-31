@@ -15,6 +15,10 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 9. **Tarjetas de complejo y vista completa.** El encabezado queda solo con el título. Cada tarjeta muestra la imagen en grande y el nombre; al presionarla se abre la vista completa del complejo (/admin/complejos/:complexId): portada con imagen, datos, **Editar datos**, **Eliminar complejo** (solo administradores), listado de canchas con **Horarios** y **Cerrar cancha** (baja con confirmación; el servicio rechaza el cierre si hay reservas futuras) y la agenda del día con turnos libres, reservados y quién reservó.
 10. **Ajustes de la vista del complejo.** Cambiar de día recarga solo la grilla (se atenúa mientras carga, sin reiniciar la pantalla); los datos del complejo van en una tarjeta desplegable; los modales vuelven a centrarse en toda la pantalla (la animación de entrada de las pantallas admin dejaba un 	ransform activo que cambiaba el bloque contenedor de los modales ixed); la tarjeta Canchas tiene un selector de cancha, la grilla muestra solo los turnos de la cancha elegida y **Administrar horarios** abre un modal con el editor semanal.
 11. **Tarjeta Canchas simplificada.** Selector propio (pp-select-menu, reutilizable) con la última opción **Crear cancha** (abre el formulario de alta y deja la nueva cancha seleccionada); **Administrar horarios** queda a la derecha del selector; se quitan la etiqueta de tipo y el botón Cerrar cancha (el cierre sigue disponible en Administrar canchas). El modal de horarios no tiene subtítulo ni tarjeta desplegable y sus íconos de reloj son negros.
+12. **Franjas que cruzan la medianoche, turnos sin huecos y alta desde la grilla.** Con autorización expresa del usuario se tocó el backend: una franja con cierre menor a la apertura (por ejemplo 17:00 a 01:00) termina al día siguiente. Migración `013` (quita `opens_at < closes_at`, exige `opens_at <> closes_at`); validación en `schedules` (con chequeo contra el día anterior y el siguiente), proyección de turnos en `slots` (los turnos pasados de medianoche aparecen en el día siguiente con la duración del día de origen), verificación de turnos en un paquete nuevo `slotcheck` usado por reservas, partidos y partidos completos, y protección de reservas futuras. En el frontend, el editor semanal y el generador aceptan la franja, la grilla no dibuja las horas sin turnos entre franjas y al presionar un turno libre de la agenda se abre directo el alta de reserva.
+13. **Datos del complejo y encargados.** La tarjeta de datos muestra cada dato en un mosaico con ícono (dirección, teléfono, zona y encargados con avatar). En el modal de edición, nombre y dirección comparten fila, se quitó el espacio sobrante entre filas (el estilo global `.field` agregaba 22px de margen) y los encargados se eligen en un desplegable de selección múltiple (`app-multi-select`). Con autorización del usuario para tocar el backend, la lista de encargados disponibles y la asignación solo admiten usuarios con rol ADMIN, así que un jugador no puede ser encargado; el formulario descarta las asignaciones previas que ya no cumplen. También se corrigió la validación de "al menos un encargado" (`minLength` no validaba arreglos vacíos).
+14. **Canchas en el sidebar.** El botón **Canchas** del sidebar ahora está siempre visible y abre `/admin/canchas`: todas las canchas de todos los complejos a los que accede la cuenta, agrupadas por complejo (con enlace "Ver complejo"). Las tarjetas tienen todas el mismo tamaño, no tienen menú de tres puntitos y al presionarlas se abre el modal de la cancha para editarla (el cierre usa un temporizador de respaldo). Se reutiliza la tarjeta de cancha en modo seleccionable y se agregó `CourtApiService.list` para leer canchas sin tocar el estado compartido. El ítem queda activo también dentro de la administración de canchas de un complejo.
+15. **Confirmación al cerrar sesión.** El botón **Cerrar sesión** del sidebar abre un modal de confirmación ("¿Cerrar sesión?") con Cancelar y Cerrar sesión; solo al confirmar se cierra la sesión y se vuelve a `/ingresar`. Aplica a todas las pantallas admin porque lo resuelve el sidebar compartido.
 
 ## Archivos principales
 
@@ -26,6 +30,8 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 - `frontend/src/app/agenda/agenda.page.*` y `app.routes.ts` (ruta con `data.overview`)
 - `frontend/src/app/availability/court-schedule-dialog.component.*` y `schedule-utils.ts` (modal de horarios y utilidades compartidas con la página de disponibilidad)
 - `frontend/src/app/shared/select-menu.component.*` (selector con el estilo de la app)
+- `frontend/src/app/shared/multi-select.component.*` (selector múltiple)
+- `frontend/src/app/courts/all-courts.page.*` (listado general de canchas)
 - Tests: `login.page.spec.ts`, `register.page.spec.ts`
 
 ## Validaciones
@@ -35,6 +41,9 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend.
 - Todas las animaciones respetan `prefers-reduced-motion`.
 
 ## Límites de alcance
+
+- El cambio de backend de la franja nocturna fue autorizado expresamente por el usuario; el resto del trabajo es solo frontend.
+- Una franja nocturna no puede pisar la apertura del día siguiente (el servicio responde 400 y el editor lo avisa).
 
 - `app.spec.ts` y `landing.page.spec.ts` ya fallaban en la base de la rama (`55a72b8`) por peticiones sin simular; no se tocaron.
 - La imagen del complejo (campo `imageDataUrl`) proviene de un trabajo aparte de backend y formulario; la tarjeta y el modal la usan y muestran un ícono si no existe.
