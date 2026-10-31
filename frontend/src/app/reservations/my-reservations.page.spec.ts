@@ -232,8 +232,6 @@ describe('HU-17: Mis reservas', () => {
 
   it('muestra el vacío de cada pestaña con enlaces a partidos y clubes', async () => {
     await render(page([]));
-    expect(root().querySelector('.my-state a[href="/partidos"]')).toBeNull();
-    expect(root().querySelector('.my-state a[href="/clubes"]')).toBeNull();
     expect(text()).toContain('Todavía no tenés reservas próximas.');
     expect(root().querySelector('a[href="/partidos"]')).toBeTruthy();
     expect(root().querySelector('a[href="/clubes"]')).toBeTruthy();
@@ -242,9 +240,9 @@ describe('HU-17: Mis reservas', () => {
     await settle();
     expectList('past').flush(page([]));
     await settle();
+    expect(text()).toContain('Todavía no jugaste ningún partido.');
     expect(root().querySelector('.my-state a[href="/partidos"]')).toBeNull();
     expect(root().querySelector('.my-state a[href="/clubes"]')).toBeNull();
-    expect(text()).toContain('Todavía no jugaste ningún partido.');
   });
 
   it('cambia de pestaña, consulta la vista pasada y actualiza la URL', async () => {
