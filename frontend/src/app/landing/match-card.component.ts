@@ -11,6 +11,14 @@ import { AuthSessionService } from '../auth/auth-session.service';
       class="match-card"
       [class.match-card--search]="searchMode"
       [attr.data-match-card]="match.id"
+      [class.match-card--clickable]="detailsMode"
+      [attr.data-match-detail]="detailsMode ? '' : null"
+      [attr.role]="detailsMode ? 'button' : null"
+      [attr.tabindex]="detailsMode ? 0 : null"
+      [attr.aria-label]="detailsMode ? 'Ver detalle del partido en ' + match.club : null"
+      (click)="detailsMode && openDetails($event)"
+      (keydown.enter)="detailsMode && openDetails($event)"
+      (keydown.space)="detailsMode && openDetails($event); detailsMode && $event.preventDefault()"
     >
       <header class="match-card__top">
         <span class="match-card__time">{{ match.day }} · {{ match.time }}</span>      </header>
@@ -49,9 +57,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
           <i aria-hidden="true">{{ match.openSpots === 0 ? '✓' : '+' }}</i>{{ missingLabel }}
         </span>
         @if (detailsMode) {
-          <button type="button" class="match-card__details" data-match-detail (click)="openDetails($event)" [attr.aria-label]="'Ver detalle del partido en ' + match.club">
-            Ver partido <span aria-hidden="true">↗</span>
-          </button>
+          <span></span>
         } @else if (browseMode) {
           <a class="match-card__details" routerLink="/partidos">Ver partido <span aria-hidden="true">→</span></a>
         } @else {

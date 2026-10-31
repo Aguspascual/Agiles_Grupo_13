@@ -231,3 +231,5 @@
 }
 .match-card__missing i { font-style: normal; font-size: 0.8rem; }
 .match-card__missing.is-full { background: #f2f2f5; color: #7f8490; }
+.match-card--clickable { cursor: pointer; }
+.match-card--clickable:focus-visible { outline: 3px solid #16875c; outline-offset: 2px; }
