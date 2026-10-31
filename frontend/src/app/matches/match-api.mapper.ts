@@ -66,7 +66,8 @@ export function toMatchPreview(match: ApiMatch): MatchPreview {
     imageAlt: `Cancha ${match.court} del complejo ${match.complex}`,
     address: match.address,
     zone: match.zone,
-    level: match.targetLevel,
+    level: levelsOf(match).join(' / '),
+    levels: levelsOf(match),
     price: '',
     openSpots: match.missingPlayers,
     players: match.players.map(toPlayer),
@@ -81,16 +82,21 @@ function parseMatch(value: unknown): ApiMatch {
   }
   const players = value['players'].map((item): ApiMatch['players'][number] => {
     if (!isRecord(item) || !isStringFields(item, ['name', 'level']) || typeof item['organizer'] !== 'boolean') throw new Error('Datos de jugador inválidos');
-    return { name: item['name'] as string, level: item['level'] as string, position: typeof item['position'] === 'string' ? item['position'] : undefined, organizer: item['organizer'] };
+    return { name: item['name'] as string, level: item['level'] as string, position: typeof item['position'] === 'string' ? item['position'] : undefined, organizer: item['organizer'], slot: typeof item['slot'] === 'number' ? item['slot'] : undefined };
   });
-  return { ...(value as unknown as ApiMatch), players };
+  const targetLevels = Array.isArray(value['targetLevels']) ? value['targetLevels'].filter((level): level is string => typeof level === 'string') : [];
+  return { ...(value as unknown as ApiMatch), targetLevels, players };
 }
 
 function toPlayer(player: ApiMatch['players'][number]): PlayerPreview {
   const initials = player.name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase();
   const tones = ['mint', 'lavender', 'peach', 'blue'];
   const tone = tones[(initials.charCodeAt(0) + (initials.charCodeAt(1) ?? 0)) % tones.length];
-  return { initials, name: player.name, level: player.level, tone, position: player.position as PlayerPreview['position'], organizer: player.organizer };
+  return { initials, name: player.name, level: player.level, tone, position: player.position as PlayerPreview['position'], organizer: player.organizer, slot: player.slot };
+}
+
+function levelsOf(match: ApiMatch): string[] {
+  return match.targetLevels?.length ? match.targetLevels : [match.targetLevel];
 }
 
 function dayName(dateValue: string): string {

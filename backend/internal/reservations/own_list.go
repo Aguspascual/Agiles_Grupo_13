@@ -142,7 +142,7 @@ const ownListSelect = `SELECT kind, id, reservation_id, status, complex_id, comp
 			c.id::text, c.name, court.id::text, court.name,
 			r.starts_at, r.ends_at,
 			CASE WHEN me.is_organizer THEN 'organizer' ELSE 'player' END,
-			m.status, m.target_level,
+			m.status, array_to_string(ARRAY[m.target_level]||m.extra_levels,' / '),
 			(SELECT count(*)::int FROM pending_match_players p WHERE p.match_id = m.id)
 		FROM pending_match_players me
 		JOIN pending_matches m ON m.id = me.match_id

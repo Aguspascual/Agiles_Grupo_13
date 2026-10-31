@@ -41,7 +41,7 @@ export class LandingPage {
   readonly courts = signal<PublicCourt[]>([]);
   readonly matches = signal<MatchPreview[]>([]);
   readonly zones = computed(() => [...new Set(this.complexes().map((complex) => complex.zone))].sort());
-  readonly levels = computed(() => [...new Set(this.matches().map((match) => match.level))].sort());
+  readonly levels = computed(() => [...new Set(this.matches().flatMap((match) => match.levels ?? [match.level]))].sort());
   /** Cantidad de canchas publicadas de cada complejo. */
   readonly courtCounts = computed(() => {
     const counts = new Map<string, number>();
@@ -51,7 +51,7 @@ export class LandingPage {
   readonly recommendedMatches = computed(() => {
     const all = this.matches();
     const level = this.session.currentUser()?.level;
-    return (level ? all.filter((match) => match.level === level) : all).slice(0, 3);
+    return (level ? all.filter((match) => (match.levels ?? [match.level]).includes(level)) : all).slice(0, 3);
   });
   readonly availableMatches = computed(() => {
     let matches = this.matches();
@@ -62,7 +62,7 @@ export class LandingPage {
   readonly stats = computed(() => [
     { value: this.matches().length, label: 'PARTIDOS ABIERTOS', icon: '⌁' },
     { value: this.complexes().length, label: 'CLUBES PUBLICADOS', icon: '▦' },
-    { value: new Set(this.matches().map((match) => match.level)).size, label: 'NIVELES BUSCADOS', icon: '◎' },
+    { value: new Set(this.matches().flatMap((match) => match.levels ?? [match.level])).size, label: 'NIVELES BUSCADOS', icon: '◎' },
     { value: this.matches().reduce((total, match) => total + match.players.length, 0), label: 'INSCRIPCIONES EN PARTIDOS', icon: '♙' },
   ]);
   readonly availableFilters = ['Todos', 'Urgentes', 'Completar grupo'];

@@ -255,7 +255,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     return this.matches().filter(
       (match) =>
         (!this.selectedZones.length || this.selectedZones.includes(match.zone)) &&
-        (!this.selectedLevels.length || this.selectedLevels.includes(match.level)) &&
+        (!this.selectedLevels.length || (match.levels ?? [match.level]).some((level) => this.selectedLevels.includes(level))) &&
         (!this.dayFilterEnabled ||
           this.selectedDay === 'Todos' ||
           this.matchesSelectedDay(match)) &&

@@ -20,6 +20,8 @@ export class SelectMenuComponent {
   @Input() options: SelectOption[] = [];
   @Input() value = '';
   @Input() label = '';
+  @Input() placeholder = '';
+  @Input() disabled = false;
   @Output() valueChange = new EventEmitter<string>();
 
   open = false;
@@ -29,6 +31,7 @@ export class SelectMenuComponent {
   }
 
   toggle(): void {
+    if (this.disabled) return;
     this.open = !this.open;
     if (this.open) setTimeout(() => this.items()[Math.max(this.options.findIndex((o) => o.value === this.value), 0)]?.focus());
   }

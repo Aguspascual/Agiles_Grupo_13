@@ -47,8 +47,8 @@ func (r *Repository) ListOptions(ctx context.Context) ([]ComplexOption, error) {
 
 func (r *Repository) List(ctx context.Context, filters ListFilters, now time.Time, location *time.Location) ([]Match, error) {
 	rows, err := r.db.Query(ctx, `SELECT pm.id::text, r.id::text, pm.status, cx.id::text, cx.name, cx.address, cx.zone,
-		court.id::text, court.name, court.covered, court.has_lighting, r.starts_at, r.ends_at, pm.target_level,
-		u.id::text, p.name, p.level, COALESCE(p.position,''), pmp.is_organizer
+		court.id::text, court.name, court.covered, court.has_lighting, r.starts_at, r.ends_at, pm.target_level, pm.extra_levels,
+		u.id::text, p.name, p.level, COALESCE(p.position,''), pmp.is_organizer, COALESCE(pmp.slot,0)
 		FROM pending_matches pm
 		JOIN reservations r ON r.id=pm.reservation_id
 		JOIN complexes cx ON cx.id=r.complex_id AND cx.deleted_at IS NULL
@@ -59,7 +59,7 @@ func (r *Repository) List(ctx context.Context, filters ListFilters, now time.Tim
 		WHERE (NOT $7 OR pm.status='open') AND r.status='reserved' AND r.starts_at > $1
 		AND ($2::date IS NULL OR (r.starts_at AT TIME ZONE $5)::date=$2::date)
 		AND (NULLIF($3,'') IS NULL OR r.complex_id=NULLIF($3,'')::uuid)
-		AND (NULLIF($4,'') IS NULL OR pm.target_level=$4)
+		AND (NULLIF($4,'') IS NULL OR pm.target_level=$4 OR $4 = ANY(pm.extra_levels))
 		AND (NULLIF($6,'') IS NULL OR pm.id::text=$6)
 		ORDER BY r.starts_at,cx.name,court.name,pm.id,pmp.joined_at`, now, filters.Date, filters.ComplexID, filters.Level, location.String(), filters.MatchID, filters.OnlyOpen)
 	if err != nil {
@@ -71,10 +71,11 @@ func (r *Repository) List(ctx context.Context, filters ListFilters, now time.Tim
 	for rows.Next() {
 		var item Match
 		var startsAt, endsAt time.Time
+		var extraLevels []string
 		var player Player
 		if err := rows.Scan(&item.ID, &item.ReservationID, &item.Status, &item.ComplexID, &item.Complex,
 			&item.Address, &item.Zone, &item.CourtID, &item.Court, &item.Covered, &item.Lighting,
-			&startsAt, &endsAt, &item.TargetLevel, &player.ID, &player.Name, &player.Level, &player.Position, &player.Organizer); err != nil {
+			&startsAt, &endsAt, &item.TargetLevel, &extraLevels, &player.ID, &player.Name, &player.Level, &player.Position, &player.Organizer, &player.Slot); err != nil {
 			return nil, err
 		}
 		if index, exists := indexByID[item.ID]; exists {
@@ -85,6 +86,7 @@ func (r *Repository) List(ctx context.Context, filters ListFilters, now time.Tim
 		item.Date = startsAt.In(location).Format("2006-01-02")
 		item.StartsAt = startsAt.In(location).Format("15:04")
 		item.EndsAt = endsAt.In(location).Format("15:04")
+		item.TargetLevels = append([]string{item.TargetLevel}, extraLevels...)
 		item.Players = []Player{player}
 		item.Missing = 3
 		indexByID[item.ID] = len(items)
@@ -148,11 +150,11 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 	if err != nil {
 		return Match{}, err
 	}
-	err = tx.QueryRow(ctx, `INSERT INTO pending_matches(reservation_id,target_level,status) VALUES($1::uuid,$2,'open') RETURNING id::text`, result.ReservationID, input.TargetLevel).Scan(&result.ID)
+	err = tx.QueryRow(ctx, `INSERT INTO pending_matches(reservation_id,target_level,extra_levels,status) VALUES($1::uuid,$2,$3,'open') RETURNING id::text`, result.ReservationID, input.TargetLevel, input.TargetLevels[1:]).Scan(&result.ID)
 	if err != nil {
 		return Match{}, err
 	}
-	if _, err := tx.Exec(ctx, `INSERT INTO pending_match_players(match_id,user_id,is_organizer) VALUES($1::uuid,$2::uuid,true)`, result.ID, actorID); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO pending_match_players(match_id,user_id,is_organizer,slot) VALUES($1::uuid,$2::uuid,true,NULLIF($3,0))`, result.ID, actorID, input.Slot); err != nil {
 		return Match{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -160,8 +162,8 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 	}
 	result.Status, result.Date = "open", start.In(location).Format("2006-01-02")
 	result.StartsAt, result.EndsAt = start.In(location).Format("15:04"), end.In(location).Format("15:04")
-	result.TargetLevel = input.TargetLevel
-	result.Players = []Player{{ID: actorID, Name: organizerName, Level: organizerLevel, Position: organizerPosition, Organizer: true}}
+	result.TargetLevel, result.TargetLevels = input.TargetLevel, input.TargetLevels
+	result.Players = []Player{{ID: actorID, Name: organizerName, Level: organizerLevel, Position: organizerPosition, Organizer: true, Slot: input.Slot}}
 	result.Missing = 3
 	return result, nil
 }
@@ -201,7 +203,8 @@ func (r *Repository) Join(ctx context.Context, matchID, actorID string, now time
 	if err != nil {
 		return Match{}, err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO pending_match_players(match_id,user_id) VALUES($1::uuid,$2::uuid)`, matchID, actorID)
+	_, err = tx.Exec(ctx, `INSERT INTO pending_match_players(match_id,user_id,slot) VALUES($1::uuid,$2::uuid,
+		(SELECT s FROM generate_series(1,4) s WHERE s NOT IN (SELECT slot FROM pending_match_players WHERE match_id=$1::uuid AND slot IS NOT NULL) ORDER BY s LIMIT 1))`, matchID, actorID)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return Match{}, ErrDuplicate

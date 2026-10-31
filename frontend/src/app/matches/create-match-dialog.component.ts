@@ -3,16 +3,19 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 import { AuthSessionService } from '../auth/auth-session.service';
+import { MultiSelectComponent, MultiSelectOption } from '../shared/multi-select.component';
+import { SelectMenuComponent, SelectOption } from '../shared/select-menu.component';
 import { toDateKey } from '../shared/local-date';
 import { MatchApiService } from './match-api.service';
 import { FullMatch, FullMatchApiService } from './full-match-api.service';
 import { FullMatchCreatedComponent } from './full-match-created.component';
 import { InviteeAutocompleteComponent, InviteeDraft } from './invitee-autocomplete.component';
 import { AvailabilityOption, ComplexOption } from './match-api.model';
+import { CourtPositionPickerComponent } from './court-position-picker.component';
 
 @Component({
   selector: 'app-create-match-dialog',
-  imports: [FormsModule, RouterLink, FullMatchCreatedComponent, InviteeAutocompleteComponent],
+  imports: [FormsModule, RouterLink, FullMatchCreatedComponent, InviteeAutocompleteComponent, SelectMenuComponent, MultiSelectComponent, CourtPositionPickerComponent],
   templateUrl: './create-match-dialog.component.html',
   styleUrl: './create-match-dialog.component.scss',
 })
@@ -35,7 +38,11 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   courtId = '';
   date = this.minDate;
   startsAt = '';
-  targetLevel = this.session.currentUser()?.level ?? '5ta';
+  /** Hasta tres niveles buscados; por defecto, el del organizador. */
+  targetLevels: string[] = [this.session.currentUser()?.level ?? '5ta'];
+  readonly maxLevels = 3;
+  /** Lugar del organizador en la cancha (1 y 2: pareja A, 3 y 4: pareja B). */
+  slot: number | null = this.session.currentUser()?.position === 'Revés' ? 2 : 1;
   phone = '';
   invitees: InviteeDraft[] = Array.from({ length: 3 }, () => ({ query: '', selected: null }));
   createdFullMatch: FullMatch | null = null;
@@ -71,6 +78,34 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
       if (this.mode !== 'complete') return true;
       return this.slotDate(slot.startsAt).getTime() >= Date.now() + 30 * 60 * 1000;
     });
+  }
+
+  get complexOptions(): SelectOption[] {
+    return this.complexes.map((complex) => ({ value: complex.id, label: `${complex.name} · ${complex.zone}` }));
+  }
+
+  get courtOptions(): SelectOption[] {
+    return (this.selectedComplex?.courts ?? []).map((court) => ({ value: court.id, label: `${court.name} · ${court.covered ? 'Techada' : 'Aire libre'}` }));
+  }
+
+  get slotOptions(): SelectOption[] {
+    return this.availableSlots.map((slot) => ({ value: slot.startsAt, label: `${slot.startsAt}-${slot.endsAt}` }));
+  }
+
+  get levelOptions(): MultiSelectOption[] {
+    return this.levels.map((level) => ({ value: level, label: level }));
+  }
+
+  get initials(): string {
+    const name = this.session.currentUser()?.name ?? '';
+    return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase() || 'Vos';
+  }
+
+  /** Jugadores que no deben ofrecerse en un lugar de invitado: el organizador y los ya elegidos en los demás. */
+  excludedFor(index: number): string[] {
+    const ids = this.invitees.filter((_, position) => position !== index).map((invite) => invite.selected?.id).filter((id): id is string => !!id);
+    const organizer = this.session.currentUser()?.id;
+    return organizer ? [...ids, organizer] : ids;
   }
 
   changeComplex(id: string): void {
@@ -131,7 +166,17 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
     }
     let request: Observable<unknown>;
     if (this.mode === 'open') {
-      request = this.matchesApi.createOpen(this.complexId, this.courtId, { date: this.date, startsAt: this.startsAt, targetLevel: this.targetLevel });
+      if (!this.targetLevels.length) {
+        this.errorMessage = 'Elegí al menos un nivel buscado.';
+        return;
+      }
+      request = this.matchesApi.createOpen(this.complexId, this.courtId, {
+        date: this.date,
+        startsAt: this.startsAt,
+        targetLevel: this.targetLevels[0],
+        targetLevels: this.targetLevels,
+        ...(this.slot ? { slot: this.slot } : {}),
+      });
     } else {
       if (this.invitees.some((invite) => !invite.query.trim())) {
         this.errorMessage = 'Buscá o ingresá a tus tres invitados.';

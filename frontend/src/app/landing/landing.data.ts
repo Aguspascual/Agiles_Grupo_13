@@ -5,6 +5,8 @@ export interface PlayerPreview {
   tone: string;
   position?: 'Drive' | 'Revés' | 'Indistinto';
   organizer?: boolean;
+  /** Lugar en la cancha (1 y 2: pareja A; 3 y 4: pareja B). */
+  slot?: number;
 }
 
 export interface MatchPreview {
@@ -20,6 +22,8 @@ export interface MatchPreview {
   address: string;
   zone: string;
   level: string;
+  /** Niveles buscados cuando son varios; level los muestra unidos. */
+  levels?: string[];
   price: string;
   openSpots: number;
   players: PlayerPreview[];

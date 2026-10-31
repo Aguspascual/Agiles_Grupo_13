@@ -26,7 +26,7 @@
                     <span class="court-player-copy"><b>{{ slot.player.name }} @if (slot.isCurrentUser) { <small>(Vos)</small> }</b><small>{{ slot.position }} · Nivel {{ slot.player.level }}</small></span>
                   } @else {
                     <span class="court-avatar court-avatar--empty" aria-hidden="true">+</span>
-                    <span class="court-player-copy"><b>Tu lugar está acá</b><small>{{ slot.position }} · Pareja B</small></span>
+                    <span class="court-player-copy"><b>Tu lugar está acá</b><small>{{ slot.side }} · {{ slot.team }}</small></span>
                   }
                 </article>
               }
