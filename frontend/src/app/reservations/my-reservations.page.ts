@@ -53,8 +53,11 @@ export class MyReservationsPage implements OnInit {
   readonly selectedMatch = signal<MatchPreview | null>(null);
   readonly leavingMatchId = signal<string | null>(null);
   private lastTrigger?: HTMLElement;
+  /** Próximo turno cuando se está viendo "Jugados" (la lista cargada es otra). */
+  private readonly upcomingNext = signal<MyReservationItem | null>(null);
+  private nextSubscription?: Subscription;
   readonly nextItem = computed(() =>
-    this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : null,
+    this.view() === 'upcoming' ? this.items().find((item) => item.status === 'reserved') ?? null : this.upcomingNext(),
   );
   readonly nextDate = computed(() => this.nextItem() ? this.dateLabel(this.nextItem()!) : '');
   readonly nextTime = computed(() => this.nextItem() ? this.timeLabel(this.nextItem()!) : '');
@@ -68,6 +71,7 @@ export class MyReservationsPage implements OnInit {
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.loadSubscription?.unsubscribe();
+      this.nextSubscription?.unsubscribe();
       if (this.toastTimer) clearTimeout(this.toastTimer);
     });
   }
@@ -108,6 +112,7 @@ export class MyReservationsPage implements OnInit {
     this.hasMore.set(false);
     this.loadingMore.set(false);
     this.nextOffset = 0;
+    this.loadNext();
     this.loadSubscription = this.api.listMine(this.view(), PAGE_SIZE, 0).subscribe({
       next: (result) => {
         this.items.set(result.items);
@@ -116,6 +121,15 @@ export class MyReservationsPage implements OnInit {
         this.status.set('ready');
       },
       error: () => this.status.set('error'),
+    });
+  }
+
+  private loadNext(): void {
+    this.nextSubscription?.unsubscribe();
+    if (this.view() === 'upcoming') return;
+    this.nextSubscription = this.api.listMine('upcoming', PAGE_SIZE, 0).subscribe({
+      next: (result) => this.upcomingNext.set(result.items.find((item) => item.status === 'reserved') ?? null),
+      error: () => this.upcomingNext.set(null),
     });
   }
 
