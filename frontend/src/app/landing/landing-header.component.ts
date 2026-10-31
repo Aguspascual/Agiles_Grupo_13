@@ -28,7 +28,6 @@ import { MatchNotice } from '../matches/match-api.model';
             >Buscar partidos</a
           >
           <a class="nav-link" routerLink="/mis-reservas" routerLinkActive="is-active">Mis partidos</a>
-          <a class="nav-link" routerLink="/clubes" routerLinkActive="is-active">Clubes</a>
         </div>
         <div class="nav-dropdown">
           <button
@@ -61,9 +60,6 @@ import { MatchNotice } from '../matches/match-api.model';
               >
               <a routerLink="/mis-reservas" routerLinkActive="is-active" (click)="closeMenu()"
                 >Mis partidos</a
-              >
-              <a routerLink="/clubes" routerLinkActive="is-active" (click)="closeMenu()"
-                >Clubes</a
               >
               <a class="nav-menu-panel__create" routerLink="/partidos" [queryParams]="{ crear: 1 }" (click)="closeMenu()"
                 >Crear partido</a

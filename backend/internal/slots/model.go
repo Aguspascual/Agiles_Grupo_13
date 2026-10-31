@@ -20,6 +20,8 @@ type Complex struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Zone    string `json:"zone"`
+	// ImageURL is only filled in the public directory, and only when the complex has a picture.
+	ImageURL string `json:"imageUrl,omitempty"`
 }
 
 // PendingMatch is the public summary of an open match: no names or identifiers.

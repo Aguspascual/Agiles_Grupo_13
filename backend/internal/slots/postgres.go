@@ -18,7 +18,9 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 
 // ListComplexes returns active complexes with the same public fields as Complex.
 func (r *PostgresRepository) ListComplexes(ctx context.Context) ([]Complex, error) {
-	rows, err := r.db.Query(ctx, `SELECT id::text,name,address,zone FROM complexes WHERE deleted_at IS NULL ORDER BY name,id`)
+	rows, err := r.db.Query(ctx, `SELECT id::text,name,address,zone,
+		CASE WHEN image_data IS NULL THEN '' ELSE '/api/v1/public/complexes/'||id::text||'/image?v='||floor(extract(epoch from updated_at))::bigint END
+		FROM complexes WHERE deleted_at IS NULL ORDER BY name,id`)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +28,7 @@ func (r *PostgresRepository) ListComplexes(ctx context.Context) ([]Complex, erro
 	complexes := []Complex{}
 	for rows.Next() {
 		var item Complex
-		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.ImageURL); err != nil {
 			return nil, err
 		}
 		complexes = append(complexes, item)
