@@ -39,6 +39,7 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		mux.Handle("GET "+matches.OptionsPath, matchService.OptionsHandler())
 		protectedMatches := auth.RequireUser(secret, auth.NewPostgresRepository(db), matchService.Handler())
 		mux.Handle("POST "+matches.CreatePath, protectedMatches)
+		mux.Handle("GET "+matches.GetPath, protectedMatches)
 		mux.Handle("POST "+matches.JoinPath, protectedMatches)
 		mux.Handle("DELETE "+matches.LeavePath, protectedMatches)
 		mux.Handle("GET "+matches.NoticesPath, protectedMatches)

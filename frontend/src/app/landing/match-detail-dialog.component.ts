@@ -87,6 +87,10 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (this.closeTimer) clearTimeout(this.closeTimer);
   }
 
+  get startTime(): string {
+    return this.match.time.match(/\d{1,2}:\d{2}/)?.[0] ?? this.match.time;
+  }
+
   get endTime(): string {
     const start = this.match.time.match(/(\d{1,2}):(\d{2})/);
     const duration = Number(this.match.duration.match(/\d+/)?.[0] ?? 90);

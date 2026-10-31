@@ -7,6 +7,12 @@
 .next-card__rule { height: 1px; margin: 12px 0 10px; background: #ffffff30; }
 .next-card .next-card__date { margin-bottom: 3px; }
 .next-card strong { font-size: 1rem; }
+.next-card__countdown { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 8px 10px; border-radius: 10px; background: #ffffff1c; }
+.next-card__countdown > span { color: #b9f0d8; font-size: .56rem; font-weight: 800; letter-spacing: .08em; }
+.next-card__countdown div { display: grid; line-height: 1.1; }
+.next-card__countdown b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.next-card__countdown small { color: #b9f0d8; font-size: .56rem; }
+.next-card .next-card__countdown-note { margin-top: 10px; }
 .next-card--empty { min-height: 0; }
 .next-card--empty h2 { margin-top: 12px; }
 .next-card--empty p { margin: 6px 0 12px; line-height: 1.45; }

@@ -7,6 +7,15 @@
       <div class="next-card__rule"></div>
       <p class="next-card__date">{{ nextDate() }}</p>
       <strong>{{ nextTime() }}</strong>
+      @if (countdown(); as left) {
+        <div class="next-card__countdown" role="timer" aria-label="Tiempo restante para el próximo turno">
+          <span>FALTAN</span>
+          <div><b>{{ left.days }}</b><small>{{ left.days === 1 ? 'día' : 'días' }}</small></div>
+          <div><b>{{ left.clock }}</b><small>horas</small></div>
+        </div>
+      } @else {
+        <p class="next-card__countdown-note">Tu turno ya comenzó.</p>
+      }
     </section>
   } @else {
     <section class="next-card next-card--empty" aria-labelledby="next-title">

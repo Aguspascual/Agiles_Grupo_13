@@ -34,6 +34,7 @@ func NewServiceWithClock(repository *Repository, clock func() time.Time) (*Servi
 func (s *Service) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST "+CreatePath, s.create)
+	mux.HandleFunc("GET "+GetPath, s.get)
 	mux.HandleFunc("POST "+JoinPath, s.join)
 	mux.HandleFunc("DELETE "+LeavePath, s.leave)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
@@ -98,6 +99,33 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.writeError(w, err)
+}
+
+// get returns one match (open, full or already played) only to the players who take part in it.
+func (s *Service) get(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	actor, ok := auth.UserIDFromContext(r.Context())
+	matchID := r.PathValue("matchId")
+	if !ok {
+		auth.WriteError(w, http.StatusUnauthorized, "no autorizado")
+		return
+	}
+	if !auth.ValidUUID(matchID) || r.URL.RawQuery != "" {
+		auth.WriteError(w, http.StatusBadRequest, "solicitud inválida")
+		return
+	}
+	result, err := s.repository.getExisting(r.Context(), matchID, s.location)
+	if err != nil {
+		s.writeError(w, err)
+		return
+	}
+	for _, player := range result.Players {
+		if player.ID == actor {
+			auth.WriteJSON(w, http.StatusOK, map[string]any{"match": result})
+			return
+		}
+	}
+	auth.WriteError(w, http.StatusNotFound, "partido no encontrado")
 }
 
 func (s *Service) join(w http.ResponseWriter, r *http.Request) {

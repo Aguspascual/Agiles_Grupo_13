@@ -54,7 +54,7 @@
           @if (freeSpots === 1) { <span class="last-spot">⚡ Último cupo disponible</span> } @else { <span class="last-spot">PARTIDO · {{ match.level }}</span> }
           @if (match.price) { <p class="price-label">Costo por jugador</p><strong class="price">{{ match.price }} <small>ARS</small></strong> }
           <div class="aside-divider"></div>
-          <p class="aside-fact"><b>Fecha y hora</b><span>{{ match.day }} &middot; {{ match.time }}-{{ endTime }} hs</span></p>
+          <p class="aside-fact"><b>Fecha y hora</b><span>{{ match.day }} &middot; {{ startTime }}-{{ endTime }} hs</span></p>
           <p class="aside-fact"><b>Ubicaci&oacute;n</b><span>{{ match.address }}, {{ match.zone }}</span></p>
           <p class="aside-fact"><b>Nivel buscado</b><span>{{ match.level }}</span></p>
           <p class="aside-fact"><b>Duración</b><span>{{ match.duration }}</span></p>

@@ -14,7 +14,7 @@
   margin: 0 auto;
   padding: 10px 0 40px;
 }
-.my-heading { margin-bottom: 14px; }
+.my-heading { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
 .my-heading h1 {
   margin: 0;
   color: #1d2737;
@@ -24,15 +24,7 @@
 }
 .my-layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 17px; align-items: start; }
 .my-content { min-width: 0; }
-.my-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  overflow-x: auto;
-  border-bottom: 1px solid #e8e9f1;
-  scrollbar-width: thin;
-}
+.my-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
 .my-tab {
   flex: 0 0 auto;
   min-height: 32px;
@@ -55,7 +47,9 @@
 }
 .my-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .my-card { overflow: hidden; border: 1px solid #e8e9f2; border-radius: 14px; background: #fff; box-shadow: 0 4px 14px #20244b0a; }
-.my-card.is-match { border-top: 3px solid #54c99a; }
+.my-card.is-clickable { cursor: pointer; transition: box-shadow .18s ease, transform .18s ease; }
+.my-card.is-clickable:hover { box-shadow: 0 8px 20px #20244b14; transform: translateY(-1px); }
+.my-card.is-clickable:focus-visible { outline: 3px solid #10b981; outline-offset: 2px; }
 .my-card.is-cancelled { background: #fcfcfe; }
 .my-more button:disabled { opacity: .55; cursor: not-allowed; }
 .my-more { padding: 14px 0 4px; text-align: center; }
@@ -91,5 +85,6 @@
   .my-tab { padding-inline: 11px; font-size: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .my-card.is-clickable { transition: none; transform: none !important; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

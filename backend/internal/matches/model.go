@@ -20,6 +20,7 @@ var (
 const (
 	ListPath    = "/api/v1/matches"
 	CreatePath  = "/api/v1/complexes/{complexId}/courts/{courtId}/matches"
+	GetPath     = "/api/v1/matches/{matchId}"
 	JoinPath    = "/api/v1/matches/{matchId}/players"
 	LeavePath   = "/api/v1/matches/{matchId}/players/me"
 	NoticesPath = "/api/v1/match-notices"
