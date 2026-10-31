@@ -10,7 +10,8 @@ Rama: `mejora/frontend-ajustes-visuales`. Alcance: solo frontend, sin cambios de
 4. **Fecha y nivel.** Chips del mismo estilo.
 5. **Horario preferido.** Filas con casilla propia y resaltado al elegirlas.
 6. **Club específico.** Selector con flecha propia y foco visible.
-7. Secciones separadas por líneas y tipografía más legible. Foco visible en todos los controles y transiciones desactivadas con `prefers-reduced-motion`.
+7. **Segunda pasada.** Se quitaron el contador de filtros activos del encabezado y el interruptor Solo con lugares libres (con su lógica). **Club específico** ahora lista los complejos registrados en la base de datos (GET /api/v1/public/complexes), no solo los clubes con partidos publicados, y usa el selector propio del sistema (pp-select-menu, con tamaño configurable por variables CSS). El contador sobre el ícono de filtros del modo móvil se mantiene.
+8. Secciones separadas por líneas y tipografía más legible. Foco visible en todos los controles y transiciones desactivadas con `prefers-reduced-motion`.
 
 ## Archivos principales
 

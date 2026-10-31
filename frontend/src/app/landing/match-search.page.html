@@ -44,8 +44,7 @@
     >
       <div class="filter-sidebar__heading">
         <h2 id="filters-title">Filtros</h2>
-        <span [class.is-empty]="activeFiltersCount === 0">{{ activeFiltersCount }} {{ activeFiltersCount === 1 ? 'activo' : 'activos' }}</span
-        ><button type="button" (click)="clearFilters()">Limpiar filtros</button>
+        <button type="button" (click)="clearFilters()">Limpiar filtros</button>
         <button
           class="filter-sidebar__close"
           type="button"
@@ -55,11 +54,6 @@
           ×
         </button>
       </div>
-      <label class="open-toggle" [class.is-on]="onlyOpen">
-        <span class="open-toggle__text"><strong>Solo con lugares libres</strong><small>Ocultá los partidos completos</small></span>
-        <input type="checkbox" role="switch" [checked]="onlyOpen" (change)="onlyOpen = !onlyOpen" />
-        <span class="open-toggle__switch" aria-hidden="true"></span>
-      </label>
       <fieldset class="filter-group">
         <legend>Zona / Localidad</legend>
         <div class="chip-list">
@@ -130,15 +124,10 @@
           }
         </div>
       </fieldset>
-      <label class="club-select"
-        ><span>Club específico</span
-        ><select name="club" [(ngModel)]="selectedClub">
-          <option>Todos los clubes de La Plata</option>
-          @for (match of matches(); track match.club) {
-            <option [value]="match.club">{{ match.club }}</option>
-          }
-        </select></label
-      >      <article class="organize-card">
+      <div class="club-select">
+        <span id="club-select-label">Club específico</span>
+        <app-select-menu label="Club específico" [options]="clubOptions()" [value]="selectedClub" (valueChange)="selectedClub = $event" />
+      </div>      <article class="organize-card">
         <small>CIRCUITO PLATENSE</small>
         <h3>¿Organizás tu propio torneo?</h3>
         <p>Habilitá inscripciones, cuadros automatizados y ranking mensual en APA.</p>
