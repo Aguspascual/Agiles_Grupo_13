@@ -42,9 +42,9 @@ func (postgresReservationChecker) HasFutureReservations(ctx context.Context, tx 
 	err := tx.QueryRow(ctx, `SELECT EXISTS (
 		SELECT 1 FROM reservations WHERE court_id=$1::uuid AND status='reserved'
 		AND ends_at > statement_timestamp()
-		AND (`+reservationDay+`=$2 OR (`+reservationDay+`=$2 % 7 + 1
+		AND (`+reservationDay+`=$2::int OR (`+reservationDay+`=$2::int % 7 + 1
 			AND EXTRACT(HOUR FROM starts_at AT TIME ZONE 'America/Argentina/Buenos_Aires')*60
-			  + EXTRACT(MINUTE FROM starts_at AT TIME ZONE 'America/Argentina/Buenos_Aires') < $3))
+			  + EXTRACT(MINUTE FROM starts_at AT TIME ZONE 'America/Argentina/Buenos_Aires') < $3::int))
 	)`, courtID, weekday, spillEnd).Scan(&exists)
 	return exists, err
 }
@@ -64,7 +64,7 @@ func (postgresReservationChecker) HasReservationsOutside(ctx context.Context, tx
 	byWeekday[weekday] = intervals
 	rows, err := tx.Query(ctx, `SELECT starts_at, ends_at FROM reservations
 		WHERE court_id=$1::uuid AND status='reserved' AND ends_at > statement_timestamp()
-		AND `+reservationDay+` IN ($2, $2 % 7 + 1)`, courtID, weekday)
+		AND `+reservationDay+` IN ($2::int, $2::int % 7 + 1)`, courtID, weekday)
 	if err != nil {
 		return false, err
 	}
