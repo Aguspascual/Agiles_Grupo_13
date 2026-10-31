@@ -1,0 +1,24 @@
+<div class="multi-root" [class.is-open]="open" [class.is-disabled]="disabled" (keydown)="onKeydown($event)">
+  <button class="multi-trigger" type="button" aria-haspopup="listbox" [attr.aria-expanded]="open" [attr.aria-label]="label" [disabled]="disabled" (click)="toggleMenu()">
+    <span class="multi-values">
+      @for (option of chosen; track option.value) {
+        <span class="multi-chip">{{ option.label }}@if (!disabled) { <span class="multi-chip-remove" role="button" tabindex="-1" [attr.aria-label]="'Quitar ' + option.label" (click)="remove(option, $event)">×</span> }</span>
+      } @empty {
+        <span class="multi-placeholder">{{ placeholder }}</span>
+      }
+    </span>
+    <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
+  </button>
+  @if (open) {
+    <ul class="multi-menu" role="listbox" aria-multiselectable="true" [attr.aria-label]="label">
+      @for (option of options; track option.value) {
+        <li role="option" tabindex="-1" [attr.aria-selected]="isSelected(option.value)" [class.is-selected]="isSelected(option.value)" (click)="toggle(option)" (keydown.enter)="toggle(option)" (keydown.space)="toggle(option); $event.preventDefault()">
+          <span class="multi-check" aria-hidden="true">@if (isSelected(option.value)) { <svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7" /></svg> }</span>
+          <span class="multi-text"><strong>{{ option.label }}</strong>@if (option.hint) { <small>{{ option.hint }}</small> }</span>
+        </li>
+      } @empty {
+        <li class="multi-empty" aria-disabled="true">{{ emptyText }}</li>
+      }
+    </ul>
+  }
+</div>

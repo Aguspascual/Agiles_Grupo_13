@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/media"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -60,7 +61,7 @@ func (r *PostgresRepository) HasAssignments(ctx context.Context, userID string) 
 }
 
 func (r *PostgresRepository) List(ctx context.Context, userID string, admin bool) ([]Complex, error) {
-	rows, err := r.db.Query(ctx, `SELECT c.id::text, c.name, c.address, c.zone, c.phone
+	rows, err := r.db.Query(ctx, `SELECT c.id::text, c.name, c.address, c.zone, c.phone, c.image_data, COALESCE(c.image_mime_type,'')
 		FROM complexes c
 		WHERE c.deleted_at IS NULL AND ($2 OR EXISTS (
 			SELECT 1 FROM complex_managers cm WHERE cm.complex_id = c.id AND cm.user_id = $1::uuid
@@ -72,9 +73,10 @@ func (r *PostgresRepository) List(ctx context.Context, userID string, admin bool
 	var result []Complex
 	for rows.Next() {
 		var item Complex
-		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType); err != nil {
 			return nil, err
 		}
+		item.ImageDataURL = media.EncodeDataURL(item.ImageData, item.ImageMimeType)
 		result = append(result, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -94,15 +96,19 @@ func (r *PostgresRepository) List(ctx context.Context, userID string, admin bool
 }
 
 func (r *PostgresRepository) Create(ctx context.Context, draft Draft) (Complex, error) {
+	imageData, mimeType, err := media.DecodeDataURL(draft.ImageDataURL)
+	if err != nil {
+		return Complex{}, ErrInvalid
+	}
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return Complex{}, err
 	}
 	defer tx.Rollback(ctx)
 	var item Complex
-	err = tx.QueryRow(ctx, `INSERT INTO complexes(name,address,zone,phone) VALUES($1,$2,$3,$4)
-		RETURNING id::text,name,address,zone,phone`, draft.Name, draft.Address, draft.Zone, draft.Phone).
-		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone)
+	err = tx.QueryRow(ctx, `INSERT INTO complexes(name,address,zone,phone,image_data,image_mime_type) VALUES($1,$2,$3,$4,$5,$6)
+		RETURNING id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,'')`, draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType)).
+		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType)
 	if err != nil {
 		return Complex{}, err
 	}
@@ -113,20 +119,25 @@ func (r *PostgresRepository) Create(ctx context.Context, draft Draft) (Complex, 
 		return Complex{}, err
 	}
 	item.ManagerIDs = append([]string(nil), draft.ManagerIDs...)
+	item.ImageDataURL = media.EncodeDataURL(item.ImageData, item.ImageMimeType)
 	item.Managers, _ = r.managerDetails(ctx, draft.ManagerIDs)
 	return item, nil
 }
 
 func (r *PostgresRepository) Update(ctx context.Context, id, actor string, admin bool, draft Draft) (Complex, error) {
+	imageData, mimeType, err := media.DecodeDataURL(draft.ImageDataURL)
+	if err != nil {
+		return Complex{}, ErrInvalid
+	}
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return Complex{}, err
 	}
 	defer tx.Rollback(ctx)
 	var item Complex
-	err = tx.QueryRow(ctx, `SELECT id::text,name,address,zone,phone FROM complexes
+	err = tx.QueryRow(ctx, `SELECT id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,'') FROM complexes
 		WHERE id=$1::uuid AND deleted_at IS NULL FOR UPDATE`, id).
-		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone)
+		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Complex{}, ErrNotFound
 	}
@@ -152,7 +163,7 @@ func (r *PostgresRepository) Update(ctx context.Context, id, actor string, admin
 			return Complex{}, ErrForbidden
 		}
 	}
-	_, err = tx.Exec(ctx, `UPDATE complexes SET name=$2,address=$3,zone=$4,phone=$5,updated_at=now() WHERE id=$1::uuid`, id, draft.Name, draft.Address, draft.Zone, draft.Phone)
+	_, err = tx.Exec(ctx, `UPDATE complexes SET name=$2,address=$3,zone=$4,phone=$5,image_data=$6,image_mime_type=$7,updated_at=now() WHERE id=$1::uuid`, id, draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType))
 	if err != nil {
 		return Complex{}, err
 	}
@@ -168,9 +179,18 @@ func (r *PostgresRepository) Update(ctx context.Context, id, actor string, admin
 		return Complex{}, err
 	}
 	item.Name, item.Address, item.Zone, item.Phone = draft.Name, draft.Address, draft.Zone, draft.Phone
+	item.ImageData, item.ImageMimeType = imageData, mimeType
+	item.ImageDataURL = media.EncodeDataURL(imageData, mimeType)
 	item.ManagerIDs = append([]string(nil), draft.ManagerIDs...)
 	item.Managers, _ = r.managerDetails(ctx, item.ManagerIDs)
 	return item, nil
+}
+
+func nullableString(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 func (r *PostgresRepository) Delete(ctx context.Context, id string) error {
@@ -185,7 +205,7 @@ func (r *PostgresRepository) Delete(ctx context.Context, id string) error {
 }
 
 func (r *PostgresRepository) AvailableManagers(ctx context.Context) ([]Manager, error) {
-	rows, err := r.db.Query(ctx, `SELECT u.id::text,p.name,u.email FROM users u JOIN player_profiles p ON p.user_id=u.id ORDER BY p.name,u.email`)
+	rows, err := r.db.Query(ctx, `SELECT u.id::text,p.name,u.email FROM users u JOIN player_profiles p ON p.user_id=u.id WHERE u.role='ADMIN' ORDER BY p.name,u.email`)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +223,7 @@ func (r *PostgresRepository) AvailableManagers(ctx context.Context) ([]Manager, 
 
 func insertManagers(ctx context.Context, tx pgx.Tx, complexID string, ids []string) error {
 	for _, id := range ids {
-		if _, err := tx.Exec(ctx, `INSERT INTO complex_managers(complex_id,user_id) SELECT $1::uuid,u.id FROM users u JOIN player_profiles p ON p.user_id=u.id WHERE u.id=$2::uuid`, complexID, id); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO complex_managers(complex_id,user_id) SELECT $1::uuid,u.id FROM users u JOIN player_profiles p ON p.user_id=u.id WHERE u.id=$2::uuid AND u.role='ADMIN'`, complexID, id); err != nil {
 			return err
 		}
 		var exists bool

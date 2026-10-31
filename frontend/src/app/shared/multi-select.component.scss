@@ -1,0 +1,26 @@
+:host { display: block; min-width: 0; }
+.multi-root { position: relative; }
+.multi-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 42px; padding: 6px 12px; border: 1px solid #dce2ed; border-radius: 9px; background: #fff; color: #131b2e; font: inherit; text-align: left; cursor: pointer; transition: border-color .18s ease, box-shadow .18s ease; }
+.multi-trigger:hover:not(:disabled) { border-color: #78ad91; }
+.multi-trigger:focus-visible, .is-open .multi-trigger { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px #10b98130; }
+.multi-trigger:disabled { background: #f4f6f5; cursor: not-allowed; }
+.multi-values { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.multi-placeholder { color: #839088; font-size: .88rem; font-weight: 500; }
+.multi-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 5px 3px 10px; border-radius: 999px; background: #e8f8ef; color: #005236; font-size: .78rem; font-weight: 700; }
+.multi-chip-remove { display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; font-size: .95rem; line-height: 1; cursor: pointer; }
+.multi-chip-remove:hover { background: #bfe8d3; }
+.multi-trigger svg { flex: none; width: 16px; height: 16px; fill: none; stroke: #08734f; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
+.is-open .multi-trigger svg { transform: rotate(180deg); }
+.multi-menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; max-height: 220px; overflow-y: auto; margin: 0; padding: 6px; list-style: none; border: 1px solid #cfded4; border-radius: 12px; background: #fff; box-shadow: 0 12px 28px #141c2a26; animation: multi-in .14s ease-out; }
+.multi-menu li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: #23372d; cursor: pointer; transition: background-color .12s ease; }
+.multi-menu li:hover, .multi-menu li:focus-visible { outline: none; background: #e6f5ec; }
+.multi-check { display: grid; flex: none; width: 20px; height: 20px; place-items: center; border: 1.5px solid #b9c6bd; border-radius: 6px; background: #fff; }
+.is-selected .multi-check { border-color: #006c49; background: #006c49; }
+.multi-check svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.multi-text { display: grid; min-width: 0; gap: 1px; }
+.multi-text strong { overflow: hidden; font-size: .86rem; text-overflow: ellipsis; white-space: nowrap; }
+.multi-text small { overflow: hidden; color: #687469; font-size: .74rem; text-overflow: ellipsis; white-space: nowrap; }
+.multi-menu li.multi-empty { color: #687469; font-size: .84rem; cursor: default; }
+.multi-menu li.multi-empty:hover { background: transparent; }
+@keyframes multi-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .multi-menu { animation: none; } .multi-trigger, .multi-trigger svg, .multi-menu li { transition: none; } }

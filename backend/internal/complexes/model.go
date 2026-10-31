@@ -3,6 +3,8 @@ package complexes
 import (
 	"errors"
 	"strings"
+
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/media"
 )
 
 var (
@@ -17,13 +19,16 @@ var validZones = map[string]struct{}{
 }
 
 type Complex struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	Address    string    `json:"address"`
-	Zone       string    `json:"zone"`
-	Phone      string    `json:"phone"`
-	ManagerIDs []string  `json:"managerIds"`
-	Managers   []Manager `json:"managers,omitempty"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Address       string    `json:"address"`
+	Zone          string    `json:"zone"`
+	Phone         string    `json:"phone"`
+	ImageDataURL  *string   `json:"imageDataUrl"`
+	ManagerIDs    []string  `json:"managerIds"`
+	Managers      []Manager `json:"managers,omitempty"`
+	ImageData     []byte    `json:"-"`
+	ImageMimeType string    `json:"-"`
 }
 
 type Manager struct {
@@ -33,11 +38,12 @@ type Manager struct {
 }
 
 type Draft struct {
-	Name       string   `json:"name"`
-	Address    string   `json:"address"`
-	Zone       string   `json:"zone"`
-	Phone      string   `json:"phone"`
-	ManagerIDs []string `json:"managerIds"`
+	Name         string   `json:"name"`
+	Address      string   `json:"address"`
+	Zone         string   `json:"zone"`
+	Phone        string   `json:"phone"`
+	ImageDataURL *string  `json:"imageDataUrl"`
+	ManagerIDs   []string `json:"managerIds"`
 }
 
 func (d *Draft) Validate(requireManagers bool) error {
@@ -45,6 +51,9 @@ func (d *Draft) Validate(requireManagers bool) error {
 	d.Address = strings.TrimSpace(d.Address)
 	d.Zone = strings.TrimSpace(d.Zone)
 	d.Phone = strings.TrimSpace(d.Phone)
+	if _, _, err := media.DecodeDataURL(d.ImageDataURL); err != nil {
+		return ErrInvalid
+	}
 	if d.Name == "" || len([]rune(d.Name)) > 80 || d.Address == "" || d.Phone == "" {
 		return ErrInvalid
 	}

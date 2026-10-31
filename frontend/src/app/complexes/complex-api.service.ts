@@ -76,6 +76,7 @@ function parseComplex(value: unknown): ComplexRecord {
     address: value['address'] as string,
     zone: value['zone'] as string,
     phone: value['phone'] as string,
+    imageDataUrl: typeof value['imageDataUrl'] === 'string' ? value['imageDataUrl'] : null,
     managerIds,
     managers,
   };
