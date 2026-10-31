@@ -71,6 +71,12 @@ describe('sidebar de administración', () => {
     expect(button.tagName).toBe('BUTTON');
     expect(button.textContent).toContain('Cerrar sesión');
     button.click();
+    fixture.detectChanges();
+
+    expect(logout).not.toHaveBeenCalled();
+    const dialog = fixture.nativeElement.querySelector('app-confirm-dialog') as HTMLElement;
+    expect(dialog.textContent).toContain('¿Cerrar sesión?');
+    (dialog.querySelector('.danger-button') as HTMLButtonElement).click();
 
     expect(logout).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith('/ingresar');

@@ -26,8 +26,11 @@
       ><span aria-hidden="true">▤</span> Agenda</a
     >
   }  <div class="sidebar-footer">
-    <button class="logout-link" type="button" (click)="logout()">
+    <button class="logout-link" type="button" (click)="logoutOpen.set(true)">
       <span aria-hidden="true">↪</span> Cerrar sesión
     </button>
   </div>
 </aside>
+@if (logoutOpen()) {
+  <app-confirm-dialog title="¿Cerrar sesión?" message="Vas a salir del panel de administración. Para volver a entrar tendrás que iniciar sesión nuevamente." confirmLabel="Cerrar sesión" cancelLabel="Cancelar" (cancel)="logoutOpen.set(false)" (confirm)="logout()" />
+}
