@@ -101,7 +101,7 @@ func TestHTTPLeaveFullMatchReopensAndNotifiesRemainingPlayers(t *testing.T) {
 func TestHTTPLeaveValidationAndIdempotency(t *testing.T) {
 	now := myNow(t)
 	f := newManualFixture(t).clockServer(t, now)
-	organizer := f.userID(t, "manual-player@example.com")
+	organizer, organizerToken := f.registerPlayer(t, "leave-validation-organizer@example.com")
 	playerB, tokenB := f.registerPlayer(t, "leave-validation@example.com")
 	starts, ends := now.Add(3*time.Hour), now.Add(4*time.Hour)
 	matchID, _ := f.insertMatch(t, organizer, []string{playerB}, "5ta", "open", "reserved", starts, ends)
@@ -116,7 +116,7 @@ func TestHTTPLeaveValidationAndIdempotency(t *testing.T) {
 		{"unexpected query", "/api/v1/matches/" + matchID + "/players/me?force=1", tokenB, "", 400},
 		{"unexpected body", "/api/v1/matches/" + matchID + "/players/me", tokenB, `{}`, 400},
 		{"unknown match", "/api/v1/matches/" + unknownUUID + "/players/me", tokenB, "", 404},
-		{"organizer", "/api/v1/matches/" + matchID + "/players/me", f.player, "", 409},
+		{"organizer", "/api/v1/matches/" + matchID + "/players/me", organizerToken, "", 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			expectManual(t, f.request("DELETE", tc.path, tc.token, tc.body), tc.status)
@@ -139,6 +139,33 @@ func TestHTTPLeaveValidationAndIdempotency(t *testing.T) {
 
 	cancelledID, _ := f.insertMatch(t, organizer, []string{playerB}, "5ta", "open", "cancelled", starts.Add(time.Hour), ends.Add(time.Hour))
 	expectManual(t, f.request("DELETE", "/api/v1/matches/"+cancelledID+"/players/me", tokenB, ""), 404)
+}
+
+func TestHTTPLeaveLastPlayerDeletesMatchAndReleasesReservation(t *testing.T) {
+	now := myNow(t)
+	f := newManualFixture(t).clockServer(t, now)
+	organizer, token := f.registerPlayer(t, "leave-last-organizer@example.com")
+	starts, ends := now.Add(4*time.Hour), now.Add(5*time.Hour)
+	matchID, reservationID := f.insertMatch(t, organizer, nil, "5ta", "open", "reserved", starts, ends)
+
+	reply := f.request("DELETE", "/api/v1/matches/"+matchID+"/players/me", token, "")
+	body := string(expectManual(t, reply, 200))
+	if !strings.Contains(body, `"deleted":true`) {
+		t.Fatalf("expected deletion result, got: %s", body)
+	}
+	if f.count(t, `SELECT count(*) FROM pending_matches WHERE id=$1`, matchID) != 0 {
+		t.Fatal("the match must be deleted when its last player leaves")
+	}
+	if f.count(t, `SELECT count(*) FROM reservations WHERE id=$1 AND status='cancelled'`, reservationID) != 1 {
+		t.Fatal("the associated court reservation must be released")
+	}
+	if f.count(t, `SELECT count(*) FROM reservations r JOIN pending_matches pm ON pm.reservation_id=r.id WHERE r.id=$1`, reservationID) != 0 {
+		t.Fatal("the deleted match must not retain a pending-match association")
+	}
+	publicMatches := string(expectManual(t, f.request("GET", "/api/v1/matches", "", ""), 200))
+	if strings.Contains(publicMatches, `"id":"`+matchID+`"`) {
+		t.Fatalf("deleted match is still visible in public search: %s", publicMatches)
+	}
 }
 
 func TestHTTPLeaveTwoHourBoundaryIsInclusive(t *testing.T) {

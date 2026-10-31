@@ -223,10 +223,10 @@ func (r *Repository) Join(ctx context.Context, matchID, actorID string, now time
 	return r.Get(ctx, matchID, location)
 }
 
-func (r *Repository) Leave(ctx context.Context, matchID, actorID string, now time.Time, location *time.Location) (Match, error) {
+func (r *Repository) Leave(ctx context.Context, matchID, actorID string, now time.Time, location *time.Location) (LeaveResult, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -236,55 +236,71 @@ func (r *Repository) Leave(ctx context.Context, matchID, actorID string, now tim
 		FROM pending_matches pm JOIN reservations r ON r.id=pm.reservation_id
 		WHERE pm.id=$1::uuid AND r.status='reserved' FOR UPDATE OF pm`, matchID).Scan(&status, &startsAt)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return Match{}, ErrNotFound
+		return LeaveResult{}, ErrNotFound
 	}
 	if err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
 
-	var enrolled, organizer bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid),
-		COALESCE((SELECT is_organizer FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid),false)`, matchID, actorID).
-		Scan(&enrolled, &organizer); err != nil {
-		return Match{}, err
+	var enrolled bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid)`, matchID, actorID).
+		Scan(&enrolled); err != nil {
+		return LeaveResult{}, err
 	}
 	if !enrolled {
 		if err := tx.Commit(ctx); err != nil {
-			return Match{}, err
+			return LeaveResult{}, err
 		}
-		return r.getExisting(ctx, matchID, location)
-	}
-	if organizer {
-		return Match{}, ErrOrganizer
+		match, err := r.getExisting(ctx, matchID, location)
+		return LeaveResult{Match: &match}, err
 	}
 	if err := validateLeaveWindow(now, startsAt); err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
 
 	deleted, err := tx.Exec(ctx, `DELETE FROM pending_match_players WHERE match_id=$1::uuid AND user_id=$2::uuid`, matchID, actorID)
 	if err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
 	if deleted.RowsAffected() == 0 {
 		if err := tx.Commit(ctx); err != nil {
-			return Match{}, err
+			return LeaveResult{}, err
 		}
-		return r.getAt(ctx, matchID, now, location)
+		match, err := r.getAt(ctx, matchID, now, location)
+		return LeaveResult{Match: &match}, err
+	}
+	var remaining int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM pending_match_players WHERE match_id=$1::uuid`, matchID).Scan(&remaining); err != nil {
+		return LeaveResult{}, err
+	}
+	if remaining == 0 {
+		if _, err := tx.Exec(ctx, `UPDATE reservations SET status='cancelled'
+			WHERE id=(SELECT reservation_id FROM pending_matches WHERE id=$1::uuid) AND status='reserved'`, matchID); err != nil {
+			return LeaveResult{}, err
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM pending_matches WHERE id=$1::uuid`, matchID); err != nil {
+			return LeaveResult{}, err
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return LeaveResult{}, err
+		}
+		return LeaveResult{Deleted: true}, nil
 	}
 	if status == "full" {
 		if _, err := tx.Exec(ctx, `UPDATE pending_matches SET status='open' WHERE id=$1::uuid`, matchID); err != nil {
-			return Match{}, err
+			return LeaveResult{}, err
 		}
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO pending_match_notices(match_id,user_id,kind)
 		SELECT match_id,user_id,'player_left' FROM pending_match_players
 		WHERE match_id=$1::uuid AND user_id<>$2::uuid`, matchID, actorID); err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return Match{}, err
+		return LeaveResult{}, err
 	}
-	return r.getAt(ctx, matchID, now, location)
+	match, err := r.getAt(ctx, matchID, now, location)
+	return LeaveResult{Match: &match}, err
 }
 
 func validateLeaveWindow(now, startsAt time.Time) error {

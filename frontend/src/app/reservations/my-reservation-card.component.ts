@@ -12,6 +12,18 @@ export class MyReservationCardComponent {
   readonly time = input.required<string>();
   readonly saving = input(false);
   readonly cancel = output<MyReservationItem>();
+  readonly leave = output<MyReservationItem>();
+
+  canLeave(): boolean {
+    const item = this.item();
+    return item.kind === 'match' && item.status === 'reserved' &&
+      new Date(item.startsAt).getTime() - Date.now() >= 2 * 60 * 60 * 1000;
+  }
+
+  isLeaveExpired(): boolean {
+    const item = this.item();
+    return item.kind === 'match' && item.status === 'reserved' && !this.canLeave();
+  }
 
   typeLabel(): string {
     return this.item().kind === 'match' ? 'Partido abierto' : 'Reserva';

@@ -14,7 +14,6 @@ var (
 	ErrNotFound  = errors.New("match not found")
 	ErrConflict  = errors.New("match conflict")
 	ErrDuplicate = errors.New("player already joined")
-	ErrOrganizer = errors.New("organizer cannot leave the match")
 	ErrTooLate   = errors.New("the match leave window has closed")
 )
 
@@ -58,6 +57,11 @@ type Match struct {
 	TargetLevel   string   `json:"targetLevel"`
 	Players       []Player `json:"players"`
 	Missing       int      `json:"missingPlayers"`
+}
+
+type LeaveResult struct {
+	Match   *Match
+	Deleted bool
 }
 
 type CourtOption struct {

@@ -58,6 +58,7 @@
                         [time]="timeLabel(item)"
                         [saving]="saving()"
                         (cancel)="requestCancel($event)"
+                        (leave)="requestLeave($event)"
                       />
                     </li>
                   }
@@ -106,6 +107,16 @@
     cancelLabel="Volver"
     (cancel)="cancelTarget.set(null)"
     (confirm)="confirmCancel()"
+  />
+}
+@if (leaveTarget(); as target) {
+  <app-confirm-dialog
+    title="¿Querés bajarte del partido?"
+    [message]="target.match?.missingPlayers === 3 ? 'Sos el último jugador. El partido se eliminará y el turno quedará libre.' : 'Tu lugar quedará disponible para otro jugador. La baja se permite hasta 2 horas antes del inicio.'"
+    confirmLabel="Sí, bajarme"
+    cancelLabel="Seguir anotado"
+    (cancel)="leaveTarget.set(null)"
+    (confirm)="confirmLeave()"
   />
 }
 <app-toast [message]="toastMessage()" (dismiss)="toastMessage.set('')" />
