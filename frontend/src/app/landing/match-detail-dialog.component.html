@@ -74,6 +74,11 @@
           } @else {
             <button #joinButton class="join-match-button" type="button" (click)="requestJoin()" [disabled]="freeSpots === 0">Unirme al partido</button>
           }
+          @if (canShare) {
+            <a class="share-match-button" [href]="whatsappShareUrl" target="_blank" rel="noopener noreferrer">
+              <span aria-hidden="true">↗</span> Compartir por WhatsApp
+            </a>
+          }
         </section>
         <section class="venue-card">
           <img [src]="match.image" [alt]="match.imageAlt" (error)="useFallbackImage($event)" />

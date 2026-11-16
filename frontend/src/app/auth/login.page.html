@@ -65,7 +65,7 @@
           </button>
         </div>
 
-        <p class="switch-page">¿Todavía no tenés cuenta? <a routerLink="/registro">Registrate gratis</a></p>
+        <p class="switch-page">¿Todavía no tenés cuenta? <a routerLink="/registro" [queryParams]="{ returnUrl: returnUrl() }">Registrate gratis</a></p>
       </div>
     </section>
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
@@ -12,6 +12,7 @@ import { FullMatchCreatedComponent } from './full-match-created.component';
 import { InviteeAutocompleteComponent, InviteeDraft } from './invitee-autocomplete.component';
 import { AvailabilityOption, ComplexOption } from './match-api.model';
 import { CourtPositionPickerComponent } from './court-position-picker.component';
+import { MatchPreview } from '../landing/landing.data';
 
 @Component({
   selector: 'app-create-match-dialog',
@@ -20,8 +21,11 @@ import { CourtPositionPickerComponent } from './court-position-picker.component'
   styleUrl: './create-match-dialog.component.scss',
 })
 export class CreateMatchDialogComponent implements OnInit, OnDestroy {
+  @ViewChild('publishButton') private publishButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('confirmPublishButton') private confirmPublishButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('publishDialog') private publishDialog?: ElementRef<HTMLDialogElement>;
   @Output() close = new EventEmitter<void>();
-  @Output() created = new EventEmitter<void>();
+  @Output() created = new EventEmitter<MatchPreview>();
   @Output() fullMatchCreated = new EventEmitter<void>();
 
   private readonly matchesApi = inject(MatchApiService);
@@ -51,6 +55,7 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   loadingSlots = false;
   saving = false;
   errorMessage = '';
+  publicationConfirmOpen = false;
 
   ngOnInit(): void {
     this.matchesApi.complexes().subscribe({
@@ -170,13 +175,13 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
         this.errorMessage = 'Elegí al menos un nivel buscado.';
         return;
       }
-      request = this.matchesApi.createOpen(this.complexId, this.courtId, {
-        date: this.date,
-        startsAt: this.startsAt,
-        targetLevel: this.targetLevels[0],
-        targetLevels: this.targetLevels,
-        ...(this.slot ? { slot: this.slot } : {}),
+      this.publicationConfirmOpen = true;
+      setTimeout(() => {
+        const dialog = this.publishDialog?.nativeElement;
+        if (dialog && !dialog.open) dialog.showModal();
+        this.confirmPublishButton?.nativeElement.focus();
       });
+      return;
     } else {
       if (this.invitees.some((invite) => !invite.query.trim())) {
         this.errorMessage = 'Buscá o ingresá a tus tres invitados.';
@@ -194,6 +199,30 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
         }),
       });
     }
+    this.saveRequest(request);
+  }
+
+  confirmPublication(): void {
+    if (this.saving || !this.publicationConfirmOpen) return;
+    this.publicationConfirmOpen = false;
+    this.publishDialog?.nativeElement.close();
+    this.saveRequest(this.matchesApi.createOpen(this.complexId, this.courtId, {
+      date: this.date,
+      startsAt: this.startsAt,
+      targetLevel: this.targetLevels[0],
+      targetLevels: this.targetLevels,
+      ...(this.slot ? { slot: this.slot } : {}),
+    }));
+  }
+
+  cancelPublication(event?: Event): void {
+    event?.preventDefault();
+    this.publicationConfirmOpen = false;
+    if (this.publishDialog?.nativeElement.open) this.publishDialog.nativeElement.close();
+    setTimeout(() => this.publishButton?.nativeElement.focus());
+  }
+
+  private saveRequest(request: Observable<unknown>): void {
     this.saving = true;
     request.subscribe({
       next: (result) => {
@@ -202,7 +231,7 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
           this.createdFullMatch = result as FullMatch;
           this.fullMatchCreated.emit();
         } else {
-          this.created.emit();
+          this.created.emit(result as MatchPreview);
         }
       },
       error: (error: { status?: number }) => {

@@ -60,7 +60,7 @@ export class LoginPage {
     });
   }
 
-  private returnUrl(): string | null {
+  returnUrl(): string | null {
     const value = this.route.snapshot.queryParamMap.get('returnUrl');
     return value?.startsWith('/') && !value.startsWith('//') ? value : null;
   }

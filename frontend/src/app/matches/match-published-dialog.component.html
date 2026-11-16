@@ -1,0 +1,19 @@
+<div class="published-backdrop" (click)="close.emit()">
+  <section class="published-dialog" role="dialog" aria-modal="true" aria-labelledby="published-title" (click)="$event.stopPropagation()">
+    <button class="published-close" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
+    <span class="published-check" aria-hidden="true">✓</span>
+    <p class="published-eyebrow">PARTIDO PUBLICADO</p>
+    <h2 id="published-title">¿Querés invitar a un amigo?</h2>
+    <p class="published-copy">Compartí este link para que pueda ver el partido y sumarse.</p>
+    <label class="published-link-label" for="published-match-link">Enlace del partido</label>
+    <div class="published-link-row">
+      <input id="published-match-link" type="url" readonly [value]="matchUrl" (focus)="$any($event.target).select()" />
+      <button class="published-copy-button" type="button" (click)="copyLink()">{{ copied ? 'Copiado' : 'Copiar' }}</button>
+    </div>
+    @if (copyError) { <p class="published-error" role="status">{{ copyError }}</p> }
+    <a class="published-whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener noreferrer">
+      <span aria-hidden="true">↗</span> Compartir por WhatsApp
+    </a>
+    <button class="published-done" type="button" (click)="close.emit()">Listo</button>
+  </section>
+</div>
