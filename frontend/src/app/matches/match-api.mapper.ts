@@ -48,8 +48,10 @@ export function parseAvailability(value: unknown): Map<string, AvailabilityOptio
 
 export function parseNoticeList(value: unknown): MatchNotice[] {
   return readArray(value, 'notices', (item) => {
-    if (!isRecord(item) || !isStringFields(item, ['id', 'matchId', 'complex', 'startsAt', 'createdAt'])) throw new Error('Aviso inválido');
-    return { id: item['id'] as string, matchId: item['matchId'] as string, complex: item['complex'] as string, startsAt: item['startsAt'] as string, createdAt: item['createdAt'] as string };
+    if (!isRecord(item) || !isStringFields(item, ['id', 'matchId', 'kind', 'complex', 'startsAt', 'createdAt'])) throw new Error('Aviso inválido');
+    const kinds: MatchNotice['kind'][] = ['match_completed', 'player_left', 'match_cancelled'];
+    if (!kinds.includes(item['kind'] as MatchNotice['kind'])) throw new Error('Tipo de aviso inválido');
+    return { id: item['id'] as string, matchId: item['matchId'] as string, kind: item['kind'] as MatchNotice['kind'], complex: item['complex'] as string, startsAt: item['startsAt'] as string, createdAt: item['createdAt'] as string };
   });
 }
 

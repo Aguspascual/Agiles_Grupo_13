@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/aguspascual/agiles_grupo_13/backend/internal/reservations"
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/slotcheck"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -128,6 +129,9 @@ func (r *Repository) Create(ctx context.Context, complexID, courtID, actorID str
 		return Match{}, ErrNotFound
 	}
 	if err != nil {
+		return Match{}, err
+	}
+	if _, err := reservations.NewRepository(r.db).ExpireIncompleteMatchesOnCourt(ctx, tx, courtID, now); err != nil {
 		return Match{}, err
 	}
 	duration, offered, err := slotcheck.Duration(ctx, tx, courtID, start)

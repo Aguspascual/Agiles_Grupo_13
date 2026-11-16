@@ -10,7 +10,7 @@ import (
 	"github.com/aguspascual/agiles_grupo_13/backend/internal/auth"
 )
 
-func StartFullMatchExpirationWorker(ctx context.Context, repository *Repository, interval time.Duration) {
+func StartMatchExpirationWorker(ctx context.Context, repository *Repository, interval time.Duration) {
 	if interval <= 0 {
 		interval = time.Minute
 	}
@@ -18,8 +18,12 @@ func StartFullMatchExpirationWorker(ctx context.Context, repository *Repository,
 		expire := func() {
 			workerCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
-			if _, err := repository.ExpireFullMatches(workerCtx, time.Now()); err != nil {
+			now := time.Now()
+			if _, err := repository.ExpireFullMatches(workerCtx, now); err != nil {
 				log.Printf("HU-16: no se pudieron expirar invitaciones vencidas: %v", err)
+			}
+			if _, err := repository.ExpireIncompleteMatches(workerCtx, now); err != nil {
+				log.Printf("HU-12: no se pudieron liberar turnos de partidos incompletos: %v", err)
 			}
 		}
 		expire()
