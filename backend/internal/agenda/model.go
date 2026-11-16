@@ -36,12 +36,19 @@ type MatchPlayer struct {
 	Organizer bool   `json:"organizer"`
 }
 
+type GuestPlayer struct {
+	Name string `json:"name"`
+	Slot int    `json:"slot"`
+}
+
 type PendingMatch struct {
 	ID             string        `json:"id"`
 	Status         string        `json:"status"`
 	TargetLevel    string        `json:"targetLevel"`
+	GuestPlayers   int           `json:"guestPlayers"`
 	MissingPlayers int           `json:"missingPlayers"`
 	Players        []MatchPlayer `json:"players"`
+	Guests         []GuestPlayer `json:"guests"`
 }
 
 type Reservation struct {
@@ -72,12 +79,12 @@ type Response struct {
 
 // ReservationData is a persisted live reservation with its contact.
 type ReservationData struct {
-	ID       string
-	CourtID  string
-	Origin   string
-	Contact  Contact
-	StartsAt time.Time
-	EndsAt   time.Time
+	ID           string
+	CourtID      string
+	Origin       string
+	Contact      Contact
+	StartsAt     time.Time
+	EndsAt       time.Time
 	// PendingMatch is set only for origin 'open_match' reservations that have a match row.
 	PendingMatch *PendingMatch
 }

@@ -10,18 +10,24 @@ export function missingLabel(match: PendingMatch): string {
 
 /** "Anotados (1 de 4)". */
 export function signedUpLabel(match: PendingMatch): string {
-  return `Anotados (${match.players.length} de ${MATCH_SIZE})`;
+  const guests = match.guestPlayers ?? 0;
+  if (!guests) return `Anotados (${match.players.length} de ${MATCH_SIZE})`;
+  return `Ocupados (${match.players.length + guests} de ${MATCH_SIZE})`;
 }
 
 /** "1 jugador anotado" o "3 jugadores anotados". */
 export function signedUpCountLabel(match: PendingMatch): string {
   const count = match.players.length;
-  return count === 1 ? '1 jugador anotado' : `${count} jugadores anotados`;
+  const accounts = count === 1 ? '1 jugador anotado' : `${count} jugadores anotados`;
+  const guests = match.guestPlayers ?? 0;
+  return guests ? `${accounts} y ${guests} ${guests === 1 ? 'acompañante' : 'acompañantes'}` : accounts;
 }
 
 /** Nombres separados por coma, para resúmenes compactos. */
 export function playerNames(match: PendingMatch): string {
-  return match.players.map((player) => player.name).join(', ');
+  const names = match.players.map((player) => player.name).join(', ');
+  const guests = match.guestPlayers ?? 0;
+  return guests ? `${names}${names ? ' · ' : ''}${guests} ${guests === 1 ? 'acompañante' : 'acompañantes'} sin cuenta` : names;
 }
 
 /** Aviso del diálogo de cancelación: no promete avisos a los anotados. */

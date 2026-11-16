@@ -42,9 +42,12 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   targetLevels: string[] = [this.session.currentUser()?.level ?? '5ta'];
   readonly maxLevels = 3;
   /** Lugar del organizador en la cancha (1 y 2: pareja A, 3 y 4: pareja B). */
-  slot: number | null = this.session.currentUser()?.position === 'Revés' ? 2 : 1;
+  slot: number | null = null;
   phone = '';
   invitees: InviteeDraft[] = Array.from({ length: 3 }, () => ({ query: '', selected: null }));
+  companions: Array<{ slot: number; draft: InviteeDraft }> = [];
+  activeFriendSlot: number | null = null;
+  activeFriendDraft: InviteeDraft = { query: '', selected: null };
   createdFullMatch: FullMatch | null = null;
   slots: AvailabilityOption[] = [];
   loadingOptions = true;
@@ -101,9 +104,47 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
     return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase() || 'Vos';
   }
 
+  get companionOccupants(): Array<{ slot: number; name: string }> {
+    return this.companions.map(({ slot, draft }) => ({ slot, name: draft.selected?.name ?? draft.query.trim() }));
+  }
+
+  chooseCourtSpot(slot: number): void {
+    if (this.slot === null) {
+      this.slot = slot;
+      return;
+    }
+    if (slot === this.slot) return;
+    const occupied = this.companions.findIndex((companion) => companion.slot === slot);
+    if (occupied >= 0) {
+      this.companions = this.companions.filter((_, index) => index !== occupied);
+      if (this.activeFriendSlot === slot) this.activeFriendSlot = null;
+      return;
+    }
+    this.activeFriendSlot = slot;
+    this.activeFriendDraft = { query: '', selected: null };
+  }
+
+  positionForSlot(slot: number | null): 'Drive' | 'Revés' | 'Indistinto' {
+    if (!slot) return 'Indistinto';
+    return slot === 2 || slot === 4 ? 'Revés' : 'Drive';
+  }
+
+  updateActiveFriend(draft: InviteeDraft): void {
+    this.activeFriendDraft = draft;
+  }
+
+  addActiveFriend(): void {
+    const name = this.activeFriendDraft.query.trim();
+    if (this.activeFriendSlot === null || !name || this.companions.length >= 3) return;
+    this.companions = [...this.companions.filter((item) => item.slot !== this.activeFriendSlot), { slot: this.activeFriendSlot, draft: { ...this.activeFriendDraft, query: name } }];
+    this.activeFriendSlot = null;
+    this.activeFriendDraft = { query: '', selected: null };
+  }
+
   /** Jugadores que no deben ofrecerse en un lugar de invitado: el organizador y los ya elegidos en los demás. */
   excludedFor(index: number): string[] {
     const ids = this.invitees.filter((_, position) => position !== index).map((invite) => invite.selected?.id).filter((id): id is string => !!id);
+    ids.push(...this.companions.map(({ draft }) => draft.selected?.id).filter((id): id is string => !!id));
     const organizer = this.session.currentUser()?.id;
     return organizer ? [...ids, organizer] : ids;
   }
@@ -153,7 +194,7 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
-    if (this.saving || !this.complexId || !this.courtId || !this.startsAt) return;
+    if (this.saving || !this.complexId || !this.courtId || !this.startsAt || !this.slot) return;
     const user = this.session.currentUser();
     if (!user) {
       this.errorMessage = 'Iniciá sesión para crear un partido.';
@@ -175,7 +216,12 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
         startsAt: this.startsAt,
         targetLevel: this.targetLevels[0],
         targetLevels: this.targetLevels,
-        ...(this.slot ? { slot: this.slot } : {}),
+        missingPlayers: 3 - this.companions.length,
+        position: this.positionForSlot(this.slot),
+        slot: this.slot!,
+        companions: this.companions.map(({ slot, draft }) => draft.selected
+          ? { userId: draft.selected.id, slot }
+          : { name: draft.query.trim(), slot }),
       });
     } else {
       if (this.invitees.some((invite) => !invite.query.trim())) {
@@ -186,6 +232,7 @@ export class CreateMatchDialogComponent implements OnInit, OnDestroy {
         date: this.date,
         startsAt: this.startsAt,
         phone: this.phone.trim(),
+        position: this.positionForSlot(this.slot),
         invites: this.invitees.map((invite) => {
           const value = invite.query.trim();
           return invite.selected

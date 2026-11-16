@@ -33,10 +33,10 @@ func invitationHash(token string) ([32]byte, error) {
 func (r *Repository) GetFullMatch(ctx context.Context, matchID, organizerID string, location *time.Location) (FullMatch, error) {
 	var result FullMatch
 	var startsAt, endsAt time.Time
-	err := r.db.QueryRow(ctx, `SELECT fm.id::text,fm.status,cx.name,court.name,r.starts_at,r.ends_at,fm.expires_at
+	err := r.db.QueryRow(ctx, `SELECT fm.id::text,fm.status,cx.name,court.name,r.starts_at,r.ends_at,fm.expires_at,fm.organizer_position
 		FROM full_matches fm JOIN reservations r ON r.id=fm.reservation_id JOIN complexes cx ON cx.id=r.complex_id JOIN courts court ON court.id=r.court_id
 		WHERE fm.id=$1::uuid AND fm.organizer_id=$2::uuid`, matchID, organizerID).
-		Scan(&result.ID, &result.Status, &result.Complex, &result.Court, &startsAt, &endsAt, &result.ExpiresAt)
+		Scan(&result.ID, &result.Status, &result.Complex, &result.Court, &startsAt, &endsAt, &result.ExpiresAt, &result.OrganizerPosition)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return FullMatch{}, ErrNotFound
 	}
@@ -68,11 +68,11 @@ func (r *Repository) GetInvitation(ctx context.Context, token string, now time.T
 	var result FullMatch
 	var startsAt, endsAt time.Time
 	var invite FullMatchInvitation
-	err = r.db.QueryRow(ctx, `SELECT fm.id::text,fm.status,cx.name,court.name,r.starts_at,r.ends_at,fm.expires_at,
+	err = r.db.QueryRow(ctx, `SELECT fm.id::text,fm.status,cx.name,court.name,r.starts_at,r.ends_at,fm.expires_at,fm.organizer_position,
 		fmi.id::text,fmi.invited_name,fmi.status
 		FROM full_match_invitations fmi JOIN full_matches fm ON fm.id=fmi.match_id
 		JOIN reservations r ON r.id=fm.reservation_id JOIN complexes cx ON cx.id=r.complex_id JOIN courts court ON court.id=r.court_id
-		WHERE fmi.token_hash=$1`, hash[:]).Scan(&result.ID, &result.Status, &result.Complex, &result.Court, &startsAt, &endsAt, &result.ExpiresAt, &invite.ID, &invite.Name, &invite.Status)
+		WHERE fmi.token_hash=$1`, hash[:]).Scan(&result.ID, &result.Status, &result.Complex, &result.Court, &startsAt, &endsAt, &result.ExpiresAt, &result.OrganizerPosition, &invite.ID, &invite.Name, &invite.Status)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return FullMatch{}, ErrNotFound
 	}

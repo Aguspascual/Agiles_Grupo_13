@@ -12,6 +12,8 @@ export type MyMatchStatus = 'open' | 'full';
 export interface MyMatchInfo {
   status: MyMatchStatus;
   targetLevel: string;
+  registeredPlayers?: number;
+  guestPlayers?: number;
   missingPlayers: number;
 }
 
@@ -118,9 +120,16 @@ function parseMatch(value: unknown): MyMatchInfo {
   ) {
     throw new Error('Datos de partido inválidos');
   }
+  const registeredPlayers = value['registeredPlayers'] === undefined ? undefined : value['registeredPlayers'];
+  const guestPlayers = value['guestPlayers'] === undefined ? 0 : value['guestPlayers'];
+  if ((registeredPlayers !== undefined && (typeof registeredPlayers !== 'number' || !Number.isInteger(registeredPlayers) || registeredPlayers < 1 || registeredPlayers > 4)) || typeof guestPlayers !== 'number' || !Number.isInteger(guestPlayers) || guestPlayers < 0 || guestPlayers > 3) {
+    throw new Error('Cantidad de jugadores inválida');
+  }
   return {
     status: value['status'] as MyMatchStatus,
     targetLevel: value['targetLevel'],
+    registeredPlayers,
+    guestPlayers,
     missingPlayers: value['missingPlayers'],
   };
 }

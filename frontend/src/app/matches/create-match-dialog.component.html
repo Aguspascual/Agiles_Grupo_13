@@ -94,9 +94,32 @@
               />
             </div>
             <div class="field form-grid__wide">
-              <span id="position-label">Tu lugar en la cancha</span>
-              <app-court-position-picker [value]="slot" [initials]="initials" (valueChange)="slot = $event" />
+              <span id="position-label">Elegí tu lugar y agregá compañeros</span>
+              <app-court-position-picker [value]="slot" [initials]="initials" [occupants]="companionOccupants" (valueChange)="chooseCourtSpot($event)" />
+              <small class="field-hint">Primero elegí tu lugar; después tocá otros lugares libres para sumar amigos. El cuarto jugador completa el partido.</small>
+              @if (activeFriendSlot) {
+                <div class="friend-slot-editor">
+                  <app-invitee-autocomplete
+                    [label]="'Compañero · lugar ' + activeFriendSlot"
+                    [inputId]="'match-companion-' + activeFriendSlot"
+                    [excludedIds]="excludedFor(-1)"
+                    (selectionChange)="updateActiveFriend($event)"
+                  />
+                  <div class="friend-slot-editor__actions">
+                    <button type="button" class="button-secondary" (click)="activeFriendSlot = null">Cancelar</button>
+                    <button type="button" class="button-primary" [disabled]="!activeFriendDraft.query.trim()" (click)="addActiveFriend()">Agregar compañero</button>
+                  </div>
+                </div>
+              }
+              @if (companions.length) {
+                <p class="friend-count" role="status">{{ companions.length }} {{ companions.length === 1 ? 'compañero agregado' : 'compañeros agregados' }} · {{ 3 - companions.length }} {{ 3 - companions.length === 1 ? 'lugar libre' : 'lugares libres' }}</p>
+              }
             </div>          } @else {
+            <div class="field form-grid__wide">
+              <span id="full-position-label">Elegí tu lugar en la cancha</span>
+              <app-court-position-picker [value]="slot" [initials]="initials" (valueChange)="slot = $event" />
+              <small class="field-hint">Elegí tu posición tocando el lugar que vas a ocupar.</small>
+            </div>
             <label class="form-grid__wide">
               <span>Responsable de la reserva</span>
               <input [value]="session.currentUser()?.name ?? ''" readonly aria-readonly="true" />
@@ -139,9 +162,9 @@
         <button
           class="button-primary"
           type="submit"
-          [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !session.currentUser() || (mode === 'open' && !targetLevels.length)"
+          [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !slot || !session.currentUser() || (mode === 'open' && !targetLevels.length)"
         >
-          {{ saving ? 'Guardando…' : mode === 'open' ? 'Publicar partido' : 'Reservar e invitar' }}
+          {{ saving ? 'Guardando…' : mode === 'complete' ? 'Reservar e invitar' : companions.length === 3 ? 'Crear partido completo' : 'Publicar partido' }}
         </button>
       </footer>
     </form>

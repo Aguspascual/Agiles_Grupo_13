@@ -35,7 +35,7 @@ const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
         @if (match.price) { <strong>{{ match.price }}<small> / jugador</small></strong> }
       </div>
       <div class="match-card__players">
-        <span class="match-card__label">Jugadores confirmados ({{ match.players.length }}/4)</span>
+        <span class="match-card__label">Lugares ocupados ({{ occupiedSpots }}/4)</span>
         <div class="match-card__player-grid">
           @for (player of match.players; track player.initials) {
             <span class="player-chip"
@@ -45,6 +45,18 @@ const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
                   ><small>Nivel {{ playerLevel(player.name, player.level) }}</small></span
               ></span
             >
+          }
+          @for (guest of match.guests ?? []; track guest.slot) {
+            <span class="player-chip player-chip--guest">
+              <i class="player-chip__avatar tone-blue" aria-hidden="true">{{ guestInitials(guest.name) }}</i>
+              <span><b>{{ guest.name }}</b><small>Invitado · sin cuenta</small></span>
+            </span>
+          }
+          @for (guest of guestSlots; track $index) {
+            <span class="player-chip player-chip--guest">
+              <i class="player-chip__avatar tone-blue" aria-hidden="true">A</i>
+              <span><b>Acompañante</b><small>Confirmado · sin cuenta</small></span>
+            </span>
           }
           @for (slot of emptySlots; track $index) {
             <span class="player-chip player-chip--empty"
@@ -117,5 +129,15 @@ export class MatchCardComponent {
 
   get emptySlots(): number[] {
     return Array.from({ length: Math.max(0, this.match.openSpots) });
+  }
+
+  get guestSlots(): number[] {
+    return Array.from({ length: Math.max(0, (this.match.guestPlayers ?? 0) - (this.match.guests?.length ?? 0)) });
+  }
+
+  guestInitials(name: string): string { return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase(); }
+
+  get occupiedSpots(): number {
+    return this.match.players.length + (this.match.guestPlayers ?? 0);
   }
 }
