@@ -1,0 +1,105 @@
+:host {
+  display: block;
+  margin-top: 1rem;
+}
+
+.absence {
+  border: 1px solid #dce5e0;
+  border-radius: 0.75rem;
+  background: #f8fbf9;
+  padding: 1rem;
+  color: #24352d;
+}
+
+.absence__toggle,
+.absence li button,
+.absence__confirm button {
+  min-height: 2.75rem;
+  border: 1px solid #176b46;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  background: #fff;
+  color: #145b3d;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.absence button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.absence button:focus-visible {
+  outline: 3px solid #d58e20;
+  outline-offset: 2px;
+}
+
+.absence__window,
+.absence [role='alert'],
+.absence [role='status'] {
+  margin: 0.85rem 0;
+}
+
+.absence ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.absence li {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  border-top: 1px solid #e1e9e4;
+  padding-top: 0.65rem;
+}
+
+.absence__confirm {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgb(16 31 23 / 65%);
+}
+
+.absence__confirm p,
+.absence__confirm button {
+  max-width: min(32rem, 100%);
+}
+
+.absence__confirm p {
+  margin: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  padding: 1.25rem 1.25rem 0;
+  background: #fff;
+  color: #24352d;
+  font-weight: 700;
+}
+
+.absence__confirm button {
+  width: min(32rem, 100%);
+  border-radius: 0;
+}
+
+.absence__confirm button:last-child {
+  border-radius: 0 0 0.75rem 0.75rem;
+  background: #176b46;
+  color: #fff;
+}
+
+@media (max-width: 40rem) {
+  .absence li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .absence li > span:first-child {
+    grid-column: 1 / -1;
+  }
+}

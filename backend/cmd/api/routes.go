@@ -42,6 +42,8 @@ func newHandlerWithClock(db *pgxpool.Pool, secret []byte, clock func() time.Time
 		mux.Handle("GET "+matches.GetPath, protectedMatches)
 		mux.Handle("POST "+matches.JoinPath, protectedMatches)
 		mux.Handle("DELETE "+matches.LeavePath, protectedMatches)
+		mux.Handle("GET "+matches.AbsenceReportsPath, protectedMatches)
+		mux.Handle("POST "+matches.AbsenceReportsPath, protectedMatches)
 		mux.Handle("GET "+matches.NoticesPath, protectedMatches)
 		mux.Handle("POST "+matches.NoticesPath+"/{noticeId}/read", protectedMatches)
 	} else {

@@ -278,6 +278,20 @@ describe('HU-17: Mis reservas', () => {
     expect(root().querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')).toBe('tab-jugados');
   });
 
+  it('muestra el panel HU-19 solo en Jugados para partidos no cancelados', async () => {
+    await render(page([
+      match('m-played', { status: 'reserved' }),
+      match('m-cancelled', { status: 'cancelled' }),
+      reservation('r-past', { status: 'reserved' }),
+    ]), { vista: 'jugados' });
+    expect(root().querySelectorAll('app-absence-reports').length).toBe(1);
+    buttonByText('Próximos')!.click();
+    await settle();
+    expectList('upcoming').flush(page([match('m-future', { status: 'reserved' })]));
+    await settle();
+    expect(root().querySelector('app-absence-reports')).toBeNull();
+  });
+
   it('ignora la respuesta de una pestaña anterior si se cambió antes de terminar', async () => {
     await render(null);
     const first = expectList('upcoming');

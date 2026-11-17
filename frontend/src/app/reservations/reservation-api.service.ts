@@ -39,6 +39,14 @@ export interface MyReservationsPage {
   page: { limit: number; offset: number; hasMore: boolean };
 }
 
+export interface AbsencePlayer {
+  id: string; name: string; isSelf: boolean; reportCount: number; confirmed: boolean;
+  reportedByMe: boolean; canReport: boolean;
+}
+export interface AbsenceState {
+  matchId: string; endsAt: string; deadline: string; serverNow: string; windowOpen: boolean; players: AbsencePlayer[];
+}
+
 const KINDS = new Set<string>(['reservation', 'match']);
 const STATUSES = new Set<string>(['reserved', 'cancelled']);
 const ROLES = new Set<string>(['organizer', 'player']);
@@ -62,6 +70,28 @@ export class ReservationApiService {
       .post<unknown>(`/api/v1/reservations/${encodeURIComponent(reservationId)}/cancel`, null)
       .pipe(map(parseReceipt));
   }
+
+  getAbsences(matchId: string): Observable<AbsenceState> {
+    return this.http.get<unknown>(`/api/v1/matches/${encodeURIComponent(matchId)}/absence-reports`).pipe(map(parseAbsenceState));
+  }
+
+  reportAbsence(matchId: string, playerId: string): Observable<AbsenceState> {
+    return this.http.post<unknown>(`/api/v1/matches/${encodeURIComponent(matchId)}/absence-reports`, { playerId }).pipe(map(parseAbsenceState));
+  }
+}
+
+export function parseAbsenceState(value: unknown): AbsenceState {
+  if (!isRecord(value) || typeof value['matchId'] !== 'string' || !['endsAt', 'deadline', 'serverNow'].every((key) => typeof value[key] === 'string') ||
+      typeof value['windowOpen'] !== 'boolean' || !Array.isArray(value['players'])) throw new Error('Respuesta de ausencias inválida');
+  const players = value['players'].map((raw): AbsencePlayer => {
+    if (!isRecord(raw) || typeof raw['id'] !== 'string' || typeof raw['name'] !== 'string' ||
+        typeof raw['isSelf'] !== 'boolean' || typeof raw['reportCount'] !== 'number' ||
+        typeof raw['confirmed'] !== 'boolean' || typeof raw['reportedByMe'] !== 'boolean' || typeof raw['canReport'] !== 'boolean')
+      throw new Error('Participante de ausencia inválido');
+    return { id: raw['id'], name: raw['name'], isSelf: raw['isSelf'], reportCount: raw['reportCount'], confirmed: raw['confirmed'], reportedByMe: raw['reportedByMe'], canReport: raw['canReport'] };
+  });
+  return { matchId: value['matchId'], endsAt: value['endsAt'] as string, deadline: value['deadline'] as string,
+    serverNow: value['serverNow'] as string, windowOpen: value['windowOpen'], players };
 }
 
 export function parseMyReservations(value: unknown): MyReservationsPage {

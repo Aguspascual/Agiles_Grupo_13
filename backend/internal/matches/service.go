@@ -39,6 +39,7 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("DELETE "+LeavePath, s.leave)
 	mux.HandleFunc("GET "+NoticesPath, s.listNotices)
 	mux.HandleFunc("POST "+NoticesPath+"/{noticeId}/read", s.readNotice)
+	s.absenceRoutes(mux)
 	return mux
 }
 

@@ -124,3 +124,54 @@ describe('HU-14: ReservationApiService', () => {
     expect(failed).toBe(true);
   });
 });
+
+describe('HU-19: ReservationApiService de ausencias', () => {
+  let api: ReservationApiService;
+  let http: HttpTestingController;
+  const state = {
+    matchId: 'm-1', endsAt: '2026-11-03T19:30:00-03:00', deadline: '2026-11-05T19:30:00-03:00',
+    serverNow: '2026-11-04T10:00:00-03:00', windowOpen: true,
+    players: [
+      { id: 'u-1', name: 'Ana', isSelf: true, reportCount: 0, confirmed: false, reportedByMe: false, canReport: false },
+      { id: 'u-2', name: 'Beto', isSelf: false, reportCount: 1, confirmed: false, reportedByMe: true, canReport: false },
+    ],
+  };
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    api = TestBed.inject(ReservationApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+  afterEach(() => http.verify());
+
+  it('consulta el estado del partido mediante GET y parsea los jugadores sin identidades de reportantes', () => {
+    let result: unknown;
+    api.getAbsences('m/1').subscribe(value => result = value);
+    const req = http.expectOne('/api/v1/matches/m%2F1/absence-reports');
+    expect(req.request.method).toBe('GET');
+    req.flush(state);
+    expect(result).toEqual(state);
+    expect(JSON.stringify(result)).not.toContain('reporter');
+  });
+
+  it('registra un reporte con POST y devuelve el estado actualizado', () => {
+    let result: unknown;
+    const updated = { ...state, players: state.players.map(player => player.id === 'u-2' ? { ...player, reportCount: 2, confirmed: true } : player) };
+    api.reportAbsence('m-1', 'u-2').subscribe(value => result = value);
+    const req = http.expectOne('/api/v1/matches/m-1/absence-reports');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ playerId: 'u-2' });
+    req.flush(updated, { status: 201, statusText: 'Created' });
+    expect(result).toEqual(updated);
+  });
+
+  it('propaga errores HTTP y rechaza respuestas de estado inválidas', () => {
+    let status = -1;
+    api.getAbsences('m-1').subscribe({ error: error => status = error.status });
+    http.expectOne('/api/v1/matches/m-1/absence-reports').flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(status).toBe(403);
+    let rejected = false;
+    api.getAbsences('m-1').subscribe({ error: () => rejected = true });
+    http.expectOne('/api/v1/matches/m-1/absence-reports').flush({ ...state, players: [{ id: 'u-2' }] });
+    expect(rejected).toBe(true);
+  });
+});

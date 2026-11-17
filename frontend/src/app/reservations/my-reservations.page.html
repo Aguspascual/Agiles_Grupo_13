@@ -75,6 +75,9 @@
                         (cancel)="requestCancel($event)"
                         (leave)="requestLeave($event)"
                       />
+                      @if (view() === 'past' && item.kind === 'match' && item.status === 'reserved') {
+                        <app-absence-reports [matchId]="item.id" />
+                      }
                     </li>
                   }
                 </ul>
