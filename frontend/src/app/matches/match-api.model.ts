@@ -55,6 +55,7 @@ export interface AvailabilityOption {
 export interface MatchNotice {
   id: string;
   matchId: string;
+  kind: 'match_completed' | 'player_left' | 'match_cancelled';
   complex: string;
   startsAt: string;
   createdAt: string;
