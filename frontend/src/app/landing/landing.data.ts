@@ -7,6 +7,8 @@ export interface PlayerPreview {
   organizer?: boolean;
   /** Lugar en la cancha (1 y 2: pareja A; 3 y 4: pareja B). */
   slot?: number;
+  /** Acompañante confirmado que participa sin cuenta. */
+  guest?: boolean;
 }
 
 export interface MatchPreview {
@@ -26,6 +28,8 @@ export interface MatchPreview {
   levels?: string[];
   price: string;
   openSpots: number;
+  guestPlayers?: number;
+  guests?: Array<{ name: string; slot: number }>;
   players: PlayerPreview[];
   features: string[];
 }

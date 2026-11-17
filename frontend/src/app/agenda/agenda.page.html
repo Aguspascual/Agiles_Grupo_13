@@ -108,6 +108,12 @@
                               }
                             </li>
                           }
+                          @for (guest of match.guests ?? []; track guest.slot) {
+                            <li><strong>{{ guest.name }}</strong> · invitado sin cuenta</li>
+                          }
+                          @for (guest of guestSlots(match); track $index) {
+                            <li><strong>Acompañante</strong> · sin cuenta</li>
+                          }
                         </ul>
                       </section>
                     }

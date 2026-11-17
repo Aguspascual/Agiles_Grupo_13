@@ -28,9 +28,11 @@ type ownListQuery struct {
 
 // OwnMatch is only present for kind=match.
 type OwnMatch struct {
-	Status         string `json:"status"`
-	TargetLevel    string `json:"targetLevel"`
-	MissingPlayers int    `json:"missingPlayers"`
+	Status            string `json:"status"`
+	TargetLevel       string `json:"targetLevel"`
+	RegisteredPlayers int    `json:"registeredPlayers"`
+	GuestPlayers      int    `json:"guestPlayers"`
+	MissingPlayers    int    `json:"missingPlayers"`
 }
 
 // OwnItem is one reservation or match of the player; it never carries contact data or other players.
@@ -127,12 +129,12 @@ func (s *Service) listMine(w http.ResponseWriter, r *http.Request) {
 }
 
 const ownListSelect = `SELECT kind, id, reservation_id, status, complex_id, complex_name, court_id, court_name,
-		starts_at, ends_at, role, match_status, target_level, players
+		starts_at, ends_at, role, match_status, target_level, players, guest_players
 	FROM (
 		SELECT 'reservation'::text AS kind, r.id::text AS id, r.id::text AS reservation_id, r.status,
 			c.id::text AS complex_id, c.name AS complex_name, court.id::text AS court_id, court.name AS court_name,
 			r.starts_at, r.ends_at, 'organizer'::text AS role,
-			NULL::text AS match_status, NULL::text AS target_level, NULL::int AS players
+			NULL::text AS match_status, NULL::text AS target_level, NULL::int AS players, NULL::int AS guest_players
 		FROM reservations r
 		JOIN complexes c ON c.id = r.complex_id
 		JOIN courts court ON court.id = r.court_id
@@ -143,7 +145,7 @@ const ownListSelect = `SELECT kind, id, reservation_id, status, complex_id, comp
 			r.starts_at, r.ends_at,
 			CASE WHEN me.is_organizer THEN 'organizer' ELSE 'player' END,
 			m.status, array_to_string(ARRAY[m.target_level]||m.extra_levels,' / '),
-			(SELECT count(*)::int FROM pending_match_players p WHERE p.match_id = m.id)
+			(SELECT count(*)::int FROM pending_match_players p WHERE p.match_id = m.id), r.companions::int
 		FROM pending_match_players me
 		JOIN pending_matches m ON m.id = me.match_id
 		JOIN reservations r ON r.id = m.reservation_id
@@ -175,16 +177,16 @@ func (r *Repository) ListMine(ctx context.Context, actorID string, query ownList
 		var item OwnItem
 		var startsAt, endsAt time.Time
 		var matchStatus, level *string
-		var players *int
+		var players, guestPlayers *int
 		if err := rows.Scan(&item.Kind, &item.ID, &item.ReservationID, &item.Status, &item.Complex.ID, &item.Complex.Name,
-			&item.Court.ID, &item.Court.Name, &startsAt, &endsAt, &item.Role, &matchStatus, &level, &players); err != nil {
+			&item.Court.ID, &item.Court.Name, &startsAt, &endsAt, &item.Role, &matchStatus, &level, &players, &guestPlayers); err != nil {
 			return nil, OwnPage{}, err
 		}
 		item.StartsAt = startsAt.In(location).Format(time.RFC3339)
 		item.EndsAt = endsAt.In(location).Format(time.RFC3339)
 		item.TimeZone = location.String()
-		if item.Kind == "match" && matchStatus != nil && level != nil && players != nil {
-			item.Match = &OwnMatch{Status: *matchStatus, TargetLevel: *level, MissingPlayers: max(0, 4-*players)}
+		if item.Kind == "match" && matchStatus != nil && level != nil && players != nil && guestPlayers != nil {
+			item.Match = &OwnMatch{Status: *matchStatus, TargetLevel: *level, RegisteredPlayers: *players, GuestPlayers: *guestPlayers, MissingPlayers: max(0, 4-*players-*guestPlayers)}
 		}
 		item.Cancellable = ownCancellable(item.Kind, item.Status, now, startsAt)
 		items = append(items, item)

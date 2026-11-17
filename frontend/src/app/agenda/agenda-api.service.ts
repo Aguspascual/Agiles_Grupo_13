@@ -36,9 +36,12 @@ export interface PendingMatch {
   id: string;
   status: PendingMatchStatus;
   targetLevel: string;
+  /** Acompañantes confirmados sin cuenta. */
+  guestPlayers?: number;
   /** Lugares libres, de 0 a 3. */
   missingPlayers: number;
   players: PendingMatchPlayer[];
+  guests?: Array<{ name: string; slot: number }>;
 }
 
 export interface AgendaReservation {
@@ -237,12 +240,19 @@ function parsePendingMatch(value: unknown): PendingMatch {
   ) {
     throw new Error('Datos de partido inválidos');
   }
+  const guestPlayers = value['guestPlayers'] === undefined ? 0 : value['guestPlayers'];
+  if (typeof guestPlayers !== 'number' || !Number.isInteger(guestPlayers) || guestPlayers < 0 || guestPlayers > 3) throw new Error('Cantidad de acompañantes inválida');
   return {
     id: value['id'],
     status: value['status'],
     targetLevel: value['targetLevel'],
+    guestPlayers,
     missingPlayers: value['missingPlayers'] as number,
     players: value['players'].map(parsePendingMatchPlayer),
+    guests: Array.isArray(value['guests']) ? value['guests'].map((guest) => {
+      if (!isRecord(guest) || typeof guest['name'] !== 'string' || typeof guest['slot'] !== 'number') throw new Error('Datos de invitado inválidos');
+      return { name: guest['name'], slot: guest['slot'] };
+    }) : [],
   };
 }
 

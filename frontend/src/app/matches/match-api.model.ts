@@ -24,6 +24,8 @@ export interface ApiMatch {
   targetLevel: string;
   targetLevels?: string[];
   players: ApiPlayer[];
+  guestPlayers?: number;
+  guests?: Array<{ name: string; slot: number }>;
   missingPlayers: number;
 }
 
@@ -68,6 +70,11 @@ export interface MatchCreateRequest {
   targetLevel: string;
   /** Hasta tres niveles buscados; el primero es el principal. */
   targetLevels: string[];
+  /** Cupos que quedan abiertos después de asignar al organizador y sus compañeros. */
+  missingPlayers: number;
+  companions?: Array<{ userId?: string; name?: string; slot: number }>;
+  /** Preferencia de juego del organizador para este partido. */
+  position?: 'Drive' | 'Revés' | 'Indistinto';
   /** Lugar elegido en la cancha (1 a 4). */
   slot?: number;
 }

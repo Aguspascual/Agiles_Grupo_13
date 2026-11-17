@@ -42,6 +42,17 @@ type Player struct {
 	Slot int `json:"slot,omitempty"`
 }
 
+type GuestPlayer struct {
+	Name string `json:"name"`
+	Slot int    `json:"slot"`
+}
+
+type MatchCompanion struct {
+	UserID string `json:"userId,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Slot   int    `json:"slot"`
+}
+
 type Match struct {
 	ID            string   `json:"id"`
 	ReservationID string   `json:"-"`
@@ -60,7 +71,9 @@ type Match struct {
 	TargetLevel   string   `json:"targetLevel"`
 	TargetLevels  []string `json:"targetLevels"`
 	Players       []Player `json:"players"`
-	Missing       int      `json:"missingPlayers"`
+	GuestPlayers int           `json:"guestPlayers"`
+	Guests       []GuestPlayer `json:"guests"`
+	Missing      int           `json:"missingPlayers"`
 }
 
 type LeaveResult struct {
@@ -88,8 +101,16 @@ type CreateRequest struct {
 	StartsAt     string   `json:"startsAt"`
 	TargetLevel  string   `json:"targetLevel"`
 	TargetLevels []string `json:"targetLevels"`
+	// MissingPlayers is the number of court places still open (0 to 3).
+	// Omitted values retain the legacy behavior: the organizer is the only occupant.
+	MissingPlayers *int `json:"missingPlayers"`
+	// Position overrides the player's profile preference for this match when provided.
+	Position string `json:"position"`
 	// Slot is the place the organizer takes on the court (1 to 4); 0 leaves it to be assigned.
 	Slot int `json:"slot"`
+	// Companions are additional account holders or named guests already assigned to court slots.
+	// nil preserves the legacy count-only request; an empty array means no companions.
+	Companions []MatchCompanion `json:"companions"`
 }
 
 // Levels returns the sought levels in order: the first one is the primary level.
@@ -143,8 +164,41 @@ func (r *CreateRequest) Validate(now time.Time, location *time.Location) (time.T
 		}
 		seen[levels[index]] = true
 	}
-	if len(levels) > 3 || r.Slot < 0 || r.Slot > 4 || len(r.Date) != 10 || len(r.StartsAt) != 5 {
+	if r.MissingPlayers == nil {
+		missing := 3
+		r.MissingPlayers = &missing
+	}
+	if r.Position != "" && r.Position != "Drive" && r.Position != "Revés" && r.Position != "Indistinto" {
 		return time.Time{}, ErrInvalid
+	}
+	if len(levels) > 3 || r.Slot < 0 || r.Slot > 4 || *r.MissingPlayers < 0 || *r.MissingPlayers > 3 || len(r.Date) != 10 || len(r.StartsAt) != 5 {
+		return time.Time{}, ErrInvalid
+	}
+	if r.Companions != nil {
+		occupied := 1
+		seenSlots := map[int]bool{r.Slot: r.Slot > 0}
+		seenUsers := map[string]bool{}
+		for index := range r.Companions {
+			companion := &r.Companions[index]
+			companion.UserID = strings.TrimSpace(companion.UserID)
+			companion.Name = strings.TrimSpace(companion.Name)
+			if companion.Slot < 1 || companion.Slot > 4 || seenSlots[companion.Slot] {
+				return time.Time{}, ErrInvalid
+			}
+			seenSlots[companion.Slot] = true
+			if companion.UserID != "" {
+				if !auth.ValidUUID(companion.UserID) || seenUsers[companion.UserID] || companion.Name != "" {
+					return time.Time{}, ErrInvalid
+				}
+				seenUsers[companion.UserID] = true
+			} else if len(companion.Name) == 0 || len(companion.Name) > 120 {
+				return time.Time{}, ErrInvalid
+			}
+			occupied++
+		}
+		if occupied > 4 || 4-occupied != *r.MissingPlayers {
+			return time.Time{}, ErrInvalid
+		}
 	}
 	r.TargetLevel, r.TargetLevels = levels[0], levels
 	start, err := time.ParseInLocation("2006-01-02 15:04", r.Date+" "+r.StartsAt, location)
