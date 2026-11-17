@@ -86,6 +86,20 @@
 .button-primary:hover:not(:disabled) { background: #066e4e; }
 .button-primary:disabled { opacity: .48; cursor: not-allowed; }
 
+.publish-confirm-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; box-sizing: border-box; margin: auto; padding: 28px; border: 1px solid #e5ebe7; border-radius: 20px; background: #fff; color: #25332e; box-shadow: 0 24px 70px rgb(14 34 25 / 30%); text-align: center; animation: dialog-in 200ms cubic-bezier(.2, .8, .2, 1) both; }
+.publish-confirm-dialog::backdrop { background: rgb(17 28 24 / 58%); backdrop-filter: blur(5px); animation: backdrop-in 180ms ease-out both; }
+.publish-confirm-icon { display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto 12px; border-radius: 50%; background: #e8f7ef; color: #07865f; font-size: 1.15rem; font-weight: 850; }
+.publish-confirm-dialog h3 { margin: 0; color: #182637; font-size: 1.12rem; }
+.publish-confirm-dialog p { margin: 9px 0 0; color: #697771; font-size: .82rem; line-height: 1.5; }
+.publish-confirm-dialog footer { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+.publish-confirm-dialog footer button { min-width: 118px; min-height: 44px; padding: 0 18px; border-radius: 11px; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease, border-color 160ms ease; }
+.publish-confirm-dialog footer .button-secondary { border: 1px solid #d7e3dd !important; background: #fff; box-shadow: 0 2px 5px rgb(20 45 32 / 5%); }
+.publish-confirm-dialog footer .button-secondary:hover { border-color: #a8cdb9 !important; background: #f5faf7; transform: translateY(-1px); }
+.publish-confirm-dialog footer .button-primary { border: 1px solid #07865f; box-shadow: 0 5px 12px rgb(7 134 95 / 20%); }
+.publish-confirm-dialog footer .button-primary:hover:not(:disabled) { background: #066e4e; box-shadow: 0 7px 16px rgb(7 134 95 / 26%); transform: translateY(-1px); }
+.publish-confirm-dialog footer button:focus-visible { outline: 3px solid #35bd8b; outline-offset: 3px; }
+.publish-confirm-dialog footer button:disabled { cursor: progress; opacity: .65; }
+
 .invite-fields { display: grid; gap: 12px; margin: 2px 0 0; padding: 14px; border: 1px solid #e3ebe6; border-radius: 14px; }
 .invite-fields legend { padding: 0 6px; color: #26342d; font-size: .82rem; font-weight: 800; }
 .friend-slot-editor { display: grid; gap: 10px; padding: 12px; border: 1px solid #cce9da; border-radius: 12px; background: #f5fbf7; }
@@ -113,5 +127,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .create-match-backdrop, .create-match-dialog, .mode-option { animation: none; transition: none; }
+  .create-match-backdrop, .create-match-dialog, .mode-option, .publish-confirm-dialog, .publish-confirm-dialog::backdrop, .publish-confirm-dialog footer button { animation: none; transition: none; }
 }

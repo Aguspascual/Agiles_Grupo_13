@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, inject } from '@angular/core';
 import { MatchPreview, PlayerPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
+import { MatchShareService } from '../matches/match-share.service';
 
 @Component({
   selector: 'app-match-detail-dialog',
@@ -8,6 +9,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
 })
 export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
   private readonly session = inject(AuthSessionService);
+  private readonly matchShare = inject(MatchShareService);
   @Input({ required: true }) match!: MatchPreview;
   @Output() close = new EventEmitter<void>();
   @Output() join = new EventEmitter<MatchPreview>();
@@ -137,6 +139,14 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
 
   get alreadyJoined(): boolean {
     return this.match.players.some((player) => this.isCurrentPlayer(player.name));
+  }
+
+  get canShare(): boolean {
+    return this.match.players.some((player) => player.organizer && this.isCurrentPlayer(player.name));
+  }
+
+  get whatsappShareUrl(): string {
+    return this.matchShare.whatsappLink(this.match);
   }
 
   get canLeave(): boolean {

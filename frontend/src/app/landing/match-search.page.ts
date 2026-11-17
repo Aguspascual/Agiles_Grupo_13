@@ -14,6 +14,7 @@ import { MatchApiService } from '../matches/match-api.service';
 import { ComplexApiService } from '../complexes/complex-api.service';
 import { SelectMenuComponent, SelectOption } from '../shared/select-menu.component';
 import { CreateMatchDialogComponent } from '../matches/create-match-dialog.component';
+import { MatchPublishedDialogComponent } from '../matches/match-published-dialog.component';
 
 const ALL_CLUBS = 'Todos los clubes de La Plata';
 
@@ -27,6 +28,7 @@ const ALL_CLUBS = 'Todos los clubes de La Plata';
     MatchCardComponent,
     MatchDetailDialogComponent,
     CreateMatchDialogComponent,
+    MatchPublishedDialogComponent,
     ToastComponent,
     SelectMenuComponent,
   ],
@@ -70,6 +72,8 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   readonly matchesError = signal('');
   createDialogOpen = false;
   readonly leavingMatchId = signal<string | null>(null);
+  readonly publishedMatch = signal<MatchPreview | null>(null);
+  private sharedMatchId = '';
 
   constructor(private readonly route: ActivatedRoute) {}
 
@@ -94,13 +98,17 @@ export class MatchSearchPage implements OnInit, OnDestroy {
   closeDetails(): void {
     this.selectedMatch.set(null);
     setTimeout(() => this.lastDetailTrigger?.focus());
+    if (this.sharedMatchId) {
+      this.sharedMatchId = '';
+      void this.router.navigate([], { relativeTo: this.route, queryParams: { partido: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
   }
 
   joinMatch(match: MatchPreview): void {
     this.session.restore().subscribe({
       next: (user) => {
         if (!user) {
-          void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: '/partidos' } });
+          void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: this.matchReturnUrl(match.id) } });
           return;
         }
         this.api.join(match.id).subscribe({
@@ -114,7 +122,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
           error: (error: unknown) => this.showToast(this.matchActionError(error)),
         });
       },
-      error: () => void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: '/partidos' } }),
+      error: () => void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: this.matchReturnUrl(match.id) } }),
     });
   }
 
@@ -144,10 +152,15 @@ export class MatchSearchPage implements OnInit, OnDestroy {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { crear: null }, queryParamsHandling: 'merge' });
   }
 
-  onMatchCreated(): void {
+  onMatchCreated(match: MatchPreview): void {
     this.closeCreateDialog();
-    this.showToast('El partido se registró correctamente.');
+    this.publishedMatch.set(match);
     this.loadMatches();
+  }
+
+  closePublishedDialog(): void {
+    this.publishedMatch.set(null);
+    this.showToast('El partido se publicó correctamente.');
   }
 
   refreshAfterFullMatch(): void {
@@ -165,6 +178,12 @@ export class MatchSearchPage implements OnInit, OnDestroy {
       const zone = typeof params['zona'] === 'string' ? params['zona'].trim() : '';
       const level = typeof params['nivel'] === 'string' ? params['nivel'].trim() : '';
       const date = typeof params['fecha'] === 'string' ? params['fecha'].trim().toLowerCase() : '';
+      const sharedMatchId = typeof params['partido'] === 'string' ? params['partido'].trim() : '';
+      if (sharedMatchId && sharedMatchId !== this.sharedMatchId) {
+        this.sharedMatchId = sharedMatchId;
+        this.clearFilters();
+        this.openSharedMatchIfLoaded();
+      }
       if (zone) this.selectedZones = [zone];
       if (level) {
         const knownLevel = this.levels.find((item) => item.toLowerCase() === level.toLowerCase());
@@ -198,6 +217,7 @@ export class MatchSearchPage implements OnInit, OnDestroy {
       next: (matches) => {
         this.matches.set(matches);
         this.loadingMatches.set(false);
+        this.openSharedMatchIfLoaded();
       },
       error: () => {
         this.loadingMatches.set(false);
@@ -208,6 +228,22 @@ export class MatchSearchPage implements OnInit, OnDestroy {
 
   private removeMatch(id: string): void {
     this.matches.update((matches) => matches.filter((item) => item.id !== id));
+  }
+
+  private openSharedMatchIfLoaded(): void {
+    if (!this.sharedMatchId || this.loadingMatches()) return;
+    const match = this.matches().find((item) => item.id === this.sharedMatchId);
+    if (match) {
+      if (this.selectedMatch()?.id !== match.id) this.selectedMatch.set(match);
+      return;
+    }
+    this.showToast('Este partido ya no está disponible.');
+    this.sharedMatchId = '';
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { partido: null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  private matchReturnUrl(matchId: string): string {
+    return `/partidos?partido=${encodeURIComponent(matchId)}`;
   }
 
   private showToast(message: string): void {

@@ -19,7 +19,7 @@
 - `backend/internal/reservations/incomplete_matches.go`: expiración, liberación y avisos.
 - `backend/internal/reservations/full_matches_http.go`: ciclo periódico compartido con HU-16.
 - `backend/internal/reservations/postgres.go` y `backend/internal/matches/postgres.go`: revisión atómica antes de crear reservas.
-- `backend/migrations/015_incomplete_match_release.sql`: estados y tipos de aviso admitidos.
+- `backend/migrations/019_incomplete_match_release.sql`: estados y tipos de aviso admitidos.
 - `frontend/src/app/matches/match-api.model.ts`, `match-api.mapper.ts` y `frontend/src/app/landing/landing-header.component.ts`: lectura y presentación del nuevo aviso.
 
 ## Validación y alcance

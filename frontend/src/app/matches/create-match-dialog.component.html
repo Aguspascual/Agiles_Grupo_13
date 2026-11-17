@@ -14,6 +14,18 @@
       <button class="icon-button" type="button" aria-label="Cerrar" (click)="close.emit()">×</button>
     </header>
 
+    @if (publicationConfirmOpen) {
+      <dialog #publishDialog class="publish-confirm-dialog" aria-labelledby="publish-confirm-title" (cancel)="cancelPublication($event)">
+        <span class="publish-confirm-icon" aria-hidden="true">?</span>
+        <h3 id="publish-confirm-title">¿Publicar este partido?</h3>
+        <p>El turno quedará publicado para que otros jugadores puedan sumarse.</p>
+        <footer>
+          <button class="button-secondary" type="button" (click)="cancelPublication()">Revisar</button>
+          <button #confirmPublishButton class="button-primary" type="button" [disabled]="saving" (click)="confirmPublication()">{{ saving ? 'Publicando…' : 'Sí, publicar' }}</button>
+        </footer>
+      </dialog>
+    }
+
     @if (createdFullMatch; as created) {
       <app-full-match-created [match]="created" (close)="close.emit()" />
     } @else {
@@ -160,6 +172,7 @@
       <footer class="create-match-dialog__actions">
         <button class="button-secondary" type="button" (click)="close.emit()">Cancelar</button>
         <button
+          #publishButton
           class="button-primary"
           type="submit"
           [disabled]="saving || loadingOptions || loadingSlots || !complexId || !courtId || !startsAt || !slot || !session.currentUser() || (mode === 'open' && !targetLevels.length)"
