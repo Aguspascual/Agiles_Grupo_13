@@ -15,6 +15,7 @@ import { MatchApiService } from '../matches/match-api.service';
 import { MatchPreview } from './landing.data';
 import { ProfileFeedbackStore } from '../profile/profile-feedback.store';
 import { ToastComponent } from '../shared/toast.component';
+import { isUrgentMatch } from './urgent-match';
 
 @Component({
   selector: 'app-landing-page',
@@ -60,8 +61,11 @@ export class LandingPage {
   });
   readonly availableMatches = computed(() => {
     let matches = this.matches();
-    if (this.activeFilter === 'Urgentes') matches = matches.filter((match) => match.openSpots === 1);
-    if (this.activeFilter === 'Completar grupo') matches = matches.filter((match) => match.openSpots > 0);
+    if (this.activeFilter() === 'Urgentes') {
+      const now = new Date();
+      matches = matches.filter((match) => isUrgentMatch(match, now));
+    }
+    if (this.activeFilter() === 'Completar grupo') matches = matches.filter((match) => match.openSpots > 0);
     return matches;
   });
   readonly stats = computed(() => [
@@ -74,7 +78,7 @@ export class LandingPage {
   zone = '';
   level = '';
   date = '';
-  activeFilter = 'Todos';
+  readonly activeFilter = signal('Todos');
 
   constructor() {
     this.loadData();

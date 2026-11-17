@@ -59,6 +59,7 @@ export function toMatchPreview(match: ApiMatch): MatchPreview {
   return {
     id: match.id,
     date: match.date,
+    startsAt: match.startsAt,
     day: dayName(match.date),
     time: `${match.startsAt} hs`,
     duration: `${duration(match.startsAt, match.endsAt)} min`,

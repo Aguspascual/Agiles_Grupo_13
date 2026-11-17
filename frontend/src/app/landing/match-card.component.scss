@@ -54,6 +54,13 @@
   font-size: 0.62rem;
   line-height: 1.45;
 }
+.match-card__level {
+  display: inline-block;
+  margin-top: 4px;
+  color: #51558e;
+  font-size: 0.58rem;
+  font-weight: 750;
+}
 .match-card__club > strong {
   flex: 0 0 auto;
   color: #148355;
