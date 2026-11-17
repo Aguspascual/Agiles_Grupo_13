@@ -5,6 +5,13 @@
 .my-card__topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 0; }
 .my-card__kind { color: #087b56; font-size: .58rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .my-card__body { display: flex; gap: 12px; padding: 10px 16px 14px; }
+.my-card__footer { flex-wrap: wrap; }
+.my-card__calendar { min-height: 38px; padding: 0 14px; border: 1px solid #087b56; border-radius: 9px; background: #fff; color: #087b56; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
+.my-card__calendar:hover:not(:disabled) { background: #e3f7ed; }
+.my-card__calendar:focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
+.my-card__calendar:disabled { opacity: .55; cursor: wait; }
+.my-card__calendar.is-primary { background: #087b56; color: #fff; }
+.my-card__calendar.is-primary:hover:not(:disabled) { background: #066344; }
 .my-card__details { min-width: 0; }
 h2 { margin: 0; color: #1b2538; font-size: .86rem; font-weight: 750; line-height: 1.35; }
 h2 span { color: #7d8797; font-weight: 500; }
