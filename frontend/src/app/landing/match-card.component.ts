@@ -31,6 +31,7 @@ const FALLBACK_IMAGE = '/images/cancha-interior.jpg';
         <div>
           <h3>{{ match.club }}</h3>
           <p>{{ match.address }} · {{ match.zone }}</p>
+          <small class="match-card__level">Categoría {{ match.level }}</small>
         </div>
         @if (match.price) { <strong>{{ match.price }}<small> / jugador</small></strong> }
       </div>

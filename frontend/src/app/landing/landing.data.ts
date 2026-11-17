@@ -14,6 +14,8 @@ export interface PlayerPreview {
 export interface MatchPreview {
   id: string;
   date?: string;
+  /** Hora local del partido (Buenos Aires), en formato HH:mm. */
+  startsAt?: string;
   day: string;
   time: string;
   duration: string;
