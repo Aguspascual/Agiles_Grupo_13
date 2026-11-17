@@ -48,8 +48,10 @@ export function parseAvailability(value: unknown): Map<string, AvailabilityOptio
 
 export function parseNoticeList(value: unknown): MatchNotice[] {
   return readArray(value, 'notices', (item) => {
-    if (!isRecord(item) || !isStringFields(item, ['id', 'matchId', 'complex', 'startsAt', 'createdAt'])) throw new Error('Aviso inválido');
-    return { id: item['id'] as string, matchId: item['matchId'] as string, complex: item['complex'] as string, startsAt: item['startsAt'] as string, createdAt: item['createdAt'] as string };
+    if (!isRecord(item) || !isStringFields(item, ['id', 'matchId', 'kind', 'complex', 'startsAt', 'createdAt'])) throw new Error('Aviso inválido');
+    const kinds: MatchNotice['kind'][] = ['match_completed', 'player_left', 'match_cancelled'];
+    if (!kinds.includes(item['kind'] as MatchNotice['kind'])) throw new Error('Tipo de aviso inválido');
+    return { id: item['id'] as string, matchId: item['matchId'] as string, kind: item['kind'] as MatchNotice['kind'], complex: item['complex'] as string, startsAt: item['startsAt'] as string, createdAt: item['createdAt'] as string };
   });
 }
 
@@ -57,6 +59,7 @@ export function toMatchPreview(match: ApiMatch): MatchPreview {
   return {
     id: match.id,
     date: match.date,
+    startsAt: match.startsAt,
     day: dayName(match.date),
     time: `${match.startsAt} hs`,
     duration: `${duration(match.startsAt, match.endsAt)} min`,
@@ -70,6 +73,8 @@ export function toMatchPreview(match: ApiMatch): MatchPreview {
     levels: levelsOf(match),
     price: '',
     openSpots: match.missingPlayers,
+    guestPlayers: match.guestPlayers ?? 0,
+    guests: match.guests ?? [],
     players: match.players.map(toPlayer),
     features: [match.covered ? 'Techado' : 'Aire libre', ...(match.lighting ? ['Iluminación'] : [])],
   };
@@ -80,12 +85,18 @@ function parseMatch(value: unknown): ApiMatch {
   if (!isRecord(value) || !isStringFields(value, strings) || typeof value['covered'] !== 'boolean' || typeof value['lighting'] !== 'boolean' || !Array.isArray(value['players']) || typeof value['missingPlayers'] !== 'number') {
     throw new Error('Datos de partido inválidos');
   }
+  const guestPlayers = value['guestPlayers'] === undefined ? 0 : value['guestPlayers'];
+  if (typeof guestPlayers !== 'number' || !Number.isInteger(guestPlayers) || guestPlayers < 0 || guestPlayers > 3) throw new Error('Cantidad de acompañantes inválida');
   const players = value['players'].map((item): ApiMatch['players'][number] => {
     if (!isRecord(item) || !isStringFields(item, ['name', 'level']) || typeof item['organizer'] !== 'boolean') throw new Error('Datos de jugador inválidos');
     return { name: item['name'] as string, level: item['level'] as string, position: typeof item['position'] === 'string' ? item['position'] : undefined, organizer: item['organizer'], slot: typeof item['slot'] === 'number' ? item['slot'] : undefined };
   });
+  const guests = Array.isArray(value['guests']) ? value['guests'].map((item) => {
+    if (!isRecord(item) || typeof item['name'] !== 'string' || typeof item['slot'] !== 'number') throw new Error('Datos de acompañante inválidos');
+    return { name: item['name'], slot: item['slot'] };
+  }) : [];
   const targetLevels = Array.isArray(value['targetLevels']) ? value['targetLevels'].filter((level): level is string => typeof level === 'string') : [];
-  return { ...(value as unknown as ApiMatch), targetLevels, players };
+  return { ...(value as unknown as ApiMatch), guestPlayers, guests, targetLevels, players };
 }
 
 function toPlayer(player: ApiMatch['players'][number]): PlayerPreview {

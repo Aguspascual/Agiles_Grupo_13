@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { ConfirmDialogComponent } from '../complexes/confirm-dialog.component';
 import { LandingFooterComponent } from '../landing/landing-footer.component';
 import { LandingHeaderComponent } from '../landing/landing-header.component';
@@ -13,6 +13,8 @@ import { MatchDetailDialogComponent } from '../landing/match-detail-dialog.compo
 import { MyReservationCardComponent } from './my-reservation-card.component';
 import { MyReservationsSummaryComponent } from './my-reservations-summary.component';
 import { MyReservationItem, MyReservationView, ReservationApiService } from './reservation-api.service';
+import { ReservationCalendarService } from './reservation-calendar.service';
+import { INVALID_CALENDAR_TIME } from './reservation-calendar';
 
 const PAGE_SIZE = 20;
 const TOAST_MS = 3500;
@@ -26,12 +28,14 @@ type ListStatus = 'loading' | 'ready' | 'error';
 /** HU-17: consulta integrada de reservas propias y partidos desde la API autenticada. */
 @Component({
   selector: 'app-my-reservations-page',
+  providers: [ReservationCalendarService],
   imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent, MatchDetailDialogComponent],
   templateUrl: './my-reservations.page.html',
   styleUrl: './my-reservations.page.scss',
 })
 export class MyReservationsPage implements OnInit {
   private readonly api = inject(ReservationApiService);
+  private readonly calendar = inject(ReservationCalendarService);
   private readonly matchApi = inject(MatchApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -47,6 +51,7 @@ export class MyReservationsPage implements OnInit {
   readonly hasMore = signal(false);
   readonly loadingMore = signal(false);
   readonly saving = signal(false);
+  readonly exporting = signal<ReadonlySet<string>>(new Set());
   readonly cancelTarget = signal<MyReservationItem | null>(null);
   readonly leaveTarget = signal<MyReservationItem | null>(null);
   readonly toastMessage = signal('');
@@ -186,6 +191,28 @@ export class MyReservationsPage implements OnInit {
     });
   }
 
+  addToCalendar(item: MyReservationItem, target: 'ics' | 'google' = 'ics'): void {
+    const key = itemKey(item);
+    if (this.exporting().has(key) || item.status === 'cancelled' || this.view() !== 'upcoming') return;
+    this.exporting.update(keys => new Set([...keys, key]));
+    const action = target === 'google' ? this.calendar.openGoogleCalendar(item) : this.calendar.download(item);
+    action.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.exporting.update(keys => {
+        const next = new Set(keys);
+        next.delete(key);
+        return next;
+      })),
+    ).subscribe({
+      error: (error: unknown) => this.showToast(
+        error instanceof Error && error.message === INVALID_CALENDAR_TIME
+          ? INVALID_CALENDAR_TIME
+          : target === 'google' ? 'No se pudo abrir Google Calendar. Intentá nuevamente.'
+          : 'No se pudo descargar el calendario. Intentá nuevamente.',
+      ),
+    });
+  }
+
   requestCancel(item: MyReservationItem): void {
     if (this.saving() || !item.cancellable) return;
     this.cancelTarget.set(item);
@@ -278,6 +305,7 @@ function viewFromParam(param: string | null): MyReservationView {
 /** Las horas se muestran en la zona que informa el servidor, no en la del navegador. */
 function format(item: MyReservationItem, options: Intl.DateTimeFormatOptions, iso: string): string {
   const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return 'Horario no disponible';
   try {
     return new Intl.DateTimeFormat('es-AR', { ...options, timeZone: item.timeZone }).format(date);
   } catch {

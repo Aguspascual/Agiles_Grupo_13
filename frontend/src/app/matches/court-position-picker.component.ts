@@ -15,6 +15,7 @@ interface CourtSpot {
 export class CourtPositionPickerComponent {
   @Input() value: number | null = null;
   @Input() initials = 'Vos';
+  @Input() occupants: Array<{ slot: number; name: string }> = [];
   @Output() valueChange = new EventEmitter<number>();
 
   readonly spots: CourtSpot[] = [
@@ -26,6 +27,17 @@ export class CourtPositionPickerComponent {
 
   choose(slot: number): void {
     this.valueChange.emit(slot);
+  }
+
+  labelFor(slot: CourtSpot): string {
+    if (this.value === null) return `Elegir tu lugar, Pareja ${slot.pair}, ${slot.side}`;
+    if (this.value === slot.slot) return `Tu lugar, Pareja ${slot.pair}, ${slot.side}`;
+    const occupant = this.occupants.find((item) => item.slot === slot.slot);
+    return occupant ? `Quitar a ${occupant.name} de Pareja ${slot.pair}, ${slot.side}` : `Agregar amigo en Pareja ${slot.pair}, ${slot.side}`;
+  }
+
+  occupantFor(slot: number): string {
+    return this.occupants.find((item) => item.slot === slot)?.name ?? '';
   }
 
   get summary(): string {

@@ -13,9 +13,10 @@ import { DayStripComponent } from '../slot-grid/day-strip.component';
 import { SlotGridComponent } from '../slot-grid/slot-grid.component';
 import { GridCourt, GridSlot, SlotState } from '../slot-grid/slot-grid.model';
 import { CLOCK } from '../slot-grid/slot-grid.service';
-import { Agenda, AgendaApiService, AgendaCourt, AgendaReservation, AgendaSlotStatus, ReservationOrigin } from './agenda-api.service';
+import { Agenda, AgendaApiService, AgendaCourt, AgendaReservation, AgendaSlotStatus, PendingMatch, ReservationOrigin } from './agenda-api.service';
 import { ManualContact, ManualReservationDialogComponent } from './manual-reservation-dialog.component';
 import { cancelOpenMatchNotice, missingLabel, playerNames, signedUpLabel } from './pending-match-labels';
+import { agendaMatchesSelection, downloadAgendaCsv } from './agenda-csv';
 
 /** Misma ventana que la API: hoy y los 13 días siguientes. */
 export const AGENDA_WINDOW_DAYS = 14;
@@ -104,6 +105,11 @@ export class AgendaPage implements OnDestroy {
   readonly agenda = computed(() => {
     const state = this.state();
     return state.status === 'ok' ? state.agenda : null;
+  });
+
+  /** Evita exportar la agenda anterior mientras la fecha o el complejo seleccionados cargan. */
+  readonly agendaMatchesSelection = computed(() => {
+    return agendaMatchesSelection(this.agenda(), this.complexId(), this.dateKey());
   });
 
   readonly dateLabel = computed(() => {
@@ -221,6 +227,16 @@ export class AgendaPage implements OnDestroy {
 
   notice(message: string): void {
     this.showToast(message);
+  }
+
+  exportCsv(): void {
+    const agenda = this.agenda();
+    if (!agenda || !this.agendaMatchesSelection()) return;
+    if (!agenda.courts.some((court) => court.reservations.length > 0)) {
+      this.showToast('No hay reservas para exportar.');
+      return;
+    }
+    downloadAgendaCsv(agenda);
   }
 
   reloadQuietly(): void {
@@ -415,6 +431,7 @@ export class AgendaPage implements OnDestroy {
 
   readonly missingLabel = missingLabel;
   readonly signedUpLabel = signedUpLabel;
+  readonly guestSlots = (match: PendingMatch) => Array.from({ length: Math.max(0, (match.guestPlayers ?? 0) - (match.guests?.length ?? 0)) });
   readonly playerNames = playerNames;
   readonly permissionError = PERMISSION_ERROR;
   readonly connectionError = CONNECTION_ERROR;

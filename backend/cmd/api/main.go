@@ -37,7 +37,7 @@ func main() {
 	}
 	expirationContext, stopExpirationWorker := context.WithCancel(context.Background())
 	defer stopExpirationWorker()
-	reservations.StartFullMatchExpirationWorker(expirationContext, reservations.NewRepository(db), 10*time.Second)
+	reservations.StartMatchExpirationWorker(expirationContext, reservations.NewRepository(db), 10*time.Second)
 
 	mux := newHandler(db, []byte(jwtSecret))
 

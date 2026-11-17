@@ -94,6 +94,10 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
     if (!image.src.endsWith('/images/cancha-interior.jpg')) image.src = '/images/cancha-interior.jpg';
   }
 
+  guestInitials(name: string): string {
+    return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase();
+  }
+
   get startTime(): string {
     return this.match.time.match(/\d{1,2}:\d{2}/)?.[0] ?? this.match.time;
   }
@@ -107,7 +111,19 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   get freeSpots(): number {
-    return Math.max(0, 4 - this.match.players.length);
+    return Math.max(0, this.match.openSpots ?? 4 - this.match.players.length - this.guestPlayers);
+  }
+
+  get guestPlayers(): number {
+    return Math.max(0, this.match.guestPlayers ?? 0);
+  }
+
+  get occupiedSpots(): number {
+    return Math.max(0, 4 - this.freeSpots);
+  }
+
+  get guestSlots(): number[] {
+    return Array.from({ length: Math.max(0, this.guestPlayers - (this.match.guests?.length ?? 0)) });
   }
 
   isCurrentPlayer(playerName: string): boolean {
@@ -154,19 +170,33 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
 
   /** Cada jugador ocupa el lugar que eligió (1 a 4); quienes no lo informaron completan los libres. */
   get courtSlots() {
-    const taken = new Map<number, PlayerPreview>();
+    const taken: Array<PlayerPreview | undefined> = Array.from({ length: 4 });
     const unplaced: PlayerPreview[] = [];
     for (const player of this.match.players) {
-      if (player.slot && player.slot >= 1 && player.slot <= 4 && !taken.has(player.slot)) taken.set(player.slot, player);
+      if (player.slot && player.slot >= 1 && player.slot <= 4 && !taken[player.slot - 1]) taken[player.slot - 1] = player;
       else unplaced.push(player);
     }
-    return Array.from({ length: 4 }, (_, index) => {
-      const player = taken.get(index + 1) ?? (taken.has(index + 1) ? undefined : unplaced.shift());
+    for (const player of unplaced) {
+      const index = taken.findIndex((occupant) => !occupant);
+      if (index >= 0) taken[index] = player;
+    }
+    for (const guest of this.match.guests ?? []) {
+      const index = guest.slot - 1;
+      if (index >= 0 && index < 4 && !taken[index]) {
+        taken[index] = { initials: guest.name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase(), name: guest.name, level: '', tone: 'blue', guest: true, slot: guest.slot };
+      }
+    }
+    const guest: PlayerPreview = { initials: 'A', name: 'Acompañante', level: '', tone: 'blue', guest: true };
+    for (let index = 0; index < this.guestPlayers; index += 1) {
+      const freeIndex = taken.findIndex((occupant) => !occupant);
+      if (freeIndex >= 0) taken[freeIndex] = guest;
+    }
+    return taken.map((player, index) => {
       return {
         player,
         team: index < 2 ? 'Pareja A' : 'Pareja B',
         side: index % 2 === 0 ? 'Drive' : 'Revés',
-        position: player?.position ?? 'Lugar disponible',
+        position: player?.guest ? 'Acompañante' : player?.position ?? 'Lugar disponible',
         isCurrentUser: player ? this.isCurrentPlayer(player.name) : false,
       };
     });

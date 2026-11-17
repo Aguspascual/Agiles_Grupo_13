@@ -48,6 +48,14 @@
           <section class="agenda-board" [class.is-refreshing]="refreshing()" [attr.aria-busy]="refreshing()" aria-labelledby="agenda-date">
             <div class="agenda-toolbar">
               <h2 id="agenda-date">{{ dateLabel() }}</h2>
+              <button
+                type="button"
+                class="agenda-export"
+                [disabled]="!agendaMatchesSelection()"
+                (click)="exportCsv()"
+              >
+                Exportar CSV
+              </button>
               <app-day-strip
                 [selected]="dateKey()"
                 [today]="todayKey"
@@ -107,6 +115,12 @@
                                 <span class="organizer-tag">Organizador</span>
                               }
                             </li>
+                          }
+                          @for (guest of match.guests ?? []; track guest.slot) {
+                            <li><strong>{{ guest.name }}</strong> · invitado sin cuenta</li>
+                          }
+                          @for (guest of guestSlots(match); track $index) {
+                            <li><strong>Acompañante</strong> · sin cuenta</li>
                           }
                         </ul>
                       </section>

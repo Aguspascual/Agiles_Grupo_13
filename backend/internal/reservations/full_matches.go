@@ -24,6 +24,7 @@ type CreateFullMatchRequest struct {
 	Date     string                 `json:"date"`
 	StartsAt string                 `json:"startsAt"`
 	Phone    string                 `json:"phone"`
+	Position string                 `json:"position"`
 	Invites  []FullMatchInviteInput `json:"invites"`
 }
 
@@ -36,20 +37,24 @@ type FullMatchInvitation struct {
 }
 
 type FullMatch struct {
-	ID        string                `json:"id"`
-	Status    string                `json:"status"`
-	Complex   string                `json:"complex"`
-	Court     string                `json:"court"`
-	Date      string                `json:"date"`
-	StartsAt  string                `json:"startsAt"`
-	EndsAt    string                `json:"endsAt"`
-	ExpiresAt time.Time             `json:"expiresAt"`
-	Invites   []FullMatchInvitation `json:"invitations"`
+	ID                string                `json:"id"`
+	Status            string                `json:"status"`
+	Complex           string                `json:"complex"`
+	Court             string                `json:"court"`
+	Date              string                `json:"date"`
+	StartsAt          string                `json:"startsAt"`
+	EndsAt            string                `json:"endsAt"`
+	ExpiresAt         time.Time             `json:"expiresAt"`
+	OrganizerPosition string                `json:"organizerPosition"`
+	Invites           []FullMatchInvitation `json:"invitations"`
 }
 
 func (r *CreateFullMatchRequest) Validate(now time.Time, location *time.Location) (time.Time, error) {
-	r.Date, r.StartsAt, r.Phone = strings.TrimSpace(r.Date), strings.TrimSpace(r.StartsAt), strings.TrimSpace(r.Phone)
+	r.Date, r.StartsAt, r.Phone, r.Position = strings.TrimSpace(r.Date), strings.TrimSpace(r.StartsAt), strings.TrimSpace(r.Phone), strings.TrimSpace(r.Position)
 	if len(r.Date) != 10 || minutes(r.StartsAt) < 0 || r.Phone == "" || len(r.Phone) > 40 || len(r.Invites) != 3 {
+		return time.Time{}, ErrInvalid
+	}
+	if r.Position != "" && r.Position != "Drive" && r.Position != "Revés" && r.Position != "Indistinto" {
 		return time.Time{}, ErrInvalid
 	}
 	start, err := time.ParseInLocation("2006-01-02 15:04", r.Date+" "+r.StartsAt, location)
@@ -90,8 +95,8 @@ func (r *Repository) CreateFullMatch(ctx context.Context, complexID, courtID, ac
 	}
 	defer tx.Rollback(ctx)
 	result := FullMatch{Status: "pending", Date: start.In(location).Format("2006-01-02"), StartsAt: start.In(location).Format("15:04")}
-	var organizerName string
-	if err := tx.QueryRow(ctx, `SELECT name FROM player_profiles WHERE user_id=$1::uuid`, actorID).Scan(&organizerName); errors.Is(err, pgx.ErrNoRows) {
+	var organizerName, organizerPosition string
+	if err := tx.QueryRow(ctx, `SELECT name,COALESCE(position,'Indistinto') FROM player_profiles WHERE user_id=$1::uuid`, actorID).Scan(&organizerName, &organizerPosition); errors.Is(err, pgx.ErrNoRows) {
 		return FullMatch{}, ErrNotFound
 	} else if err != nil {
 		return FullMatch{}, err
@@ -160,7 +165,11 @@ func (r *Repository) CreateFullMatch(ctx context.Context, complexID, courtID, ac
 		return FullMatch{}, err
 	}
 	result.ExpiresAt = now.Add(FullMatchInvitationTTL)
-	if err := tx.QueryRow(ctx, `INSERT INTO full_matches(reservation_id,organizer_id,status,expires_at,created_at) VALUES($1::uuid,$2::uuid,'pending',$3,$4) RETURNING id::text`, reservationID, actorID, result.ExpiresAt, now).Scan(&result.ID); err != nil {
+	if input.Position != "" {
+		organizerPosition = input.Position
+	}
+	result.OrganizerPosition = organizerPosition
+	if err := tx.QueryRow(ctx, `INSERT INTO full_matches(reservation_id,organizer_id,status,expires_at,created_at,organizer_position) VALUES($1::uuid,$2::uuid,'pending',$3,$4,$5) RETURNING id::text`, reservationID, actorID, result.ExpiresAt, now, organizerPosition).Scan(&result.ID); err != nil {
 		return FullMatch{}, err
 	}
 	result.EndsAt = end.In(location).Format("15:04")

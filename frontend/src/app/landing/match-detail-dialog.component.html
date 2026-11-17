@@ -7,7 +7,7 @@
           <h2 id="match-detail-title">{{ match.club }}</h2>
         </div>
       </div>
-      <div class="player-count"><span class="player-count__avatars">@for (player of match.players.slice(0, 3); track player.initials) { <i>{{ player.initials }}</i> } @if (freeSpots) { <i class="player-count__free">+{{ freeSpots }}</i> }</span><span><b>{{ match.players.length }} / 4</b><small>jugadores listos</small></span></div>
+      <div class="player-count"><span class="player-count__avatars">@for (player of match.players.slice(0, 3); track player.initials) { <i>{{ player.initials }}</i> } @if (guestPlayers) { <i class="player-count__guest">+{{ guestPlayers }}A</i> } @if (freeSpots) { <i class="player-count__free">+{{ freeSpots }}</i> }</span><span><b>{{ occupiedSpots }} / 4</b><small>lugares ocupados</small></span></div>
       <button #closeButton class="close-button" type="button" aria-label="Cerrar detalle del partido" (click)="requestClose()">×</button>
     </header>
 
@@ -22,7 +22,7 @@
                 <article class="court-player" [class.court-player--empty]="!slot.player">
                   @if (slot.player) {
                     <span class="court-avatar" [class]="'court-avatar tone-' + slot.player.tone">{{ slot.player.initials }}</span>
-                    <span class="court-player-copy"><b>{{ slot.player.name }} @if (slot.isCurrentUser) { <small>(Vos)</small> }</b><small>{{ slot.position }} · Nivel {{ slot.player.level }}</small></span>
+                    <span class="court-player-copy"><b>{{ slot.player.name }} @if (slot.isCurrentUser) { <small>(Vos)</small> }</b>@if (slot.player.guest) { <small>Acompañante · sin cuenta</small> } @else { <small>{{ slot.position }} · Nivel {{ slot.player.level }}</small> }</span>
                   } @else {
                     <span class="court-avatar court-avatar--empty" aria-hidden="true">+</span>
                     <span class="court-player-copy"><b>Tu lugar está acá</b><small>{{ slot.side }} · {{ slot.team }}</small></span>
@@ -43,7 +43,21 @@
                 <dl><div><dt>Posición</dt><dd>{{ player.position ?? 'No declarada' }}</dd></div><div><dt>Categoría</dt><dd>{{ player.level }}</dd></div></dl>
               </article>
             } @empty {
-              <p class="roster-empty">Todavía no hay jugadores anotados.</p>
+              @if (!guestPlayers) { <p class="roster-empty">Todavía no hay jugadores anotados.</p> }
+            }
+            @for (guest of match.guests ?? []; track guest.slot) {
+              <article class="roster-card roster-card--guest">
+                <span class="roster-avatar tone-blue">{{ guestInitials(guest.name) }}</span>
+                <div class="roster-card__head"><b>{{ guest.name }}</b><small>Invitado sin cuenta</small></div>
+                <dl><div><dt>Participación</dt><dd>Lugar confirmado</dd></div></dl>
+              </article>
+            }
+            @for (guest of guestSlots; track $index) {
+              <article class="roster-card roster-card--guest">
+                <span class="roster-avatar tone-blue">A</span>
+                <div class="roster-card__head"><b>Acompañante</b><small>Sin cuenta</small></div>
+                <dl><div><dt>Participación</dt><dd>Lugar confirmado</dd></div></dl>
+              </article>
             }
           </div>
         </section>

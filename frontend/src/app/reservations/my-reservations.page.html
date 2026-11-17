@@ -68,6 +68,10 @@
                         [date]="dateLabel(item)"
                         [time]="timeLabel(item)"
                         [saving]="saving()"
+                        [upcoming]="view() === 'upcoming'"
+                        [exporting]="exporting().has(itemKey(item))"
+                        (addToCalendar)="addToCalendar($event)"
+                        (googleCalendar)="addToCalendar($event, 'google')"
                         (cancel)="requestCancel($event)"
                         (leave)="requestLeave($event)"
                       />
@@ -121,7 +125,7 @@
 @if (leaveTarget(); as target) {
   <app-confirm-dialog
     title="¿Querés bajarte del partido?"
-    [message]="target.match?.missingPlayers === 3 ? 'Sos el último jugador. El partido se eliminará y el turno quedará libre.' : 'Tu lugar quedará disponible para otro jugador. La baja se permite hasta 2 horas antes del inicio.'"
+    [message]="target.role === 'organizer' && target.match?.registeredPlayers === 1 ? 'Sos el último jugador registrado. El partido se eliminará y el turno quedará libre.' : 'Tu lugar quedará disponible para otro jugador. La baja se permite hasta 2 horas antes del inicio.'"
     confirmLabel="Sí, bajarme"
     cancelLabel="Seguir anotado"
     (cancel)="leaveTarget.set(null)"

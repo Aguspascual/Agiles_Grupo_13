@@ -48,6 +48,7 @@ describe('HU-00: landing pública', () => {
     TestBed.inject(HttpTestingController).verify();
     localStorage.clear();
     sessionStorage.clear();
+    vi.useRealTimers();
   });
 
   it('presenta el hero y el buscador sin insertar datos de demostración', () => {
@@ -175,6 +176,44 @@ describe('HU-00: landing pública', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-demo-links]')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('actualiza Urgentes al instante y restaura Todos con los partidos ya cargados', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-18T12:00:00-03:00'));
+    const fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+    flushMatches();
+    await vi.runAllTimersAsync();
+    fixture.detectChanges();
+
+    const page = fixture.componentInstance;
+    const loadedMatches = page.matches();
+    page.matches.set([
+      { ...loadedMatches[0], id: 'urgent-two', date: '2026-11-18', startsAt: '13:00', openSpots: 2 },
+      { ...loadedMatches[1], id: 'outside-window', date: '2026-11-19', startsAt: '12:01', openSpots: 1 },
+      { ...loadedMatches[2], id: 'full', date: '2026-11-18', startsAt: '13:00', openSpots: 0 },
+    ]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const filter = (name: string) =>
+      [...root.querySelectorAll<HTMLButtonElement>('.filter-chips button')].find((button) => button.textContent?.trim() === name)!;
+    expect(root.querySelectorAll('.available-grid [data-match-card]')).toHaveLength(3);
+
+    filter('Urgentes').click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.available-grid [data-match-card]')).toHaveLength(1);
+    expect(root.querySelector('.available-grid [data-match-card]')?.getAttribute('data-match-card')).toBe('urgent-two');
+
+    filter('Completar grupo').click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.available-grid [data-match-card]')).toHaveLength(2);
+
+    filter('Todos').click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.available-grid [data-match-card]')).toHaveLength(3);
     fixture.destroy();
   });
 

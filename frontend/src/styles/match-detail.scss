@@ -13,6 +13,7 @@ app-match-detail-dialog {
   .player-count__avatars i { width: 28px; height: 28px; display: grid; place-items: center; margin-left: -6px; border: 2px solid white; border-radius: 50%; background: #dff3e9; color: #16734f; font-size: .48rem; font-style: normal; font-weight: 850; }
   .player-count__avatars i:first-child { margin-left: 0; }
   .player-count__avatars .player-count__free { background: #26c58b; color: white; }
+  .player-count__avatars .player-count__guest { background: #e2eefb; color: #315c8b; }
   .player-count > span:last-child { display: grid; gap: 1px; }
   .player-count b { font-size: .9rem; }
   .player-count small { color: #79828e; font-size: .62rem; }
@@ -67,6 +68,7 @@ app-match-detail-dialog {
   .court-avatar, .roster-avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: #dff2e8; color: #1e815b; font-size: .57rem; font-weight: 850; font-style: normal; }
   .tone-lavender { background: #e8e4ff; color: #6153a3; }
   .tone-peach { background: #ffe8dc; color: #a45c37; }
+  .tone-blue { background: #e2eefb; color: #315c8b; }
   .court-avatar--empty { background: #d4f2e2; color: #09825c; font-size: 1rem; }
   .court-player-copy { min-width: 0; display: grid; gap: 3px; }
   .court-player-copy b { overflow: hidden; color: #293544; font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }

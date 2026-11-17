@@ -104,6 +104,9 @@ func (r *Repository) create(ctx context.Context, complexID, courtID, actorID str
 	if err != nil {
 		return Reservation{}, err
 	}
+	if _, err := r.ExpireIncompleteMatchesOnCourt(ctx, tx, courtID, time.Now()); err != nil {
+		return Reservation{}, err
+	}
 	if !start.After(time.Now()) {
 		return Reservation{}, ErrConflict
 	}

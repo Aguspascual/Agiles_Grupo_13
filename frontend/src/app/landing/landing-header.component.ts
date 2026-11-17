@@ -216,6 +216,8 @@ export class LandingHeaderComponent {
   }
 
   private noticeText(notice: MatchNotice): string {
+	if (notice.kind === 'match_cancelled') return `El partido en ${notice.complex} se canceló porque el grupo seguía incompleto a menos de 4 horas del turno.`;
+	if (notice.kind === 'player_left') return `Un jugador dejó el partido en ${notice.complex}.`;
     return `Tu partido en ${notice.complex} ya tiene cuatro jugadores.`;
   }
 

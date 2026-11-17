@@ -31,6 +31,7 @@ export interface FullMatch {
   startsAt: string;
   endsAt: string;
   expiresAt: string;
+  organizerPosition: 'Drive' | 'Revés' | 'Indistinto';
   invitations: FullMatchInvitation[];
 }
 
@@ -47,6 +48,7 @@ export class FullMatchApiService {
     date: string;
     startsAt: string;
     phone: string;
+    position: 'Drive' | 'Revés' | 'Indistinto';
     invites: FullMatchInvitationInput[];
   }): Observable<FullMatch> {
     const path = `/api/v1/complexes/${encodeURIComponent(complexId)}/courts/${encodeURIComponent(courtId)}/full-matches`;
@@ -95,6 +97,7 @@ function parseMatchEnvelope(value: unknown): FullMatch {
     startsAt: match['startsAt'] as string,
     endsAt: match['endsAt'] as string,
     expiresAt: match['expiresAt'] as string,
+    organizerPosition: typeof match['organizerPosition'] === 'string' ? match['organizerPosition'] as FullMatch['organizerPosition'] : 'Indistinto',
     invitations,
   };
 }

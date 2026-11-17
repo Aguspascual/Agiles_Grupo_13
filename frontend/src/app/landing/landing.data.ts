@@ -7,11 +7,15 @@ export interface PlayerPreview {
   organizer?: boolean;
   /** Lugar en la cancha (1 y 2: pareja A; 3 y 4: pareja B). */
   slot?: number;
+  /** Acompañante confirmado que participa sin cuenta. */
+  guest?: boolean;
 }
 
 export interface MatchPreview {
   id: string;
   date?: string;
+  /** Hora local del partido (Buenos Aires), en formato HH:mm. */
+  startsAt?: string;
   day: string;
   time: string;
   duration: string;
@@ -26,6 +30,8 @@ export interface MatchPreview {
   levels?: string[];
   price: string;
   openSpots: number;
+  guestPlayers?: number;
+  guests?: Array<{ name: string; slot: number }>;
   players: PlayerPreview[];
   features: string[];
 }

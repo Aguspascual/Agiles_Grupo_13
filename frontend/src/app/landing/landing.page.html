@@ -91,7 +91,7 @@
           </div>
           <div class="filter-chips" aria-label="Filtrar partidos destacados">
             @for (filter of availableFilters; track filter) {
-              <button type="button" [class.is-selected]="activeFilter === filter" (click)="activeFilter = filter">{{ filter }}</button>
+              <button type="button" [class.is-selected]="activeFilter() === filter" (click)="activeFilter.set(filter)">{{ filter }}</button>
             }
           </div>
         </div>
@@ -99,7 +99,9 @@
           @for (match of availableMatches(); track match.id) {
             <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
           } @empty {
-            <p class="empty-matches">Todavía no hay partidos abiertos para mostrar.</p>
+            <p class="empty-matches">
+              {{ activeFilter() === 'Urgentes' ? 'No hay partidos urgentes para las próximas 24 horas.' : 'Todavía no hay partidos abiertos para mostrar.' }}
+            </p>
           }
         </div>
       </div>

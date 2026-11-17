@@ -60,6 +60,22 @@ h1 {
   color: #131b2e;
   font-size: 1.15rem;
 }
+.agenda-export {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #0d8f63;
+  border-radius: 10px;
+  background: #fff;
+  color: #08784f;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.agenda-export:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .agenda-card {
   overflow: hidden;
   border: 1px solid var(--pm-admin-border);

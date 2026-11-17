@@ -9,6 +9,8 @@
 .court-picker__spot small { font-size: .66rem; font-weight: 700; opacity: .9; }
 .court-picker__spot:hover .court-picker__dot { transform: scale(1.06); background: #ffffff38; }
 .court-picker__spot.is-selected .court-picker__dot { border: 2px solid #fff; background: #d8f448; color: #1e3a14; box-shadow: 0 4px 12px #00000040; }
+.court-picker__spot.is-occupied .court-picker__dot { border: 2px solid #fff; background: #d6f4e5; color: #087a59; }
+.court-picker__spot small { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .court-picker__spot:focus-visible { outline: 3px solid #fff; outline-offset: 2px; border-radius: 12px; }
 .court-picker__summary { margin: 0; color: #25332e; font-size: .78rem; font-weight: 700; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .court-picker__dot { transition: none; } }

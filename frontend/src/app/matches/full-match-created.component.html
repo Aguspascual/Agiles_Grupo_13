@@ -4,7 +4,7 @@
       <span class="invite-success__check" aria-hidden="true">✓</span>
       <div>
         <h3>{{ created.status === 'expired' || created.status === 'cancelled' ? 'El turno se liberó' : created.status === 'full' ? 'Los cuatro lugares están confirmados' : 'Turno reservado para tu grupo' }}</h3>
-        <p>{{ created.complex }} · {{ created.date }} · {{ created.startsAt }}–{{ created.endsAt }}</p>
+        <p>{{ created.complex }} · {{ created.date }} · {{ created.startsAt }}–{{ created.endsAt }} · {{ created.organizerPosition }}</p>
         @if (created.status === 'expired' || created.status === 'cancelled') {
           <small>Faltaron confirmaciones antes del vencimiento y la cancha volvió a estar disponible.</small>
         } @else if (created.status === 'full') {
