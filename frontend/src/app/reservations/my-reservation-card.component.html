@@ -40,6 +40,17 @@
         Cancelar reserva
       </button>
     }
+    @if (canExport()) {
+      <button type="button" class="my-card__calendar is-primary" data-google-calendar [disabled]="exporting()"
+        (click)="openGoogleCalendar($event)" (keydown)="$event.stopPropagation()" (keyup)="$event.stopPropagation()">
+        Agregar a Google Calendar
+      </button>
+      <button type="button" class="my-card__calendar" data-calendar [disabled]="exporting()"
+        (click)="exportCalendar($event)" (keydown)="$event.stopPropagation()" (keyup)="$event.stopPropagation()">
+        Descargar .ics
+      </button>
+      @if (exporting()) { <span role="status">Preparando calendario…</span> }
+    }
     @if (canLeave()) {
       <button type="button" class="my-card__leave" [disabled]="saving()" (click)="leave.emit(item())">
         Bajarme del partido

@@ -5,6 +5,8 @@ import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angul
 import { BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { MyReservationsPage } from './my-reservations.page';
+import { CalendarDownloadService } from './calendar-download.service';
+import { GoogleCalendarNavigationService } from './google-calendar-navigation.service';
 
 const LIST_URL = '/api/v1/me/reservations';
 
@@ -327,5 +329,111 @@ describe('HU-17: Mis reservas', () => {
     expectList('upcoming').flush({ items: [{ kind: 'otro' }], page: { limit: 20, offset: 0, hasMore: false } });
     await settle();
     expect(root().querySelector('[role="alert"]')).toBeTruthy();
+  });
+
+  const future = { startsAt: '2099-11-03T18:00:00-03:00', endsAt: '2099-11-03T19:30:00-03:00' };
+
+  it('ofrece calendario solo en reservas y partidos próximos no cancelados', async () => {
+    await render(page([
+      reservation('r1', future), match('m1', future), match('m2', future, { status: 'full' }),
+      reservation('r2', { ...future, status: 'cancelled' }),
+      match('m3', { ...future, status: 'cancelled' }),
+      reservation('old', { startsAt: '2000-01-01T12:00:00Z' }),
+    ]));
+    expect(cards().map(card => !!card.querySelector('[data-calendar]'))).toEqual([true, true, true, false, false, false]);
+    expect(cards().map(card => !!card.querySelector('[data-google-calendar]'))).toEqual([true, true, true, false, false, false]);
+    buttonByText('Jugados')!.click();
+    expectList('past').flush(page([reservation('r1', future)]));
+    await settle();
+    expect(root().querySelector('[data-calendar]')).toBeNull();
+    expect(root().querySelector('[data-google-calendar]')).toBeNull();
+  });
+
+  it('descarga desde un partido sin propagar eventos, navegar, cancelar ni bajarse', async () => {
+    await render(page([match('m1', future)]));
+    const save = vi.spyOn(TestBed.inject(CalendarDownloadService), 'save').mockImplementation(() => {});
+    const openDetail = vi.fn();
+    cards()[0].addEventListener('click', openDetail);
+    cards()[0].addEventListener('keydown', openDetail);
+    const button = cards()[0].querySelector<HTMLButtonElement>('[data-calendar]')!;
+    expect(button.type).toBe('button');
+    expect(button.tabIndex).toBe(0);
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    button.click();
+    http.expectOne('/api/v1/public/complexes').flush({ complexes: [] });
+    await settle();
+    expect(save).toHaveBeenCalledOnce();
+    expect(openDetail).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(root().querySelector('app-confirm-dialog')).toBeNull();
+    http.expectNone(req => req.method !== 'GET');
+    buttonByText('Bajarme del partido')!.click();
+    await settle();
+    expect(root().querySelector('app-confirm-dialog')).not.toBeNull();
+  });
+
+  it.each(['Descargar .ics', 'Agregar a Google Calendar'])('informa horarios inválidos desde %s', async label => {
+    await render(page([reservation('r1', { ...future, endsAt: 'invalid' })]));
+    const save = vi.spyOn(TestBed.inject(CalendarDownloadService), 'save').mockImplementation(() => {});
+    const open = vi.spyOn(TestBed.inject(GoogleCalendarNavigationService), 'open').mockImplementation(() => {});
+    buttonByText(label)!.click();
+    await settle();
+    expect(save).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+    expect(toast()).toContain('horarios');
+  });
+
+  it('abre Google una sola vez sin descargar ICS, propagar eventos ni cambiar el partido', async () => {
+    await render(page([match('m1', future)]));
+    const open = vi.spyOn(TestBed.inject(GoogleCalendarNavigationService), 'open').mockImplementation(() => {});
+    const save = vi.spyOn(TestBed.inject(CalendarDownloadService), 'save').mockImplementation(() => {});
+    const openDetail = vi.fn();
+    cards()[0].addEventListener('click', openDetail);
+    cards()[0].addEventListener('keydown', openDetail);
+    const button = buttonByText('Agregar a Google Calendar')!;
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    button.click();
+    button.click();
+    const request = http.expectOne('/api/v1/public/complexes');
+    await settle();
+    expect(button.disabled).toBe(true);
+    request.flush({ complexes: [{ id: 'c-1', name: 'Club Norte', address: 'Calle 10, Gonnet', zone: 'Gonnet' }] });
+    await settle();
+    expect(open).toHaveBeenCalledOnce();
+    expect(new URL(open.mock.calls[0][0]).searchParams.get('location')).toBe('Club Norte · Cancha 1 · Calle 10, Gonnet');
+    expect(button.disabled).toBe(false);
+    expect(save).not.toHaveBeenCalled();
+    expect(openDetail).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(root().querySelector('app-confirm-dialog')).toBeNull();
+    http.expectNone(req => req.method !== 'GET');
+    buttonByText('Bajarme del partido')!.click();
+    await settle();
+    expect(root().querySelector('app-confirm-dialog')).not.toBeNull();
+  });
+
+  it('no navega a Google si se abandona la página mientras espera la dirección', async () => {
+    await render(page([reservation('r1', future)]));
+    const open = vi.spyOn(TestBed.inject(GoogleCalendarNavigationService), 'open').mockImplementation(() => {});
+    buttonByText('Agregar a Google Calendar')!.click();
+    const request = http.expectOne('/api/v1/public/complexes');
+    fixture.destroy();
+    expect(request.cancelled).toBe(true);
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it('informa un error de navegación sin descargar ni cancelar la reserva', async () => {
+    await render(page([reservation('r1', future)]));
+    vi.spyOn(TestBed.inject(GoogleCalendarNavigationService), 'open').mockImplementation(() => { throw new Error('navigation failed'); });
+    buttonByText('Agregar a Google Calendar')!.click();
+    http.expectOne('/api/v1/public/complexes').flush({ complexes: [] });
+    await settle();
+    expect(toast()).toContain('No se pudo abrir Google Calendar');
+    expect(buttonByText('Agregar a Google Calendar')!.disabled).toBe(false);
+    expect(root().querySelector('app-confirm-dialog')).toBeNull();
   });
 });

@@ -68,6 +68,10 @@
                         [date]="dateLabel(item)"
                         [time]="timeLabel(item)"
                         [saving]="saving()"
+                        [upcoming]="view() === 'upcoming'"
+                        [exporting]="exporting().has(itemKey(item))"
+                        (addToCalendar)="addToCalendar($event)"
+                        (googleCalendar)="addToCalendar($event, 'google')"
                         (cancel)="requestCancel($event)"
                         (leave)="requestLeave($event)"
                       />

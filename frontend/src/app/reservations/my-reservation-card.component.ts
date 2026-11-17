@@ -13,6 +13,10 @@ export class MyReservationCardComponent {
   readonly date = input.required<string>();
   readonly time = input.required<string>();
   readonly saving = input(false);
+  readonly upcoming = input(true);
+  readonly exporting = input(false);
+  readonly addToCalendar = output<MyReservationItem>();
+  readonly googleCalendar = output<MyReservationItem>();
   readonly cancel = output<MyReservationItem>();
   readonly leave = output<MyReservationItem>();
 
@@ -24,6 +28,23 @@ export class MyReservationCardComponent {
   useFallback(event: Event): void {
     const image = event.target as HTMLImageElement;
     if (!image.src.endsWith(FALLBACK_IMAGE)) image.src = FALLBACK_IMAGE;
+  }
+
+  canExport(): boolean {
+    const item = this.item();
+    const startsAt = Date.parse(item.startsAt);
+    return this.upcoming() && item.status === 'reserved' &&
+      (!Number.isFinite(startsAt) || startsAt > Date.now());
+  }
+
+  exportCalendar(event: Event): void {
+    event.stopPropagation();
+    this.addToCalendar.emit(this.item());
+  }
+
+  openGoogleCalendar(event: Event): void {
+    event.stopPropagation();
+    this.googleCalendar.emit(this.item());
   }
 
   canLeave(): boolean {
