@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { ComplexDraft, ComplexRecord, ManagerOption, PublicComplex, PublicCourt } from './complex.model';
+import { ComplexDraft, ComplexPricing, ComplexRecord, ManagerOption, PublicComplex, PublicCourt } from './complex.model';
 
 const COMPLEXES_API = '/api/v1/complexes';
 const PUBLIC_COMPLEXES_API = '/api/v1/public/complexes';
@@ -106,7 +106,31 @@ function parseComplex(value: unknown): ComplexRecord {
     imageDataUrl: typeof value['imageDataUrl'] === 'string' ? value['imageDataUrl'] : null,
     managerIds,
     managers,
+    pricing: parsePricing(value['pricing']),
   };
+}
+
+function parsePricing(value: unknown): ComplexPricing {
+  if (value === undefined || value === null) {
+    return { turnPrice: '0.00', depositEnabled: false, depositType: 'fixed', depositValue: '0.00' };
+  }
+  if (!isRecord(value) || typeof value['depositEnabled'] !== 'boolean' ||
+      (value['depositType'] !== 'fixed' && value['depositType'] !== 'percentage')) {
+    throw new Error('ConfiguraciÃ³n de seÃ±a invÃ¡lida');
+  }
+  return {
+    turnPrice: parseDecimalString(value['turnPrice']),
+    depositEnabled: value['depositEnabled'],
+    depositType: value['depositType'],
+    depositValue: parseDecimalString(value['depositValue']),
+  };
+}
+
+function parseDecimalString(value: unknown): string {
+  const text = typeof value === 'string' ? value : typeof value === 'number' && Number.isFinite(value) ? value.toFixed(2) : '';
+  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) throw new Error('Importe del complejo invÃ¡lido');
+  const [whole, fraction = ''] = text.split('.');
+  return `${whole}.${fraction.padEnd(2, '0')}`;
 }
 
 function parseManagerList(value: unknown): ManagerOption[] {

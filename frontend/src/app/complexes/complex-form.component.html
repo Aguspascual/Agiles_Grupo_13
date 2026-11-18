@@ -11,6 +11,36 @@
     <label class="field">Teléfono<input formControlName="phone" type="tel" autocomplete="tel" placeholder="221 555-0123" />@if (form.controls.phone.touched && form.controls.phone.invalid) { <small>Ingresá un teléfono de contacto.</small> }</label>
   </div>
 
+  <section class="pricing-field" formGroupName="pricing" aria-labelledby="pricing-heading">
+    <h3 id="pricing-heading">Precio del turno y seña</h3>
+    <label class="field" for="turn-price">Precio por turno (ARS)
+      <input id="turn-price" type="number" min="0" step="0.01" inputmode="decimal" formControlName="turnPrice" aria-describedby="pricing-help" />
+    </label>
+    <small id="pricing-help">Un precio común para todas las canchas y duraciones del complejo.</small>
+    <label class="deposit-toggle" for="deposit-enabled">
+      <input id="deposit-enabled" type="checkbox" formControlName="depositEnabled" />
+      <span>Requerir seña</span>
+    </label>
+    @if (form.controls.pricing.controls.depositEnabled.value) {
+      <div class="field-grid pricing-options">
+        <label class="field" for="deposit-type">Modalidad
+          <select id="deposit-type" formControlName="depositType">
+            <option value="fixed">Monto fijo</option>
+            <option value="percentage">Porcentaje del turno</option>
+          </select>
+        </label>
+        <label class="field" for="deposit-value">{{ form.controls.pricing.controls.depositType.value === 'fixed' ? 'Seña (ARS)' : 'Porcentaje (%)' }}
+          <input id="deposit-value" type="number" [min]="form.controls.pricing.controls.depositType.value === 'fixed' ? 0.01 : 1" [max]="form.controls.pricing.controls.depositType.value === 'fixed' ? form.controls.pricing.controls.turnPrice.value : 100" step="0.01" inputmode="decimal" formControlName="depositValue" />
+        </label>
+      </div>
+    } @else {
+      <p class="deposit-off-note">Con la seña desactivada, las reservas siguen sin requerir pagos.</p>
+    }
+    @if (form.controls.pricing.touched && form.controls.pricing.invalid) {
+      <small class="field-error" role="alert">{{ pricingErrorMessage }}</small>
+    }
+  </section>
+
 
   <div class="manager-picker">
     <span class="manager-label">Encargados <small>{{ managersReadOnly ? 'Solo administración puede modificar asignaciones' : 'Solo usuarios administradores · podés elegir más de uno' }}</small></span>
