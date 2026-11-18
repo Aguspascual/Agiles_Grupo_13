@@ -8,6 +8,7 @@ import { LandingFooterComponent } from './landing-footer.component';
 import { LandingHeaderComponent } from './landing-header.component';
 import { MatchCardComponent } from './match-card.component';
 import { MatchDetailDialogComponent } from './match-detail-dialog.component';
+import { PadelCourtArtComponent } from './padel-court-art.component';
 import { AuthSessionService } from '../auth/auth-session.service';
 import { PublicComplex, PublicCourt } from '../complexes/complex.model';
 import { ComplexApiService } from '../complexes/complex-api.service';
@@ -16,6 +17,9 @@ import { MatchPreview } from './landing.data';
 import { ProfileFeedbackStore } from '../profile/profile-feedback.store';
 import { ToastComponent } from '../shared/toast.component';
 import { isUrgentMatch } from './urgent-match';
+
+/** Cantidad máxima de partidos en el carrusel de la portada. */
+const MAX_RECOMMENDED = 12;
 
 @Component({
   selector: 'app-landing-page',
@@ -27,6 +31,7 @@ import { isUrgentMatch } from './urgent-match';
     MatchCardComponent,
     ClubCardComponent,
     FeaturedCourtsComponent,
+    PadelCourtArtComponent,
     ToastComponent,
     MatchDetailDialogComponent,
   ],
@@ -54,11 +59,16 @@ export class LandingPage {
     for (const court of this.courts()) counts.set(court.complexId, (counts.get(court.complexId) ?? 0) + 1);
     return counts;
   });
+  /** Partidos del carrusel: respetan el filtro elegido y muestran primero los del nivel del jugador. */
   readonly recommendedMatches = computed(() => {
-    const all = this.matches();
+    const matches = this.availableMatches();
     const level = this.session.currentUser()?.level;
-    return (level ? all.filter((match) => (match.levels ?? [match.level]).includes(level)) : all).slice(0, 3);
+    if (!level) return matches.slice(0, MAX_RECOMMENDED);
+    const fitsLevel = (match: MatchPreview) => (match.levels ?? [match.level]).includes(level);
+    return [...matches.filter(fitsLevel), ...matches.filter((match) => !fitsLevel(match))].slice(0, MAX_RECOMMENDED);
   });
+  /** Próximo partido abierto con lugares libres, para el cartel de la cancha del encabezado. */
+  readonly nextOpenMatch = computed(() => this.matches().find((match) => match.openSpots > 0) ?? null);
   readonly availableMatches = computed(() => {
     let matches = this.matches();
     if (this.activeFilter() === 'Urgentes') {
@@ -69,16 +79,18 @@ export class LandingPage {
     return matches;
   });
   readonly stats = computed(() => [
-    { value: this.matches().length, label: 'PARTIDOS ABIERTOS', icon: '⌁' },
-    { value: this.complexes().length, label: 'CLUBES PUBLICADOS', icon: '▦' },
-    { value: new Set(this.matches().flatMap((match) => match.levels ?? [match.level])).size, label: 'NIVELES BUSCADOS', icon: '◎' },
-    { value: this.matches().reduce((total, match) => total + match.players.length, 0), label: 'INSCRIPCIONES EN PARTIDOS', icon: '♙' },
+    { value: this.matches().length, label: 'PARTIDOS ABIERTOS', icon: 'ball' },
+    { value: this.complexes().length, label: 'CLUBES PUBLICADOS', icon: 'club' },
+    { value: new Set(this.matches().flatMap((match) => match.levels ?? [match.level])).size, label: 'NIVELES BUSCADOS', icon: 'level' },
+    { value: this.matches().reduce((total, match) => total + match.players.length, 0), label: 'INSCRIPCIONES EN PARTIDOS', icon: 'players' },
   ]);
   readonly availableFilters = ['Todos', 'Urgentes', 'Completar grupo'];
   zone = '';
   level = '';
   date = '';
   readonly activeFilter = signal('Todos');
+  /** El buscador arranca plegado y se despliega desde "Buscar partidos". */
+  readonly searchOpen = signal(false);
 
   constructor() {
     this.loadData();
@@ -88,6 +100,16 @@ export class LandingPage {
         this.feedback.clear();
       }, 3500);
     }
+  }
+
+  /** Desplaza el carrusel de recomendados casi un ancho de pantalla. */
+  scrollCarousel(track: HTMLElement, direction: 1 | -1): void {
+    track.scrollBy?.({ left: direction * track.clientWidth * 0.9, behavior: 'smooth' });
+  }
+
+  /** Primer nombre del jugador para el saludo de la portada. */
+  firstName(name: string): string {
+    return name.trim().split(/\s+/)[0] ?? '';
   }
 
   loadData(): void {

@@ -68,8 +68,8 @@ describe('HU-00: landing pública', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     const heroTitle = root.querySelector('h1')?.textContent ?? '';
-    expect(heroTitle).toContain('Encontrá tu próximo');
-    expect(heroTitle).toContain('partido de pádel en La Plata');
+    expect(heroTitle).toContain('Publicá tu partido');
+    expect(heroTitle).toContain('jugadores de tu nivel');
     expect(root.querySelector('[data-home-search]')).not.toBeNull();
     expect(root.textContent).toContain('Cargando complejos y partidos');
     expect(root.querySelector('[data-home-stats]')).toBeNull();
