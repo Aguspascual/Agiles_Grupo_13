@@ -79,7 +79,8 @@ describe('modal de crear nuevo partido', () => {
   it('en un partido abierto se elige el lugar en la cancha y se envía con los niveles', async () => {
     const fixture = await render();
     expect(root(fixture).querySelector('app-court-position-picker')).not.toBeNull();
-    expect(fixture.componentInstance.slot).toBe(2);
+    // HU-09: el organizador arranca sin lugar asignado y lo elige tocando la cancha.
+    expect(fixture.componentInstance.slot).toBeNull();
 
     (root(fixture).querySelectorAll('.court-picker__spot')[2] as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -87,6 +88,10 @@ describe('modal de crear nuevo partido', () => {
     (open(fixture, '.form-grid app-multi-select', '6ta') as HTMLElement).click();
     fixture.componentInstance.startsAt = '18:00';
     fixture.componentInstance.submit();
+    // HU-18: antes de publicar se pide confirmación; el partido se crea al confirmar.
+    expect(fixture.componentInstance.publicationConfirmOpen).toBe(true);
+    expect(createOpen).not.toHaveBeenCalled();
+    fixture.componentInstance.confirmPublication();
 
     expect(createOpen).toHaveBeenCalledWith('c1', 'k1', expect.objectContaining({ targetLevel: '5ta', targetLevels: ['5ta', '6ta'], slot: 3 }));
   });

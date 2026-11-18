@@ -132,6 +132,11 @@ describe('HU-01: registro e inicio de sesión', () => {
     );
     await fixture.whenStable();
     fixture.detectChanges();
+    // Al volver al inicio, la portada pide complejos, partidos y canchas.
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/public/complexes').flush({ complexes: [] });
+    http.expectOne('/api/v1/matches').flush({ matches: [] });
+    http.expectOne('/api/v1/public/courts').flush({ courts: [] });
     expect(localStorage.getItem(AuthTokenStore.storageKey)).toBe('jwt-test');
 
     expect(TestBed.inject(Router).url).toBe('/');
