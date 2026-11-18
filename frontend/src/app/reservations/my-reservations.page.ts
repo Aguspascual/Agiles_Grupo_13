@@ -12,6 +12,7 @@ import { MatchPreview } from '../landing/landing.data';
 import { MatchDetailDialogComponent } from '../landing/match-detail-dialog.component';
 import { MyReservationCardComponent } from './my-reservation-card.component';
 import { MyReservationsSummaryComponent } from './my-reservations-summary.component';
+import { AbsenceReportsComponent } from './absence-reports.component';
 import { MyReservationItem, MyReservationView, ReservationApiService } from './reservation-api.service';
 import { ReservationCalendarService } from './reservation-calendar.service';
 import { INVALID_CALENDAR_TIME } from './reservation-calendar';
@@ -29,7 +30,7 @@ type ListStatus = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-my-reservations-page',
   providers: [ReservationCalendarService],
-  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent, MatchDetailDialogComponent],
+  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent, ConfirmDialogComponent, ToastComponent, MyReservationCardComponent, MyReservationsSummaryComponent, MatchDetailDialogComponent, AbsenceReportsComponent],
   templateUrl: './my-reservations.page.html',
   styleUrl: './my-reservations.page.scss',
 })
