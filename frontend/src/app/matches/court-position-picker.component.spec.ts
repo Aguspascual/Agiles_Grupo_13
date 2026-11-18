@@ -15,7 +15,13 @@ describe('selector de lugar en la cancha', () => {
     const fixture = render(2);
     const spots = [...fixture.nativeElement.querySelectorAll('[role="radio"]')] as HTMLButtonElement[];
 
-    expect(spots.map((spot) => spot.getAttribute('aria-label'))).toEqual(['Pareja A, Drive', 'Pareja A, Revés', 'Pareja B, Drive', 'Pareja B, Revés']);
+    // HU-09: con un lugar elegido, los libres ofrecen sumar a un amigo.
+    expect(spots.map((spot) => spot.getAttribute('aria-label'))).toEqual([
+      'Agregar amigo en Pareja A, Drive',
+      'Tu lugar, Pareja A, Revés',
+      'Agregar amigo en Pareja B, Drive',
+      'Agregar amigo en Pareja B, Revés',
+    ]);
     expect(spots.map((spot) => spot.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false', 'false']);
     expect(spots[1].textContent).toContain('AP');
     expect(fixture.nativeElement.querySelector('.court-picker__summary')?.textContent).toContain('Pareja A · Revés');

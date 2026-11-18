@@ -104,11 +104,14 @@ describe('HU-07: AgendaApiService', () => {
         id: 'm1',
         status: 'open',
         targetLevel: '5ta',
+        // HU-09: sin acompañantes ni invitados, el parser completa los valores por defecto.
+        guestPlayers: 0,
         missingPlayers: 2,
         players: [
           { name: 'Ana Pérez', level: '5ta', position: 'Drive', organizer: true },
           { name: 'Luis Gómez', level: '6ta', organizer: false },
         ],
+        guests: [],
       });
       expect('position' in result!.courts[0].reservations[0].pendingMatch!.players[1]).toBe(false);
     });
