@@ -61,7 +61,8 @@ func (r *PostgresRepository) HasAssignments(ctx context.Context, userID string) 
 }
 
 func (r *PostgresRepository) List(ctx context.Context, userID string, admin bool) ([]Complex, error) {
-	rows, err := r.db.Query(ctx, `SELECT c.id::text, c.name, c.address, c.zone, c.phone, c.image_data, COALESCE(c.image_mime_type,'')
+	rows, err := r.db.Query(ctx, `SELECT c.id::text, c.name, c.address, c.zone, c.phone, c.image_data, COALESCE(c.image_mime_type,''),
+		c.turn_price_cents,c.deposit_enabled,c.deposit_type,c.deposit_value_units
 		FROM complexes c
 		WHERE c.deleted_at IS NULL AND ($2 OR EXISTS (
 			SELECT 1 FROM complex_managers cm WHERE cm.complex_id = c.id AND cm.user_id = $1::uuid
@@ -73,9 +74,13 @@ func (r *PostgresRepository) List(ctx context.Context, userID string, admin bool
 	var result []Complex
 	for rows.Next() {
 		var item Complex
-		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType); err != nil {
+		var priceCents, depositUnits int64
+		if err := rows.Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType,
+			&priceCents, &item.Pricing.DepositEnabled, &item.Pricing.DepositType, &depositUnits); err != nil {
 			return nil, err
 		}
+		item.Pricing.TurnPrice = DecimalAmount(priceCents)
+		item.Pricing.DepositValue = DecimalAmount(depositUnits)
 		item.ImageDataURL = media.EncodeDataURL(item.ImageData, item.ImageMimeType)
 		result = append(result, item)
 	}
@@ -105,13 +110,23 @@ func (r *PostgresRepository) Create(ctx context.Context, draft Draft) (Complex, 
 		return Complex{}, err
 	}
 	defer tx.Rollback(ctx)
+	pricing := defaultPricing()
+	if draft.Pricing != nil {
+		pricing = *draft.Pricing
+	}
 	var item Complex
-	err = tx.QueryRow(ctx, `INSERT INTO complexes(name,address,zone,phone,image_data,image_mime_type) VALUES($1,$2,$3,$4,$5,$6)
-		RETURNING id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,'')`, draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType)).
-		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType)
+	priceCents, depositUnits := int64(pricing.TurnPrice), int64(pricing.DepositValue)
+	err = tx.QueryRow(ctx, `INSERT INTO complexes(name,address,zone,phone,image_data,image_mime_type,turn_price_cents,deposit_enabled,deposit_type,deposit_value_units)
+		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		RETURNING id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,''),turn_price_cents,deposit_enabled,deposit_type,deposit_value_units`,
+		draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType), priceCents, pricing.DepositEnabled, pricing.DepositType, depositUnits).
+		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType,
+			&priceCents, &item.Pricing.DepositEnabled, &item.Pricing.DepositType, &depositUnits)
 	if err != nil {
 		return Complex{}, err
 	}
+	item.Pricing.TurnPrice = DecimalAmount(priceCents)
+	item.Pricing.DepositValue = DecimalAmount(depositUnits)
 	if err := insertManagers(ctx, tx, item.ID, draft.ManagerIDs); err != nil {
 		return Complex{}, err
 	}
@@ -135,15 +150,19 @@ func (r *PostgresRepository) Update(ctx context.Context, id, actor string, admin
 	}
 	defer tx.Rollback(ctx)
 	var item Complex
-	err = tx.QueryRow(ctx, `SELECT id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,'') FROM complexes
+	var priceCents, depositUnits int64
+	err = tx.QueryRow(ctx, `SELECT id::text,name,address,zone,phone,image_data,COALESCE(image_mime_type,''),turn_price_cents,deposit_enabled,deposit_type,deposit_value_units FROM complexes
 		WHERE id=$1::uuid AND deleted_at IS NULL FOR UPDATE`, id).
-		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType)
+		Scan(&item.ID, &item.Name, &item.Address, &item.Zone, &item.Phone, &item.ImageData, &item.ImageMimeType,
+			&priceCents, &item.Pricing.DepositEnabled, &item.Pricing.DepositType, &depositUnits)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Complex{}, ErrNotFound
 	}
 	if err != nil {
 		return Complex{}, err
 	}
+	item.Pricing.TurnPrice = DecimalAmount(priceCents)
+	item.Pricing.DepositValue = DecimalAmount(depositUnits)
 	if !admin {
 		var assigned bool
 		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM complex_managers WHERE complex_id=$1::uuid AND user_id=$2::uuid)`, id, actor).Scan(&assigned); err != nil {
@@ -163,7 +182,13 @@ func (r *PostgresRepository) Update(ctx context.Context, id, actor string, admin
 			return Complex{}, ErrForbidden
 		}
 	}
-	_, err = tx.Exec(ctx, `UPDATE complexes SET name=$2,address=$3,zone=$4,phone=$5,image_data=$6,image_mime_type=$7,updated_at=now() WHERE id=$1::uuid`, id, draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType))
+	if draft.Pricing != nil {
+		item.Pricing = *draft.Pricing
+	}
+	_, err = tx.Exec(ctx, `UPDATE complexes SET name=$2,address=$3,zone=$4,phone=$5,image_data=$6,image_mime_type=$7,
+		turn_price_cents=$8,deposit_enabled=$9,deposit_type=$10,deposit_value_units=$11,updated_at=now() WHERE id=$1::uuid`,
+		id, draft.Name, draft.Address, draft.Zone, draft.Phone, imageData, nullableString(mimeType),
+		int64(item.Pricing.TurnPrice), item.Pricing.DepositEnabled, item.Pricing.DepositType, int64(item.Pricing.DepositValue))
 	if err != nil {
 		return Complex{}, err
 	}

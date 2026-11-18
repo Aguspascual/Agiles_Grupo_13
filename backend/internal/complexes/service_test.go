@@ -68,7 +68,10 @@ func (r *testRepository) Create(_ context.Context, d Draft) (Complex, error) {
 			return Complex{}, ErrInvalid
 		}
 	}
-	c := Complex{ID: complexID, Name: d.Name, Address: d.Address, Zone: d.Zone, Phone: d.Phone, ImageDataURL: d.ImageDataURL}
+	c := Complex{ID: complexID, Name: d.Name, Address: d.Address, Zone: d.Zone, Phone: d.Phone, ImageDataURL: d.ImageDataURL, Pricing: defaultPricing()}
+	if d.Pricing != nil {
+		c.Pricing = *d.Pricing
+	}
 	r.complexes[c.ID] = c
 	r.assignments[c.ID] = append([]string(nil), d.ManagerIDs...)
 	return c, nil
@@ -99,6 +102,9 @@ func (r *testRepository) Update(_ context.Context, id, actor string, admin bool,
 	}
 	c.Name, c.Address, c.Zone, c.Phone = d.Name, d.Address, d.Zone, d.Phone
 	c.ImageDataURL = d.ImageDataURL
+	if d.Pricing != nil {
+		c.Pricing = *d.Pricing
+	}
 	r.complexes[id] = c
 	return c, nil
 }

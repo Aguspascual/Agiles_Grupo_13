@@ -41,6 +41,7 @@ Seguir los [acuerdos backend](../AGENTS_BACK.md) para ramas, commits atómicos, 
 | [0015: consulta de la agenda del complejo](TDD-0015-hu-07-consulta-agenda-complejo.md) | HU-07 | Borrador v2 para aprobación humana |
 | [0016: cancelación de una reserva por el encargado](TDD-0016-hu-07-cancelacion-por-encargado.md) | HU-07 | Borrador v1 para aprobación humana |
 | [0017: baja de un jugador de un partido pendiente](TDD-0017-hu-13-bajarse-de-partido-pendiente.md) | HU-13 | Borrador v1 para aprobación humana |
+| [0020: configuración de seña de complejo](TDD-0020-hu-21-configurar-sena-complejo.md) | HU-21 | Aprobado v1 |
 
 ### HU-04: acuerdos y contrato común aprobado
 

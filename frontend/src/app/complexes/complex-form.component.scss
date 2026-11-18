@@ -23,6 +23,13 @@
 .manager-label { color: #29364a; font-size: .84rem; font-weight: 700; }
 .manager-label small { margin-left: 6px; color: #687469; font-size: .72rem; font-weight: 500; }
 .manager-readonly-note, .form-error { grid-column: 1 / -1; margin: 0; color: #687469; font-size: .8rem; }
+.pricing-field { display: grid; gap: 9px; padding: 13px; border: 1px solid #dce2ed; border-radius: 10px; background: #fbfcfe; }
+.pricing-field h3 { margin: 0; color: #29364a; font-size: .9rem; }
+.pricing-field > small { color: #687469; font-size: .76rem; }
+.pricing-options select { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid #dce2ed; border-radius: 9px; background: #fff; color: #131b2e; font: inherit; font-weight: 500; }
+.deposit-toggle { display: flex; align-items: center; gap: 9px; color: #29364a; font-size: .84rem; font-weight: 700; cursor: pointer; }
+.deposit-toggle input { width: 18px; height: 18px; accent-color: #059668; }
+.deposit-off-note { margin: 0; color: #687469; font-size: .78rem; }
 .image-field { display: grid; gap: 8px; }
 .image-field h3 { margin: 0; color: #29364a; font-size: .86rem; }
 .image-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }

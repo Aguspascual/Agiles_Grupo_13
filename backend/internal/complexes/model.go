@@ -27,8 +27,16 @@ type Complex struct {
 	ImageDataURL  *string   `json:"imageDataUrl"`
 	ManagerIDs    []string  `json:"managerIds"`
 	Managers      []Manager `json:"managers,omitempty"`
+	Pricing       Pricing   `json:"pricing"`
 	ImageData     []byte    `json:"-"`
 	ImageMimeType string    `json:"-"`
+}
+
+type Pricing struct {
+	TurnPrice      DecimalAmount `json:"turnPrice"`
+	DepositEnabled bool          `json:"depositEnabled"`
+	DepositType    string        `json:"depositType"`
+	DepositValue   DecimalAmount `json:"depositValue"`
 }
 
 type Manager struct {
@@ -44,6 +52,34 @@ type Draft struct {
 	Phone        string   `json:"phone"`
 	ImageDataURL *string  `json:"imageDataUrl"`
 	ManagerIDs   []string `json:"managerIds"`
+	Pricing      *Pricing `json:"pricing,omitempty"`
+}
+
+func defaultPricing() Pricing { return Pricing{DepositType: "fixed"} }
+
+func (p Pricing) Validate() error {
+	if p.TurnPrice <= 0 || p.DepositValue < 0 {
+		return ErrInvalid
+	}
+	switch p.DepositType {
+	case "fixed":
+		if p.DepositEnabled && (p.DepositValue <= 0 || p.DepositValue > p.TurnPrice) {
+			return ErrInvalid
+		}
+		if !p.DepositEnabled && p.DepositValue > p.TurnPrice {
+			return ErrInvalid
+		}
+	case "percentage":
+		if p.DepositEnabled && (p.DepositValue < 100 || p.DepositValue > 10000) {
+			return ErrInvalid
+		}
+		if !p.DepositEnabled && p.DepositValue > 0 && (p.DepositValue < 100 || p.DepositValue > 10000) {
+			return ErrInvalid
+		}
+	default:
+		return ErrInvalid
+	}
+	return nil
 }
 
 func (d *Draft) Validate(requireManagers bool) error {
@@ -71,6 +107,9 @@ func (d *Draft) Validate(requireManagers bool) error {
 		seen[id] = struct{}{}
 	}
 	if requireManagers && len(d.ManagerIDs) == 0 {
+		return ErrInvalid
+	}
+	if d.Pricing != nil && d.Pricing.Validate() != nil {
 		return ErrInvalid
 	}
 	return nil
