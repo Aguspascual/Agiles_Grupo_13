@@ -6,7 +6,7 @@
 }
 .site-header {
   width: min(1180px, calc(100% - 48px));
-  min-height: 49px;
+  min-height: 56px;
   margin: auto;
   display: flex;
   align-items: center;
@@ -19,15 +19,15 @@
   align-items: center;
   gap: 7px;
   color: #1d2730;
-  font-size: 0.76rem;
+  font-size: 0.86rem;
   font-weight: 850;
   letter-spacing: -0.045em;
   line-height: 1;
 }
 .brand img {
-  width: 27px;
-  height: 27px;
-  border-radius: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
   object-fit: cover;
 }
 .brand-accent {
@@ -39,7 +39,7 @@
   border-radius: 3px;
   background: #eef0ff;
   color: #677098;
-  font-size: 0.38rem;
+  font-size: 0.46rem;
   letter-spacing: 0.08em;
   vertical-align: middle;
 }
@@ -50,15 +50,15 @@
   gap: 11px;
 }
 .create-match-link {
-  min-height: 29px;
-  padding: 0 10px;
+  min-height: 36px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  border-radius: 5px;
+  gap: 6px;
+  border-radius: 7px;
   background: #08a878;
   color: #fff;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -115,6 +115,8 @@
   border: 0;
   background: transparent;
   font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
   color: #39434e;
   cursor: pointer;
 }
@@ -122,14 +124,14 @@
   text-decoration: none;
 }
 .profile-avatar {
-  width: 23px;
-  height: 23px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: #e5ede9;
   color: #287653;
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   font-weight: 850;
 }
 .profile-copy {
@@ -137,11 +139,11 @@
   gap: 2px;
 }
 .profile-copy b {
-  font-size: 0.55rem;
+  font-size: 0.64rem;
 }
 .profile-copy small {
-  color: #818895;
-  font-size: 0.47rem;
+  color: #6f7785;
+  font-size: 0.56rem;
 }
 .profile-menu { position: relative; }
 .profile-chevron { color: #79818d; font-size: .7rem; }
@@ -183,7 +185,7 @@
     display: none;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 1080px) {
   .profile-link, .create-match-link, .notification-link { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

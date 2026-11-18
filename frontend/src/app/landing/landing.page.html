@@ -3,24 +3,53 @@
 
   <section class="home-hero" aria-labelledby="landing-title">
     <div class="home-hero__copy">
-      <h1 id="landing-title">Encontrá tu próximo<br /><span>partido de pádel</span> en La Plata</h1>
+      <p class="home-hero__kicker">¿RESERVASTE CANCHA Y TE FALTAN JUGADORES?</p>
+      <h1 id="landing-title">Publicá tu partido y sumá <span>jugadores de tu nivel</span></h1>
       <p class="home-hero__description">
-        Encontrá partidos abiertos y complejos registrados en PádelMatch.
+        Elegí un turno disponible, indicá cuántos te faltan y compartilo. Los jugadores de tu nivel lo ven y se suman.
       </p>
-      <div class="player-proof">
-        <span aria-hidden="true">✓</span>
+      <div class="home-hero__actions">
+        <a routerLink="/partidos" [queryParams]="{ crear: 1 }" class="home-hero__create"
+          ><span aria-hidden="true">+</span> Crear un nuevo partido</a
+        >
         @if (session.currentUser(); as user) {
-          <b>{{ user.level }} · {{ user.zone }}</b>
-          <a routerLink="/perfil">Editar perfil <span aria-hidden="true">→</span></a>
-        } @else {
-          <b>Explorá los partidos disponibles</b>
-          <a routerLink="/ingresar">Iniciá sesión <span aria-hidden="true">→</span></a>
+          <p class="player-proof">
+            <span class="ball-dot" aria-hidden="true"></span>
+            <b>Hola, {{ firstName(user.name) }} · {{ user.level }} · {{ user.zone }}</b>
+            <a routerLink="/perfil">Editar perfil <span aria-hidden="true">→</span></a>
+          </p>
         }
       </div>
     </div>
-    <app-featured-courts [courts]="courts()" [complexes]="complexes()" />
+    <app-padel-court-art [match]="nextOpenMatch()" (open)="openDetails($event)" />
+  </section>
 
-    <form class="home-search" data-home-search aria-label="Buscar partidos" (submit)="$event.preventDefault()">
+  <section class="home-search-panel" aria-label="Buscar partidos">
+    <button
+      type="button"
+      class="home-search-toggle"
+      aria-controls="home-search-form"
+      [attr.aria-expanded]="searchOpen()"
+      (click)="searchOpen.set(!searchOpen())"
+    >
+      <span class="home-search-toggle__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+      </span>
+      <span class="home-search-toggle__text">
+        <b>Buscar partidos</b>
+        <small>Filtrá por zona, fecha y nivel</small>
+      </span>
+      <span class="home-search-toggle__chevron" aria-hidden="true">⌄</span>
+    </button>
+
+    <form
+      id="home-search-form"
+      class="home-search"
+      data-home-search
+      aria-label="Filtros de búsqueda"
+      [hidden]="!searchOpen()"
+      (submit)="$event.preventDefault()"
+    >
       <label>
         <span><i aria-hidden="true">⌖</i> Zona</span>
         <select name="zone" [(ngModel)]="zone">
@@ -47,7 +76,7 @@
         class="home-search__submit"
         routerLink="/partidos"
         [queryParams]="{ zona: zone || null, nivel: level || null, fecha: date || null }"
-        ><span aria-hidden="true">⌕</span> Buscar partidos</a
+        >Ver resultados</a
       >
     </form>
   </section>
@@ -60,50 +89,39 @@
       <button type="button" (click)="loadData()">Reintentar</button>
     </section>
   } @else {
-    <section class="home-stats" data-home-stats aria-label="Resumen de la información disponible">
-      @for (stat of stats(); track stat.label) {
-        <article>
-          <span aria-hidden="true">{{ stat.icon }}</span><strong>{{ stat.value }}</strong><small>{{ stat.label }}</small>
-        </article>
-      }
-    </section>
-
-    <section class="home-section home-section--recommended" aria-labelledby="recommended-title">
+    <section class="home-section home-section--recommended" id="partidos" aria-labelledby="recommended-title">
       <div class="section-heading">
-        <div><h2 id="recommended-title" class="section-heading__title">Partidos recomendados para vos</h2></div>
-        <a routerLink="/partidos">Explorar partidos <span aria-hidden="true">→</span></a>
+        <div>
+          <h2 id="recommended-title" class="section-heading__title">Partidos recomendados para vos</h2>
+          <p>
+            {{ session.currentUser() ? 'Primero los partidos de tu nivel.' : 'Partidos abiertos publicados por jugadores de La Plata.' }}
+          </p>
+        </div>
+        <a routerLink="/partidos" [queryParams]="{ nivel: session.currentUser()?.level || null }">Ver todos <span aria-hidden="true">→</span></a>
       </div>
-      <div class="recommended-grid" data-recommended-matches>
+
+      <div class="recommended-toolbar">
+        <div class="filter-chips" aria-label="Filtrar partidos recomendados">
+          @for (filter of availableFilters; track filter) {
+            <button type="button" [class.is-selected]="activeFilter() === filter" (click)="activeFilter.set(filter)">{{ filter }}</button>
+          }
+        </div>
+        @if (recommendedMatches().length > 1) {
+          <div class="carousel-nav">
+            <button type="button" aria-label="Ver partidos anteriores" (click)="scrollCarousel(track, -1)">‹</button>
+            <button type="button" aria-label="Ver más partidos" (click)="scrollCarousel(track, 1)">›</button>
+          </div>
+        }
+      </div>
+
+      <div #track class="match-carousel available-grid" data-recommended-matches>
         @for (match of recommendedMatches(); track match.id) {
           <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
         } @empty {
-          <p class="empty-matches">Todavía no hay partidos abiertos para recomendar.</p>
+          <p class="empty-matches">
+            {{ activeFilter() === 'Urgentes' ? 'No hay partidos urgentes para las próximas 24 horas.' : 'Todavía no hay partidos abiertos para mostrar.' }}
+          </p>
         }
-      </div>
-    </section>
-
-    <section class="available-section" id="partidos" aria-labelledby="available-title">
-      <div class="available-inner">
-        <div class="section-heading section-heading--available">
-          <div>
-            <h2 id="available-title" class="section-heading__title">Partidos disponibles en La Plata</h2>
-            <p>Partidos abiertos publicados por jugadores.</p>
-          </div>
-          <div class="filter-chips" aria-label="Filtrar partidos destacados">
-            @for (filter of availableFilters; track filter) {
-              <button type="button" [class.is-selected]="activeFilter() === filter" (click)="activeFilter.set(filter)">{{ filter }}</button>
-            }
-          </div>
-        </div>
-        <div class="available-grid">
-          @for (match of availableMatches(); track match.id) {
-            <app-match-card [match]="match" [searchMode]="true" [detailsMode]="true" (viewDetails)="openDetails($event)" />
-          } @empty {
-            <p class="empty-matches">
-              {{ activeFilter() === 'Urgentes' ? 'No hay partidos urgentes para las próximas 24 horas.' : 'Todavía no hay partidos abiertos para mostrar.' }}
-            </p>
-          }
-        </div>
       </div>
     </section>
 
@@ -112,6 +130,9 @@
         <div><h2 id="clubs-title">Complejos publicados</h2><p>Consultá los complejos disponibles en La Plata.</p></div>
         <a routerLink="/clubes">Ver clubes <span aria-hidden="true">→</span></a>
       </div>
+      @if (courts().length || complexes().length) {
+        <app-featured-courts [courts]="courts()" [complexes]="complexes()" />
+      }
       <div class="clubs-grid" data-featured-clubs>
         @for (club of complexes(); track club.id) {
           <app-club-card [club]="club" [courtCount]="courtCounts().get(club.id) ?? 0" />
@@ -120,19 +141,31 @@
         }
       </div>
     </section>
-  }
 
-  <section class="create-banner" aria-label="Crear partido">
-    <div>
-      <p>¿RESERVASTE CANCHA Y TE FALTAN JUGADORES?</p>
-      <h2>Publicá tu partido</h2>
-      <span>Elegí un turno disponible y compartilo con jugadores de tu nivel.</span>
-    </div>
-    <div class="create-banner__actions">
-      <a routerLink="/partidos" [queryParams]="{ crear: 1 }" class="create-banner__primary"><span aria-hidden="true">⊕</span> Crear un nuevo partido</a>
-      <a routerLink="/partidos" class="create-banner__secondary">Ver partidos</a>
-    </div>
-  </section>
+    <section class="home-stats" data-home-stats aria-label="Resumen de la información disponible">
+      @for (stat of stats(); track stat.label) {
+        <article>
+          <span class="stat-icon stat-icon--{{ stat.icon }}" aria-hidden="true">
+            @switch (stat.icon) {
+              @case ('ball') {
+                <svg viewBox="-12 -12 24 24"><circle r="10.5" fill="#d7ee3b" /><path d="M-9.5 -4 C -3 -1, -3 5, -6 8.5 M9.5 4 C 3 1, 3 -5, 6 -8.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" /></svg>
+              }
+              @case ('club') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14M3 12h18" /></svg>
+              }
+              @case ('level') {
+                <svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="13" width="4" height="7" rx="1" /><rect x="10" y="9" width="4" height="11" rx="1" /><rect x="16" y="4" width="4" height="16" rx="1" /></svg>
+              }
+              @default {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2" /><circle cx="17" cy="9" r="2.6" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M15 14.2c2.6-.2 4.6 1.4 5.2 4.3" /></svg>
+              }
+            }
+          </span>
+          <strong>{{ stat.value }}</strong><small>{{ stat.label }}</small>
+        </article>
+      }
+    </section>
+  }
 
   @if (selectedMatch(); as match) {
   <app-match-detail-dialog [match]="match" [leaving]="leavingMatchId() === match.id" (close)="closeDetails()" (join)="joinMatch($event)" (leave)="leaveMatch($event)" />
