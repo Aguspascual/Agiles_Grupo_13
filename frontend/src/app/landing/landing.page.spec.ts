@@ -30,8 +30,19 @@ const apiMatches: ApiMatch[] = Array.from({ length: 7 }, (_, index) => ({
   ],
 }));
 
-function flushMatches(): void {
-  TestBed.inject(HttpTestingController).expectOne('/api/v1/matches').flush({ matches: apiMatches });
+/** La búsqueda de partidos pide los partidos y los complejos para el filtro de clubes. */
+function flushSearchData(): void {
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne('/api/v1/matches').flush({ matches: apiMatches });
+  http.expectOne('/api/v1/public/complexes').flush({ complexes: [] });
+}
+
+/** La portada pide complejos, partidos y canchas en paralelo: se responden las tres solicitudes. */
+function flushLandingData(): void {
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne('/api/v1/public/complexes').flush({ complexes: [] });
+  http.expectOne('/api/v1/matches').flush({ matches: apiMatches });
+  http.expectOne('/api/v1/public/courts').flush({ courts: [] });
 }
 
 describe('HU-00: landing pública', () => {
@@ -69,13 +80,14 @@ describe('HU-00: landing pública', () => {
     expect(root.querySelector('a[href^="/partidos"]')?.textContent).toContain('Buscar partidos');
     expect(root.querySelector('.home-search__advanced')).toBeNull();
     expect(root.querySelector('a[href="/ingresar"]')).not.toBeNull();
+    flushLandingData();
     fixture.destroy();
   });
 
   it('presenta filtros laterales y partidos en Home 2', async () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
-    flushMatches();
+    flushSearchData();
     await fixture.whenStable();
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -142,7 +154,7 @@ describe('HU-00: landing pública', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    flushMatches();
+    flushSearchData();
     await fixture.whenStable();
     fixture.detectChanges();
     const details = root.querySelector('[data-match-detail]') as HTMLButtonElement;
@@ -176,6 +188,7 @@ describe('HU-00: landing pública', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-demo-links]')).toBeNull();
+    flushLandingData();
     fixture.destroy();
   });
 
@@ -184,8 +197,9 @@ describe('HU-00: landing pública', () => {
     vi.setSystemTime(new Date('2026-11-18T12:00:00-03:00'));
     const fixture = TestBed.createComponent(LandingPage);
     fixture.detectChanges();
-    flushMatches();
-    await vi.runAllTimersAsync();
+    flushLandingData();
+    // La portada tiene temporizadores periódicos (carrusel): se avanzan solo los pendientes.
+    await vi.runOnlyPendingTimersAsync();
     fixture.detectChanges();
 
     const page = fixture.componentInstance;
@@ -220,7 +234,7 @@ describe('HU-00: landing pública', () => {
   it('filtra partidos de la API por zona y permite limpiar los filtros', () => {
     const fixture = TestBed.createComponent(MatchSearchPage);
     fixture.detectChanges();
-    flushMatches();
+    flushSearchData();
     fixture.componentInstance.selectedZones = ['City Bell'];
     expect(fixture.componentInstance.filteredMatches.length).toBe(1);
     expect(fixture.componentInstance.filteredMatches[0].zone).toBe('City Bell');

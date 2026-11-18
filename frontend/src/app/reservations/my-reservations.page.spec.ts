@@ -266,7 +266,10 @@ describe('HU-17: Mis reservas', () => {
   it('en Jugados la tarjeta Próximo turno muestra el próximo turno de los próximos', async () => {
     await render(null, { vista: 'jugados' });
     expectList('past').flush(page([]));
-    flushNextTurn(page([reservation('r-9')]));
+    // La cuenta regresiva solo aparece para turnos futuros: se usa una fecha relativa a hoy.
+    const startsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    const endsAt = new Date(startsAt.getTime() + 90 * 60 * 1000);
+    flushNextTurn(page([reservation('r-9', { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() })]));
     await settle();
     expect(root().querySelector('.next-card')?.textContent).not.toContain('Todav');
     expect(root().querySelector('.next-card__countdown')).not.toBeNull();
