@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input
 import { MatchPreview, PlayerPreview } from './landing.data';
 import { AuthSessionService } from '../auth/auth-session.service';
 import { MatchShareService } from '../matches/match-share.service';
+import { courtRow } from '../matches/court-layout';
 
 @Component({
   selector: 'app-match-detail-dialog',
@@ -186,16 +187,21 @@ export class MatchDetailDialogComponent implements AfterViewInit, OnDestroy {
         taken[index] = { initials: guest.name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase(), name: guest.name, level: '', tone: 'blue', guest: true, slot: guest.slot };
       }
     }
+    // Los acompañantes con nombre ya ocupan su lugar; solo se agregan los que no tienen nombre registrado.
     const guest: PlayerPreview = { initials: 'A', name: 'Acompañante', level: '', tone: 'blue', guest: true };
-    for (let index = 0; index < this.guestPlayers; index += 1) {
+    for (let index = 0; index < this.guestSlots.length; index += 1) {
       const freeIndex = taken.findIndex((occupant) => !occupant);
       if (freeIndex >= 0) taken[freeIndex] = guest;
     }
     return taken.map((player, index) => {
+      const pair = index < 2 ? 'A' : 'B';
+      const side = index % 2 === 0 ? 'Drive' : 'Revés';
       return {
         player,
-        team: index < 2 ? 'Pareja A' : 'Pareja B',
-        side: index % 2 === 0 ? 'Drive' : 'Revés',
+        team: `Pareja ${pair}`,
+        side,
+        row: courtRow(pair, side),
+        column: pair === 'A' ? 1 : 2,
         position: player?.guest ? 'Acompañante' : player?.position ?? 'Lugar disponible',
         isCurrentUser: player ? this.isCurrentPlayer(player.name) : false,
       };

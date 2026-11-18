@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { courtRow } from './court-layout';
 
 interface CourtSpot {
   slot: number;
@@ -34,6 +35,11 @@ export class CourtPositionPickerComponent {
     if (this.value === slot.slot) return `Tu lugar, Pareja ${slot.pair}, ${slot.side}`;
     const occupant = this.occupants.find((item) => item.slot === slot.slot);
     return occupant ? `Quitar a ${occupant.name} de Pareja ${slot.pair}, ${slot.side}` : `Agregar amigo en Pareja ${slot.pair}, ${slot.side}`;
+  }
+
+  /** Fila del lugar en la cancha: el drive queda a la derecha de cada pareja. */
+  rowFor(spot: CourtSpot): number {
+    return courtRow(spot.pair, spot.side);
   }
 
   occupantFor(slot: number): string {
