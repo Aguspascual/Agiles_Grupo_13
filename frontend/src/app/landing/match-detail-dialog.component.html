@@ -19,7 +19,7 @@
             <div class="court-pair-labels"><span>PAREJA A</span><span>PAREJA B</span></div>
             <div class="court-slots">
               @for (slot of courtSlots; track $index) {
-                <article class="court-player" [class.court-player--empty]="!slot.player">
+                <article class="court-player" [class.court-player--empty]="!slot.player" [style.grid-row]="slot.row" [style.grid-column]="slot.column">
                   @if (slot.player) {
                     <span class="court-avatar" [class]="'court-avatar tone-' + slot.player.tone">{{ slot.player.initials }}</span>
                     <span class="court-player-copy"><b>{{ slot.player.name }} @if (slot.isCurrentUser) { <small>(Vos)</small> }</b>@if (slot.player.guest) { <small>Acompañante · sin cuenta</small> } @else { <small>{{ slot.position }} · Nivel {{ slot.player.level }}</small> }</span>
