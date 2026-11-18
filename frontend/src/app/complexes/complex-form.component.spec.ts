@@ -17,7 +17,10 @@ describe('imagen del complejo', () => {
     expect(fixture.componentInstance.form.controls.imageDataUrl.value).toMatch(/^data:image\/png;base64,/);
     const save = vi.fn();
     fixture.componentInstance.save.subscribe(save);
-    fixture.componentInstance.form.patchValue({ name: 'Club', address: 'Calle 1', zone: 'Gonnet', phone: '221', managerIds: ['manager'] });
+    fixture.componentInstance.form.patchValue({
+      name: 'Club', address: 'Calle 1', zone: 'Gonnet', phone: '221', managerIds: ['manager'],
+      pricing: { turnPrice: '1000.00', depositEnabled: false, depositType: 'fixed', depositValue: '' },
+    });
     fixture.componentInstance.submit();
 
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ imageDataUrl: expect.stringContaining('data:image/png;base64,') }));
@@ -92,6 +95,67 @@ describe('encargados del complejo', () => {
     expect(fields.slice(0, 2).map((field) => field.classList.contains('wide'))).toEqual([false, false]);
     expect(fields[0].textContent).toContain('Nombre del complejo');
     expect(fields[1].textContent).toContain('Dirección');
+    fixture.destroy();
+  });
+});
+
+describe('configuración de precio y seña del complejo (HU-21)', () => {
+  it('ofrece campos para precio del turno y activar la seña', async () => {
+    await TestBed.configureTestingModule({ imports: [ComplexFormComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(ComplexFormComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#turn-price')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#deposit-enabled')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('ARS');
+    fixture.destroy();
+  });
+
+  it('permite editar un complejo legado sin precio y omite pricing mientras la seña siga apagada', async () => {
+    await TestBed.configureTestingModule({ imports: [ComplexFormComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(ComplexFormComponent);
+    fixture.componentRef.setInput('complex', {
+      id: 'legacy', name: 'Club', address: 'Calle 1', zone: 'Gonnet', phone: '221', imageDataUrl: null,
+      managerIds: ['admin'], pricing: { turnPrice: '0.00', depositEnabled: false, depositType: 'fixed', depositValue: '0.00' },
+    });
+    fixture.detectChanges();
+    const save = vi.fn();
+    fixture.componentInstance.save.subscribe(save);
+    fixture.componentInstance.form.controls.name.setValue('Club actualizado');
+
+    expect(fixture.componentInstance.form.controls.pricing.errors).toBeNull();
+    expect(fixture.componentInstance.form.valid).toBe(true);
+    fixture.componentInstance.submit();
+
+    expect(save).toHaveBeenCalledOnce();
+    expect(save.mock.calls[0][0].name).toBe('Club actualizado');
+    expect(save.mock.calls[0][0]).not.toHaveProperty('pricing');
+    fixture.destroy();
+  });
+
+  it('valida precio y modalidades de seña antes de emitir el borrador', async () => {
+    await TestBed.configureTestingModule({ imports: [ComplexFormComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(ComplexFormComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const save = vi.fn();
+    component.save.subscribe(save);
+    component.form.patchValue({ name: 'Club', address: 'Calle 1', zone: 'Gonnet', phone: '221', managerIds: ['admin'] });
+    component.form.controls.pricing.patchValue({ turnPrice: '0', depositEnabled: false, depositType: 'fixed', depositValue: '' });
+    component.submit();
+    expect(save).not.toHaveBeenCalled();
+
+    component.form.controls.pricing.patchValue({ turnPrice: '1500.50', depositEnabled: true, depositType: 'fixed', depositValue: '1500.51' });
+    component.submit();
+    expect(save).not.toHaveBeenCalled();
+
+    component.form.controls.pricing.patchValue({ turnPrice: '1500.50', depositEnabled: true, depositType: 'percentage', depositValue: '100.01' });
+    component.submit();
+    expect(save).not.toHaveBeenCalled();
+
+    component.form.controls.pricing.patchValue({ turnPrice: '1500.50', depositEnabled: true, depositType: 'percentage', depositValue: '100.00' });
+    component.submit();
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ pricing: expect.objectContaining({ turnPrice: '1500.50', depositValue: '100.00' }) }));
     fixture.destroy();
   });
 });

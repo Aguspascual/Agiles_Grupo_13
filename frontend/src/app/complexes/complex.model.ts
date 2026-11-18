@@ -13,6 +13,17 @@ export interface ComplexRecord {
   imageDataUrl: string | null;
   managerIds: string[];
   managers?: ManagerOption[];
+  pricing: ComplexPricing;
+}
+
+export type DepositType = 'fixed' | 'percentage';
+
+/** Decimal values are strings so browser JSON parsing cannot round ARS cents. */
+export interface ComplexPricing {
+  turnPrice: string;
+  depositEnabled: boolean;
+  depositType: DepositType;
+  depositValue: string;
 }
 
 /** Complejo del listado público (sin teléfono ni encargados). */
@@ -38,5 +49,5 @@ export interface PublicCourt {
   complexAddress: string;
 }
 
-export type ComplexDraft = Omit<ComplexRecord, 'id'>;
+export type ComplexDraft = Omit<ComplexRecord, 'id' | 'pricing'> & { pricing?: ComplexPricing };
 export type DemoRole = 'admin' | 'manager';

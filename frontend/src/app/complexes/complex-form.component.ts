@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MultiSelectComponent, MultiSelectOption } from '../shared/multi-select.component';
-import { ComplexDraft, ComplexRecord, ManagerOption } from './complex.model';
+import { ComplexDraft, ComplexPricing, ComplexRecord, ManagerOption } from './complex.model';
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -31,6 +31,12 @@ export class ComplexFormComponent implements OnChanges {
     phone: new FormControl('', { nonNullable: true, validators: Validators.required }),
     imageDataUrl: new FormControl<string | null>(null),
     managerIds: new FormControl<string[]>([], { nonNullable: true, validators: Validators.required }),
+    pricing: new FormGroup({
+      turnPrice: new FormControl('', { nonNullable: true }),
+      depositEnabled: new FormControl(false, { nonNullable: true }),
+      depositType: new FormControl<'fixed' | 'percentage'>('fixed', { nonNullable: true }),
+      depositValue: new FormControl('', { nonNullable: true }),
+    }, { validators: control => pricingValidator(control, this.isLegacyUnpricedComplex()) }),
   });
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -42,7 +48,8 @@ export class ComplexFormComponent implements OnChanges {
         phone: this.complex.phone,
         imageDataUrl: this.complex.imageDataUrl ?? null,
         managerIds: [...this.complex.managerIds],
-      } : { name: '', address: '', zone: '', phone: '', imageDataUrl: null, managerIds: [] });
+        pricing: this.complex.pricing ?? emptyPricing(),
+      } : { name: '', address: '', zone: '', phone: '', imageDataUrl: null, managerIds: [], pricing: emptyPricing() });
       this.imageError = '';
     }
     if ((changes['complex'] || changes['managers']) && !this.managersReadOnly && this.managers.length) {
@@ -56,6 +63,15 @@ export class ComplexFormComponent implements OnChanges {
 
   get managerOptions(): MultiSelectOption[] {
     return this.managers.map((manager) => ({ value: manager.id, label: manager.name, hint: manager.email }));
+  }
+
+  get pricingErrorMessage(): string {
+    const errors = this.form.controls.pricing.errors;
+    if (errors?.['turnPriceInvalid']) return 'IngresÃ¡ un precio de turno positivo en ARS, con hasta dos decimales.';
+    if (errors?.['depositValueRequired']) return 'IngresÃ¡ el valor de la seÃ±a.';
+    if (errors?.['fixedDepositInvalid']) return 'La seÃ±a fija debe ser positiva y no superar el precio del turno.';
+    if (errors?.['percentageInvalid']) return 'El porcentaje debe estar entre 1% y 100%.';
+    return 'RevisÃ¡ los valores de precio y seÃ±a.';
   }
 
   setManagers(ids: string[]): void {
@@ -109,6 +125,50 @@ export class ComplexFormComponent implements OnChanges {
 
   submit(): void {
     this.form.markAllAsTouched();
-    if (this.form.valid) this.save.emit(this.form.getRawValue());
+    if (!this.form.valid) return;
+    const draft = this.form.getRawValue();
+    const pricing = draft.pricing;
+    if (this.isLegacyUnpricedComplex() && !pricing.depositEnabled && parseMinorUnits(pricing.turnPrice) === 0 &&
+      (pricing.depositValue.trim() === '' || parseMinorUnits(pricing.depositValue) === 0)) {
+      const legacyDraft = { ...draft } as ComplexDraft;
+      delete legacyDraft.pricing;
+      this.save.emit(legacyDraft);
+      return;
+    }
+    this.save.emit(draft);
   }
+
+  private isLegacyUnpricedComplex(): boolean {
+    const pricing = this.complex?.pricing;
+    return !!pricing && !pricing.depositEnabled && parseMinorUnits(pricing.turnPrice) === 0;
+  }
+}
+
+function emptyPricing(): ComplexPricing {
+  return { turnPrice: '', depositEnabled: false, depositType: 'fixed', depositValue: '' };
+}
+
+const pricingValidator = (control: AbstractControl, allowLegacyUnpriced: boolean): ValidationErrors | null => {
+  const pricing = control.getRawValue() as ComplexPricing;
+  const turnPrice = parseMinorUnits(pricing.turnPrice);
+  if (allowLegacyUnpriced && !pricing.depositEnabled && turnPrice === 0 &&
+    (pricing.depositValue.trim() === '' || parseMinorUnits(pricing.depositValue) === 0)) return null;
+  if (turnPrice === null || turnPrice <= 0) return { turnPriceInvalid: true };
+  const deposit = pricing.depositValue.trim() === '' ? 0 : parseMinorUnits(pricing.depositValue);
+  if (deposit === null) return pricing.depositEnabled ? { depositValueRequired: true } : { fixedDepositInvalid: true };
+  if (!pricing.depositEnabled && deposit === 0) return null;
+  if (pricing.depositType === 'fixed') {
+    if (deposit <= 0 || deposit > turnPrice) return pricing.depositEnabled || deposit > 0 ? { fixedDepositInvalid: true } : null;
+  } else if (deposit < 100 || deposit > 10000) {
+    return pricing.depositEnabled || deposit > 0 ? { percentageInvalid: true } : null;
+  }
+  return null;
+};
+
+function parseMinorUnits(value: string): number | null {
+  const normalized = value.trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
+  const [whole, fraction = ''] = normalized.split('.');
+  const units = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(units) ? units : null;
 }
